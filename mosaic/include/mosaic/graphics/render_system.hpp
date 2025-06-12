@@ -6,6 +6,8 @@
 #include <pieces/result.hpp>
 
 #include "mosaic/defines.hpp"
+#include "mosaic/core/window.hpp"
+
 #include "render_context.hpp"
 
 namespace mosaic
@@ -23,9 +25,8 @@ enum class RendererAPIType
 class MOSAIC_API RenderSystem
 {
    private:
-    bool m_initialized = false;
     RendererAPIType m_apiType;
-    std::unordered_map<void*, std::unique_ptr<RenderContext>> m_contexts;
+    std::unordered_map<const core::Window*, std::unique_ptr<RenderContext>> m_contexts;
 
    public:
     RenderSystem(RendererAPIType _apiType) : m_apiType(_apiType) {};
@@ -33,11 +34,10 @@ class MOSAIC_API RenderSystem
 
     RenderSystem(const RenderSystem&) = delete;
     RenderSystem& operator=(const RenderSystem&) = delete;
-
     RenderSystem(RenderSystem&&) = default;
     RenderSystem& operator=(RenderSystem&&) = default;
 
-    static std::unique_ptr<RenderSystem> create(RendererAPIType _apiType);
+    static std::unique_ptr<RenderSystem> create(RendererAPIType _type);
 
    public:
     virtual pieces::RefResult<RenderSystem, std::string> initialize(
@@ -53,7 +53,15 @@ class MOSAIC_API RenderSystem
     // createMesh()
     // createRenderPass()
 
-    inline void destroyAllContexts() { m_contexts.clear(); }
+    inline void destroyAllContexts()
+    {
+        for (auto& [window, context] : m_contexts)
+        {
+            context->shutdown();
+        }
+
+        m_contexts.clear();
+    }
 
     inline void render()
     {
@@ -65,11 +73,9 @@ class MOSAIC_API RenderSystem
 
     inline RenderContext* getContext(const core::Window* _window) const
     {
-        const auto glfwWindow = _window->getNativeHandle();
-
-        if (m_contexts.find(glfwWindow) != m_contexts.end())
+        if (m_contexts.find(_window) != m_contexts.end())
         {
-            return m_contexts.at(glfwWindow).get();
+            return m_contexts.at(_window).get();
         }
 
         return nullptr;

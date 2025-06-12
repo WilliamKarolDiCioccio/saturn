@@ -16,6 +16,15 @@ namespace graphics
 namespace webgpu
 {
 
+WebGPURenderContext::WebGPURenderContext(const core::Window* _window,
+                                         const RenderContextSettings& _settings)
+    : m_instance(nullptr),
+      m_surface(nullptr),
+      m_adapter(nullptr),
+      m_device(nullptr),
+      m_presentQueue(nullptr),
+      RenderContext(_window, _settings) {};
+
 pieces::RefResult<RenderContext, std::string> WebGPURenderContext::initialize(
     RenderSystem* _renderSystem)
 {
@@ -88,6 +97,8 @@ void WebGPURenderContext::shutdown()
 }
 
 void WebGPURenderContext::resizeFramebuffer() {}
+
+void mosaic::graphics::webgpu::WebGPURenderContext::recreateSurface() {}
 
 void WebGPURenderContext::getNextSurfaceViewData()
 {

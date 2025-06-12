@@ -40,23 +40,32 @@ namespace input
 class MOSAIC_API InputSystem
 {
    public:
-    std::unordered_map<void*, std::unique_ptr<InputContext>> m_contexts;
+    std::unordered_map<const core::Window*, std::unique_ptr<InputContext>> m_contexts;
 
    public:
     InputSystem() = default;
-    ~InputSystem() { unregisterAllWindows(); }
 
     InputSystem(const InputSystem&) = delete;
     InputSystem& operator=(const InputSystem&) = delete;
-
     InputSystem(InputSystem&&) = default;
     InputSystem& operator=(InputSystem&&) = default;
 
    public:
+    pieces::RefResult<InputSystem, std::string> initialize();
+    void shutdown();
+
     pieces::Result<InputContext*, std::string> registerWindow(core::Window* _window);
     void unregisterWindow(core::Window* _window);
 
-    inline void unregisterAllWindows() { m_contexts.clear(); }
+    inline void unregisterAllWindows()
+    {
+        for (auto& [window, context] : m_contexts)
+        {
+            context->shutdown();
+        }
+
+        m_contexts.clear();
+    }
 
     /**
      * @brief Updates all registered input contexts.
@@ -75,11 +84,9 @@ class MOSAIC_API InputSystem
 
     inline InputContext* getContext(const core::Window* _window) const
     {
-        const auto nativeHandle = _window->getNativeHandle();
-
-        if (m_contexts.find(nativeHandle) != m_contexts.end())
+        if (m_contexts.find(_window) != m_contexts.end())
         {
-            return m_contexts.at(nativeHandle).get();
+            return m_contexts.at(_window).get();
         }
 
         return nullptr;

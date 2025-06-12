@@ -8,7 +8,9 @@ namespace input
 InputArena::InputArena(core::Window* _window)
     : m_rawInputHandler(RawInputHandler::create(_window)),
       m_mouseScrollWheelSamples(MOUSE_WHEEL_NUM_SAMPLES),
-      m_cursorPosSamples(MOUSE_CURSOR_NUM_SAMPLES)
+      m_cursorPosSamples(MOUSE_CURSOR_NUM_SAMPLES) {};
+
+pieces::RefResult<InputArena, std::string> InputArena::initialize()
 {
     m_cursorPosSamples.push(MouseCursorPosSample{
         glm::vec2(0.f),
@@ -20,7 +22,18 @@ InputArena::InputArena(core::Window* _window)
         glm::vec2(0.f),
         std::chrono::high_resolution_clock::now(),
     });
-};
+
+    auto result = m_rawInputHandler->initialize();
+
+    if (result.isErr())
+    {
+        return pieces::ErrRef<InputArena, std::string>(std::move(result.error()));
+    }
+
+    return pieces::OkRef<InputArena, std::string>(*this);
+}
+
+void InputArena::shutdown() { m_rawInputHandler->shutdown(); }
 
 void InputArena::update()
 {
@@ -34,7 +47,7 @@ void InputArena::update()
     {
         if (!m_rawInputHandler->isActive()) break;
 
-        const int action = m_rawInputHandler->getKeyboardKeyInput(key);
+        const InputAction action = m_rawInputHandler->getKeyboardKeyInput(key);
 
         auto& keyEvent = m_keyboardKeyEvents[static_cast<uint32_t>(key)];
 
@@ -44,7 +57,7 @@ void InputArena::update()
         auto actionDuration = std::chrono::duration_cast<std::chrono::milliseconds>(
             currentTime - keyEvent.metadata.timestamp);
 
-        if (action == GLFW_RELEASE)
+        if (action == InputAction::release)
         {
             if (actionDuration < KEY_RELEASE_DURATION) continue;
 
@@ -66,7 +79,7 @@ void InputArena::update()
                 };
             }
         }
-        else if (action == GLFW_PRESS)
+        else if (action == InputAction::press)
         {
             if (utils::hasFlag(keyEvent.lastSignificantState, KeyButtonState::release) &&
                 actionDuration > DOUBLE_CLICK_MIN_INTERVAL &&
@@ -116,7 +129,7 @@ void InputArena::update()
         auto actionDuration = std::chrono::duration_cast<std::chrono::milliseconds>(
             currentTime - buttonEvent.metadata.timestamp);
 
-        if (action == GLFW_RELEASE)
+        if (action == InputAction::release)
         {
             if (actionDuration < KEY_RELEASE_DURATION) continue;
 
@@ -138,7 +151,7 @@ void InputArena::update()
                 };
             }
         }
-        else if (action == GLFW_PRESS)
+        else if (action == InputAction::press)
         {
             if (utils::hasFlag(buttonEvent.lastSignificantState, KeyButtonState::release) &&
                 actionDuration > DOUBLE_CLICK_MIN_INTERVAL &&

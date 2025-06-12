@@ -62,6 +62,15 @@ class MOSAIC_API InputContext
    public:
     InputContext(core::Window* _window);
 
+    InputContext(InputContext&) = delete;
+    InputContext& operator=(InputContext&) = delete;
+    InputContext(const InputContext&) = delete;
+    InputContext& operator=(const InputContext&) = delete;
+
+   public:
+    pieces::RefResult<InputContext, std::string> initialize();
+    void shutdown();
+
     void update();
 
     void loadVirtualKeysAndButtons(const std::string& _filePath);

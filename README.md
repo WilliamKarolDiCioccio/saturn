@@ -1,6 +1,6 @@
 # 🎮 Mosaic Game Engine
 
-**Mosaic** is a modern, cross-platform game engine written in **C++20**, built from the ground up as both a learning journey and a foundation for something greater.
+**Mosaic** is a modern, cross-platform game engine written in **C++23**, built from the ground up as both a learning journey and a foundation for something greater.
 
 Like all of my projects, Mosaic is first and foremost an exploration: a deep dive into systems programming, computer graphics, and game architecture. But it's not a toy. The engine is designed with the long-term goal of becoming a stable, professional-grade platform for interactive experiences — games, simulations, creative tools, and beyond.
 
@@ -102,8 +102,6 @@ We use **vcpkg in manifest mode** to manage most dependencies.
    - SDK tools for API level 24+
 
 3. Set the environment variable `ANDROID_NDK_HOME` to point to your NDK installation.
-4. Configure an Android CMake toolchain or preset.
-5. Add a custom **vcpkg Android triplet** targeting `arm64-v8a` or `x86_64`, and make sure Vulkan is enabled.
 
 ### 🔧 Build Instructions
 

@@ -9,6 +9,13 @@ namespace platform
 namespace glfw
 {
 
+enum class GLFWInputAction : uint32_t
+{
+    release = GLFW_RELEASE,
+    press = GLFW_PRESS,
+    repeat = GLFW_REPEAT,
+};
+
 /**
  * @brief The `KeyboardKey` enum class represents the keyboard keys supported by GLFW.
  *
@@ -59,7 +66,7 @@ enum class GLFWKeyboardKey : uint32_t
     key_enter = GLFW_KEY_ENTER,
     key_escape = GLFW_KEY_ESCAPE,
     key_left_shift = GLFW_KEY_LEFT_SHIFT,
-    key_right_Shift = GLFW_KEY_RIGHT_SHIFT,
+    key_right_shift = GLFW_KEY_RIGHT_SHIFT,
     key_left_control = GLFW_KEY_LEFT_CONTROL,
     key_right_control = GLFW_KEY_RIGHT_CONTROL,
     key_left_alt = GLFW_KEY_LEFT_ALT,

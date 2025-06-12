@@ -5,6 +5,9 @@ namespace mosaic
 namespace graphics
 {
 
+RenderContext::RenderContext(const core::Window* _window, const RenderContextSettings& _settings)
+    : m_window(_window), m_settings(_settings) {};
+
 void RenderContext::render()
 {
     beginFrame();

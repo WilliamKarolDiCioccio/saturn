@@ -33,8 +33,7 @@ class RenderContext
     RenderContextSettings m_settings;
 
    public:
-    RenderContext(const core::Window* _window, const RenderContextSettings& _settings)
-        : m_window(_window), m_settings(_settings) {};
+    RenderContext(const core::Window* _window, const RenderContextSettings& _settings);
     virtual ~RenderContext() = default;
 
    public:
@@ -49,6 +48,7 @@ class RenderContext
 
    protected:
     virtual void resizeFramebuffer() = 0;
+    virtual void recreateSurface() = 0;
     virtual void beginFrame() = 0;
     virtual void updateResources() = 0;
     virtual void drawScene() = 0;

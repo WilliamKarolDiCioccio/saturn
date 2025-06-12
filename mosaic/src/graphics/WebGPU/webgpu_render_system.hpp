@@ -16,6 +16,7 @@ class WebGPURenderSystem : public RenderSystem
 {
    public:
     WebGPURenderSystem() : RenderSystem(RendererAPIType::web_gpu) {};
+    ~WebGPURenderSystem() override = default;
 
    public:
     pieces::RefResult<RenderSystem, std::string> initialize(const core::Window* _window) override;

@@ -168,6 +168,9 @@ We use **Doxygen** as the standard documentation generator for the engine. All d
   - Performance-critical code
   - Subtle algorithmic behavior
 
+- If an entire file or subsystem needs explanation, place a Doxygen `\file` or `\brief` comment block at the top.
+- Document major modules in standalone `.md` files under the `docs/` directory for higher-level guides.
+
 ### Style and Format
 
 - Use **full sentences** with correct punctuation.
@@ -191,14 +194,19 @@ We use **Doxygen** as the standard documentation generator for the engine. All d
 bool Rendered::init();
 ```
 
-### File Organization
+### Code Modularization and Folder Structure
 
-- If an entire file or subsystem needs explanation, place a Doxygen `\file` or `\brief` comment block at the top.
-- Document major modules in standalone `.md` files under the `docs/` directory for higher-level guides.
+Our folder structure mirrors the modularization of the codebase: each namespace corresponds to a folder, except for `internal` and `detail`, which are reserved for implementation details. To prevent ambiguity when using `using namespace` directives or when referencing symbols within their own namespace, we prefer explicit and redundant naming (e.g., `mosaic::platform::win32::Win32Platform`). This approach, while more verbose, ensures clarity and avoids symbol collisions. As classes or systems grow in complexity, they should be moved into their own dedicated subfolders to further encapsulate related files and maintain a clean project hierarchy.
 
 ### Error Handling
 
-We avoid using exceptions for flow control. Exceptions are only used in scenarios where crashing is acceptable or necessary (e.g., irrecoverable logic errors). In most cases, we prefer to use the `Result` class from the `pieces` template library to model recoverable errors. This encourages explicit handling and improves clarity when dealing with failure cases. If a function doesn't produce additional data on failure, a simple `bool` or `return code` may be used instead for simplicity. However, if the failure involves meaningful data (e.g., an error message or diagnostic payload), even when already logged, a `Result` must still be returned so that the information can bubble up to a caller that may know how to respond appropriately.
+We avoid using exceptions for flow control. Exceptions are only used in scenarios where crashing is acceptable or necessary (e.g., irrecoverable logic errors). In most cases, we prefer to use the `Result` class from the `pieces` template library to model recoverable errors. This encourages explicit handling and improves clarity when dealing with failure cases. If a function doesn't produce additional data on failure, a simple `bool` or `return code` may be used instead for simplicity or. For more complex error data without a success counterpart you might use `std::optional`. However, if the failure involves meaningful data for both error and sucess, even when already logged, a `Result` must still be returned so that the information can bubble up to a caller that may know how to respond appropriately.
+
+To ensure proper handling of errors in objects, we recommend not using constructors to call functions or perform operations that can fail. Instead, limit them to invariants and conditions that require crashing the program. For all initialization code that may not succeed use `initialize()` methods that return the desired object or an error message/code.
+
+### Platform Specific Code and Logic
+
+Platform-specific code does not always need to be isolated in a separate file or confined strictly to the platform layer. If the amount of platform-specific code is small and localized, it can be kept within the relevant source files, clearly marked with comments or preprocessor directives. For larger or more complex platform-dependent implementations, code should be organized into the dedicated platform layer subfolder or the appropriate subsystem folder to maintain clarity and separation of concerns. If you're only dealing with platform specific logic, meaning it doesn't directly interact with platform specific APIs but it is more of a behavior related difference, you can just compile it conditionally.
 
 ---
 

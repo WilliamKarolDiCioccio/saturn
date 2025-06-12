@@ -1,6 +1,7 @@
 #pragma once
 
 #include "mosaic/graphics/render_context.hpp"
+
 #include "webgpu_common.hpp"
 
 namespace mosaic
@@ -28,13 +29,8 @@ class WebGPURenderContext : public RenderContext
     WGPUQueue m_presentQueue;
 
    public:
-    WebGPURenderContext(const core::Window* _window, const RenderContextSettings& _settings)
-        : m_instance(nullptr),
-          m_surface(nullptr),
-          m_adapter(nullptr),
-          m_device(nullptr),
-          m_presentQueue(nullptr),
-          RenderContext(_window, _settings) {};
+    WebGPURenderContext(const core::Window* _window, const RenderContextSettings& _settings);
+    ~WebGPURenderContext() override = default;
 
    public:
     pieces::RefResult<RenderContext, std::string> initialize(RenderSystem* _renderSystem) override;
@@ -42,6 +38,7 @@ class WebGPURenderContext : public RenderContext
 
    private:
     void resizeFramebuffer() override;
+    void recreateSurface() override;
     void beginFrame() override;
     void updateResources() override;
     void drawScene() override;

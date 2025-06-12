@@ -20,6 +20,20 @@ InputContext::InputContext(core::Window* _window)
       m_cursorLinearAccelleration(0.f),
       m_cursorMovementDirection(MovementDirection::none) {};
 
+pieces::RefResult<InputContext, std::string> InputContext::initialize()
+{
+    auto result = m_arena->initialize();
+
+    if (result.isErr())
+    {
+        return pieces::ErrRef<InputContext, std::string>(std::move(result.error()));
+    }
+
+    return pieces::OkRef<InputContext, std::string>(*this);
+}
+
+void InputContext::shutdown() { m_arena->shutdown(); }
+
 void InputContext::update()
 {
     m_arena->update();

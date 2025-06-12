@@ -7,90 +7,73 @@ namespace platform
 namespace emscripten
 {
 
-pieces::RefResult<Platform, std::string> EmscriptenPlatform::initialize()
+pieces::RefResult<core::Platform, std::string> EmscriptenPlatform::initialize()
 {
     if (!glfwInit())
     {
-        return pieces::ErrRef<Platform, std::string>("Failed to initialize GLFW");
+        return pieces::ErrRef<EmscriptenPlatform, std::string>("Failed to initialize GLFW");
     }
 
-    return pieces::OkRef<Platform, std::string>(*this);
-}
+    auto result = m_app->initialize();
 
-void EmscriptenPlatform::update() { glfwPollEvents(); }
-
-void EmscriptenPlatform::shutdown() { glfwTerminate(); }
-
-void EmscriptenPlatform::showInfo(const std::string& message)
-{
-    EM_ASM({ alert(UTF8ToString($0)); }, message.c_str());
-}
-
-void EmscriptenPlatform::showWarning(const std::string& message)
-{
-    EM_ASM({ alert(UTF8ToString($0)); }, message.c_str());
-}
-
-void EmscriptenPlatform::showError(const std::string& message)
-{
-    EM_ASM({ alert(UTF8ToString($0)); }, message.c_str());
-}
-
-pieces::Result<int, std::string> EmscriptenPlatform::runShellCommand(
-    const std::string& _command, const std::vector<std::string>& _args) const
-{
-    std::string fullCmd = _command;
-    for (const auto& arg : _args) fullCmd += " " + arg;
-
-    EM_ASM({ console.log("Attempted to run command: " + UTF8ToString($0)); }, fullCmd.c_str());
-
-    return pieces::Err<int, std::string>(
-        "Shell commands are not supported in the browser environment");
-}
-
-pieces::Result<int, std::string> EmscriptenPlatform::runProgram(
-    const std::string& _programPath, const std::vector<std::string>& _args) const
-{
-    std::string fullCmd = _programPath;
-    for (const auto& arg : _args) fullCmd += " " + arg;
-
-    EM_ASM({ console.log("Attempted to run program: " + UTF8ToString($0)); }, fullCmd.c_str());
-
-    return pieces::Err<int, std::string>(
-        "Running programs is not supported in the browser environment");
-}
-
-bool EmscriptenPlatform::writeConfig(const std::string& key, const std::string& value) const
-{
-    EM_ASM(
-        { localStorage.setItem(UTF8ToString($0), UTF8ToString($1)); }, key.c_str(), value.c_str());
-
-    return true; // Assume success
-}
-
-pieces::Result<std::string, std::string> EmscriptenPlatform::readConfig(
-    const std::string& key) const
-{
-    char* value = (char*)EM_ASM_INT(
-        {
-            var val = localStorage.getItem(UTF8ToString($0));
-            if (val == = null) return 0;
-            var buffer = _malloc(val.length + 1);
-            stringToUTF8(val, buffer, val.length + 1);
-            return buffer;
-        },
-        key.c_str());
-
-    if (!value)
+    if (result.isErr())
     {
-        return pieces::Err<std::string, std::string>("Key not found: " + key);
+        return pieces::ErrRef<core::Platform, std::string>(std::move(result.error()));
     }
 
-    std::string result(value);
+    m_app->resume();
 
-    free(value);
+    return pieces::OkRef<EmscriptenPlatform, std::string>(*this);
+}
 
-    return pieces::Ok<std::string, std::string>(std::move(result));
+pieces::RefResult<core::Platform, std::string> EmscriptenPlatform::run()
+{
+    auto callback = [](void* _arg)
+    {
+        auto pApp = reinterpret_cast<core::Application*>(_arg);
+
+        glfwPollEvents();
+
+        if (pApp->shouldExit())
+        {
+            return emscripten_cancel_main_loop();
+        }
+
+        if (pApp->isResumed())
+        {
+            auto result = pApp->update();
+
+            if (result.isErr())
+            {
+                return pieces::ErrRef<core::Platform, std::string>(std::move(result.error()));
+            }
+        }
+    };
+
+    emscripten_set_main_loop_arg(callback, this, 0, true);
+
+    return pieces::OkRef<core::Platform, std::string>(*this);
+}
+
+void EmscriptenPlatform::pause()
+{
+    m_app->pause();
+
+    emscripten_pause_main_loop();
+}
+
+void EmscriptenPlatform::resume()
+{
+    m_app->resume();
+
+    emscripten_resume_main_loop();
+}
+
+void EmscriptenPlatform::shutdown()
+{
+    m_app->shutdown();
+
+    glfwTerminate();
 }
 
 } // namespace emscripten

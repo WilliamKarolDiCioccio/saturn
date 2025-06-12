@@ -26,10 +26,10 @@ void VulkanRenderSystem::shutdown()
 {
     vkDeviceWaitIdle(m_device.device);
 
+    destroyAllContexts();
+
     destroyDevice(m_device);
     destroyInstance(m_instance);
-
-    destroyAllContexts();
 }
 
 } // namespace vulkan

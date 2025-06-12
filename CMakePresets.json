@@ -2,7 +2,7 @@
   "version": 3,
   "cmakeMinimumRequired": {
     "major": 3,
-    "minor": 23
+    "minor": 24
   },
   "configurePresets": [
     {
@@ -14,7 +14,6 @@
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
         "CMAKE_CONFIGURATION_TYPES": "Debug;Dev;Release;Sanitizers",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": true,
         "GLFW_BUILD_WIN32": true,
         "WEBGPU_BACKEND": "DAWN",
         "VCPKG_MANIFEST_MODE": "ON"
@@ -31,13 +30,10 @@
       "displayName": "Linux (Ninja)",
       "generator": "Ninja",
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "clang",
-        "CMAKE_CXX_COMPILER": "clang++",
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": true,
+        "VCPKG_MANIFEST_MODE": "ON",
         "GLFW_BUILD_X11": true,
-        "WEBGPU_BACKEND": "DAWN",
-        "VCPKG_MANIFEST_MODE": "ON"
+        "WEBGPU_BACKEND": "DAWN"
       },
       "condition": {
         "type": "equals",
@@ -84,12 +80,11 @@
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
         "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake",
         "VCPKG_TARGET_TRIPLET": "wasm32-emscripten",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": true,
-        "BUILD_SHARED_LIBS": false,
         "VCPKG_LIBRARY_LINKAGE": "static",
+        "VCPKG_MANIFEST_MODE": "ON",
+        "BUILD_SHARED_LIBS": false,
         "WEBGPU_LINK_TYPE": "STATIC",
-        "WEBGPU_BACKEND": "EMDAWNWEBGPU",
-        "VCPKG_MANIFEST_MODE": "ON"
+        "WEBGPU_BACKEND": "EMDAWNWEBGPU"
       },
       "environment": {
         "EMSCRIPTEN_ROOT": "$env{EMSDK}/upstream/emscripten"
@@ -133,6 +128,8 @@
       "binaryDir": "${sourceDir}/out/build/clang-sanitizers",
       "installDir": "${sourceDir}/out/install/clang-sanitizers",
       "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
         "CMAKE_BUILD_TYPE": "Debug"
       }
     }

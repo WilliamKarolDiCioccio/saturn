@@ -11,9 +11,9 @@ void createGraphicsPipeline(Pipeline& _pipeline, const Device& _device, const Sw
                             const RenderPass& _renderPass)
 {
     ShaderModule vertShaderModule;
-    createShaderModule(vertShaderModule, _device.device, "assets/shaders/bin/triangle.vert.spv");
+    createShaderModule(vertShaderModule, _device.device, "shaders/bin/triangle.vert.spv");
     ShaderModule fragShaderModule;
-    createShaderModule(fragShaderModule, _device.device, "assets/shaders/bin/triangle.frag.spv");
+    createShaderModule(fragShaderModule, _device.device, "shaders/bin/triangle.frag.spv");
 
     VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
     vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;

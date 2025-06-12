@@ -4,17 +4,14 @@
 #include "mosaic/core/window.hpp"
 
 #include <volk.h>
+#include <vulkan/vulkan.h>
 #include <vulkan/vk_enum_string_helper.h>
 
-#if defined(MOSAIC_PLATFORM_WINDOWS) || defined(MOSAIC_PLATFORM_LINUX) || \
-    defined(MOSAIC_PLATFORM_MACOS) || defined(MOSAIC_PLATFORM_EMSCRIPTEN)
-#include <GLFW/glfw3.h>
-#include <GLFW/glfw3native.h>
-#endif
-
-#ifdef MOSAIC_PLATFORM_WINDOWS
+#if defined(MOSAIC_PLATFORM_WINDOWS)
 #include <windows.h>
 #include <vulkan/vulkan_win32.h>
+#elif defined(MOSAIC_PLATFORM_ANDROID)
+#include <vulkan/vulkan_android.h>
 #endif
 
 namespace mosaic

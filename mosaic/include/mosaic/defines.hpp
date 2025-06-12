@@ -4,7 +4,9 @@
 #if defined(__EMSCRIPTEN__)
 #define MOSAIC_PLATFORM_EMSCRIPTEN
 #define MOSCAIC_PLATFORM_NAME "Emscripten"
-#include <emscripten.h>
+#elif defined(__ANDROID__) || defined(ANDROID)
+#define MOSAIC_PLATFORM_ANDROID
+#define MOSCAIC_PLATFORM_NAME "Android"
 #elif defined(_WIN32) || defined(_WIN64)
 #define MOSAIC_PLATFORM_WINDOWS
 #define MOSCAIC_PLATFORM_NAME "Windows"
@@ -16,6 +18,19 @@
 #define MOSCAIC_PLATFORM_NAME "Linux"
 #else
 #error "Unknown platform!"
+#endif
+
+// Platform type detection
+#if defined(MOSAIC_PLATFORM_WINDOWS) || defined(MOSAIC_PLATFORM_MACOS) || \
+    defined(MOSAIC_PLATFORM_LINUX)
+#define MOSAIC_PLATFORM_DESKTOP
+#define MOSAIC_PLATFORM_TYPE "Desktop"
+#elif defined(MOSAIC_PLATFORM_EMSCRIPTEN)
+#define MOSAIC_PLATFORM_WEB
+#define MOSAIC_PLATFORM_TYPE "Web"
+#elif defined(MOSAIC_PLATFORM_ANDROID)
+#define MOSAIC_PLATFORM_MOBILE
+#define MOSAIC_PLATFORM_TYPE "Mobile"
 #endif
 
 // Compiler detection
@@ -88,17 +103,17 @@
 #endif
 
 // Warning suppression macros
-#if defined(MOSAIC_PLATFORM_EMSCRIPTEN)
+#if defined(MOSAIC_COMPILER_EMSCRIPTEN)
 #define MOSAIC_PUSH_WARNINGS
 #define MOSAIC_POP_WARNINGS
 #define MOSAIC_DISABLE_ALL_WARNINGS
 #define MOSAIC_DISABLE_WARNING(warning)
-#elif defined(MOSAIC_PLATFORM_WINDOWS)
+#elif defined(MOSAIC_COMPILER_MSVC)
 #define MOSAIC_PUSH_WARNINGS __pragma(warning(push))
 #define MOSAIC_POP_WARNINGS __pragma(warning(pop))
 #define MOSAIC_DISABLE_ALL_WARNINGS __pragma(warning(push, 0))
 #define MOSAIC_DISABLE_WARNING(warning) __pragma(warning(disable : warning))
-#elif defined(MOSAIC_PLATFORM_MACOS) || defined(MOSAIC_PLATFORM_LINUX)
+#elif defined(MOSAIC_COMPILER_GCC) || defined(MOSAIC_COMPILER_CLANG)
 #define MOSAIC_PUSH_WARNINGS _Pragma("GCC diagnostic push")
 #define MOSAIC_POP_WARNINGS _Pragma("GCC diagnostic pop")
 #define MOSAIC_DISABLE_ALL_WARNINGS                                            \

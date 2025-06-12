@@ -1,8 +1,9 @@
 #include "mosaic/core/window.hpp"
 
-#if defined(MOSAIC_PLATFORM_WINDOWS) || defined(MOSAIC_PLATFORM_LINUX) || \
-    defined(MOSAIC_PLATFORM_MACOS) || defined(MOSAIC_PLATFORM_EMSCRIPTEN)
+#if defined(MOSAIC_PLATFORM_DESKTOP) || defined(MOSAIC_PLATFORM_WEB)
 #include "platform/GLFW/glfw_window.hpp"
+#elif defined(MOSAIC_PLATFORM_ANDROID)
+#include "platform/AGDK/agdk_window.hpp"
 #endif
 
 namespace mosaic
@@ -18,9 +19,10 @@ Window::Window(const std::string& _title, glm::ivec2 _size)
 
 std::unique_ptr<Window> Window::create(const std::string& _title, glm::ivec2 _size)
 {
-#if defined(MOSAIC_PLATFORM_WINDOWS) || defined(MOSAIC_PLATFORM_LINUX) || \
-    defined(MOSAIC_PLATFORM_MACOS) || defined(MOSAIC_PLATFORM_EMSCRIPTEN)
+#if defined(MOSAIC_PLATFORM_DESKTOP) || defined(MOSAIC_PLATFORM_WEB)
     return std::make_unique<platform::glfw::GLFWWindow>(_title, _size);
+#elif defined(MOSAIC_PLATFORM_ANDROID)
+    return std::make_unique<platform::agdk::AGDKWindow>(_title, _size);
 #endif
 }
 

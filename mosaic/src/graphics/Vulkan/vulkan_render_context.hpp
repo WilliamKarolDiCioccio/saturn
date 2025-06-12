@@ -53,12 +53,8 @@ class VulkanRenderContext : public RenderContext
     bool m_framebufferResized;
 
    public:
-    VulkanRenderContext(const core::Window* _window, const RenderContextSettings& _settings)
-        : m_currentFrame(0),
-          m_framebufferResized(false),
-          m_instance(nullptr),
-          m_device(nullptr),
-          RenderContext(_window, _settings) {};
+    VulkanRenderContext(const core::Window* _window, const RenderContextSettings& _settings);
+    ~VulkanRenderContext() override = default;
 
    public:
     pieces::RefResult<RenderContext, std::string> initialize(RenderSystem* _renderSystem) override;
@@ -66,6 +62,7 @@ class VulkanRenderContext : public RenderContext
 
    private:
     void resizeFramebuffer() override;
+    void recreateSurface() override;
     void beginFrame() override;
     void updateResources() override;
     void drawScene() override;

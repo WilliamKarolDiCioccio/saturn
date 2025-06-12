@@ -47,11 +47,15 @@ struct Device
     {
         requiredExtensions = {
             VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+#if defined(MOSAIC_PLATFORM_DESKTOP)
             VK_KHR_MULTIVIEW_EXTENSION_NAME,
+#endif
         };
 
         optionalExtensions = {
+#ifdef MOSAIC_PLATFORM_WINDOWS
             VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME,
+#endif
         };
 
 #ifdef _DEBUG

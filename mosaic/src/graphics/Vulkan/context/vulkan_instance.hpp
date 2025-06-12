@@ -23,8 +23,10 @@ struct Instance
     {
         requiredExtensions = {
             VK_KHR_SURFACE_EXTENSION_NAME,
-#ifdef MOSAIC_PLATFORM_WINDOWS
+#if defined(MOSAIC_PLATFORM_WINDOWS)
             VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
+#elif defined(MOSAIC_PLATFORM_ANDROID)
+            VK_KHR_ANDROID_SURFACE_EXTENSION_NAME,
 #endif
         };
 

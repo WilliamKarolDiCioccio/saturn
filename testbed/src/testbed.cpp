@@ -3,18 +3,15 @@
 namespace testbed
 {
 
-void TestbedApplication::onInitialize()
+std::optional<std::string> TestbedApplication::onInitialize()
 {
-    m_window = mosaic::core::Window::create("Testbed", glm::vec2(1280, 720));
     m_window->setResizeable(true);
-
-    m_inputSystem = std::make_unique<mosaic::input::InputSystem>();
 
     auto registrationResult = m_inputSystem->registerWindow(m_window.get());
 
     if (registrationResult.isErr())
     {
-        return shutdown();
+        return registrationResult.error();
     }
 
     auto inputContext = registrationResult.unwrap();
@@ -115,26 +112,20 @@ void TestbedApplication::onInitialize()
         },
     });
 
-    m_renderSystem = graphics::RenderSystem::create(graphics::RendererAPIType::vulkan);
-
     auto creationResult = m_renderSystem->createContext(m_window.get());
 
     if (creationResult.isErr())
     {
-        return shutdown();
+        return creationResult.error();
     }
 
     MOSAIC_INFO("Testbed initialized.");
+
+    return std::nullopt;
 }
 
-void TestbedApplication::onUpdate()
+std::optional<std::string> TestbedApplication::onUpdate()
 {
-    core::Timer::tick();
-
-    m_renderSystem->render();
-
-    m_inputSystem->poll();
-
     auto inputContext = m_inputSystem->getContext(m_window.get());
 
     if (inputContext->isActionTriggered("moveLeft")) MOSAIC_INFO("Moving left.");
@@ -145,8 +136,12 @@ void TestbedApplication::onUpdate()
 
     if (m_window->shouldClose() || inputContext->isActionTriggered("closeApp"))
     {
-        return shutdown();
+        requestExit();
+
+        return std::nullopt;
     }
+
+    return std::nullopt;
 }
 
 void TestbedApplication::onPause() { MOSAIC_INFO("Testbed paused."); }

@@ -28,8 +28,12 @@ class GLFWRawInputHandler : public input::RawInputHandler
     core::Window* m_window;
 
    public:
-    GLFWRawInputHandler(core::Window* window);
+    GLFWRawInputHandler(const core::Window* window);
     ~GLFWRawInputHandler() override = default;
+
+   public:
+    pieces::RefResult<input::RawInputHandler, std::string> initialize() override;
+    void shutdown() override;
 
     input::RawInputHandler::KeyboardKeyInputData getKeyboardKeyInput(
         input::KeyboardKey key) const override;

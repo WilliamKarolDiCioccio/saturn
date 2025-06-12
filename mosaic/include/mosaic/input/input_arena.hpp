@@ -104,8 +104,15 @@ class InputArena
 
    public:
     InputArena(core::Window* _window);
+
     InputArena(const InputArena&) = delete;
     InputArena& operator=(const InputArena&) = delete;
+    InputArena(InputArena&&) = delete;
+    InputArena& operator=(InputArena&&) = delete;
+
+   public:
+    pieces::RefResult<InputArena, std::string> initialize();
+    void shutdown();
 
     void update();
 

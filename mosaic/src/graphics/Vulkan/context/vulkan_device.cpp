@@ -42,10 +42,7 @@ bool isDeviceSuitable(const VkPhysicalDevice& _physicalDevice, const VkSurfaceKH
     SwapChainSupportDetails swapChainSupport =
         findDeviceSwapChainSupport(_physicalDevice, _surface);
 
-    return deviceFeatures.geometryShader && deviceFeatures.sampleRateShading &&
-           deviceFeatures.multiDrawIndirect && deviceFeatures.fillModeNonSolid &&
-           deviceFeatures.multiViewport && deviceFeatures.samplerAnisotropy &&
-           queueFamiliySupport.isComplete() && swapChainSupport.isComplete();
+    return queueFamiliySupport.isComplete() && swapChainSupport.isComplete();
 }
 
 uint16_t getDeviceScore(const VkPhysicalDevice& _physicalDevice)
@@ -112,6 +109,12 @@ VkPhysicalDevice pickVulkanPhysicalDevice(const Instance& _instance, const VkSur
                 physicalDevice = device;
             }
         }
+    }
+
+    if (physicalDevice == nullptr)
+    {
+        MOSAIC_CRITICAL("No suitable Vulkan physical device found!");
+        return nullptr;
     }
 
     VkPhysicalDeviceProperties deviceProperties;
@@ -305,12 +308,7 @@ void createDevice(Device& _device, const Instance& _instance, const Surface& _su
     }
 
     constexpr VkPhysicalDeviceFeatures deviceFeatures{
-        .geometryShader = true,
-        .sampleRateShading = true,
-        .multiDrawIndirect = true,
-        .fillModeNonSolid = true,
-        .multiViewport = true,
-        .samplerAnisotropy = true,
+        
     };
 
     const VkDeviceCreateInfo deviceCreateInfo = {
@@ -324,8 +322,8 @@ void createDevice(Device& _device, const Instance& _instance, const Surface& _su
         .pEnabledFeatures = &deviceFeatures,
     };
 
-    if (vkCreateDevice(_device.physicalDevice, &deviceCreateInfo, nullptr, &_device.device) !=
-        VK_SUCCESS)
+    auto res = vkCreateDevice(_device.physicalDevice, &deviceCreateInfo, nullptr, &_device.device);
+    if (res != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create Vulkan device!");
     }

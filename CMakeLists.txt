@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.23)
+cmake_minimum_required(VERSION 3.24...3.31 FATAL_ERROR)
 
 # ---------------------------
 # CMake Policies and Features
@@ -7,6 +7,8 @@ if(POLICY CMP0141)
   cmake_policy(SET CMP0141 NEW)
 endif()
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # ---------------------------
 # Project Metadata
 # ---------------------------
@@ -14,8 +16,7 @@ project(
   mosaic_framework
   VERSION 0.0.1
   DESCRIPTION "A cross-platform game engine using modern C++"
-  LANGUAGES C CXX
-)
+  LANGUAGES C CXX)
 
 # ---------------------------
 # Compiler & C++ Configuration
@@ -38,7 +39,8 @@ endif()
 if(EMSCRIPTEN)
   set(CMAKE_EXECUTABLE_SUFFIX ".html")
   add_compile_options(-pthread)
-  add_link_options(-pthread -sUSE_PTHREADS=1 -sPTHREAD_POOL_SIZE=2 -sASYNCIFY -sALLOW_MEMORY_GROWTH -sDISABLE_EXCEPTION_CATCHING=0)
+  add_link_options(-pthread -sUSE_PTHREADS=1 -sPTHREAD_POOL_SIZE=2 -sASYNCIFY
+                   -sALLOW_MEMORY_GROWTH -sDISABLE_EXCEPTION_CATCHING=0)
 endif()
 
 # ---------------------------
@@ -51,27 +53,34 @@ find_package(benchmark REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(Stb REQUIRED)
 
-if (NOT EMSCRIPTEN)
-find_package(spdlog CONFIG REQUIRED)
-find_package(Vulkan REQUIRED)
-find_package(volk CONFIG REQUIRED)
-find_package(VulkanMemoryAllocator CONFIG REQUIRED)
+if(NOT EMSCRIPTEN)
+  find_package(Vulkan REQUIRED)
+  find_package(volk CONFIG REQUIRED)
+  find_package(VulkanMemoryAllocator CONFIG REQUIRED)
+endif()
+
+if(ANDROID)
+  find_package(game-activity REQUIRED CONFIG)
 endif()
 
 # ---------------------------
 # Third-Party (Vendored) Libraries
 # ---------------------------
-add_subdirectory("vendor/webgpu")
+if(NOT ANDROID)
 
-# Special case: GLFW handling
-if(EMSCRIPTEN)
-  add_library(glfw INTERFACE)
-	target_link_options(glfw INTERFACE -sUSE_GLFW=3)
-else()
-  add_subdirectory("vendor/glfw3")
+  add_subdirectory("vendor/webgpu")
+
+  # Special case: GLFW handling
+  if(EMSCRIPTEN)
+    add_library(glfw INTERFACE)
+    target_link_options(glfw INTERFACE -sUSE_GLFW=3)
+  else()
+    find_package(glfw3 CONFIG REQUIRED)
+  endif()
+
+  add_subdirectory("vendor/glfw3webgpu")
+
 endif()
-
-add_subdirectory("vendor/glfw3webgpu")
 
 # ---------------------------
 # Project Modules
@@ -83,10 +92,13 @@ add_subdirectory("mosaic")
 # Applications & Tests
 # ---------------------------
 add_subdirectory("testbed")
-add_subdirectory("mosaic/tests")
-add_subdirectory("pieces/tests")
-add_subdirectory("pieces/bench")
-add_subdirectory("tests")
+
+if(NOT ANDROID)
+  add_subdirectory("mosaic/tests")
+  add_subdirectory("pieces/tests")
+  add_subdirectory("pieces/bench")
+  add_subdirectory("tests")
+endif()
 
 # ---------------------------
 # Enable Global Testing

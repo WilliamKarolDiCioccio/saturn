@@ -1,75 +1,114 @@
 #include "mosaic/core/logger.hpp"
 
-#ifndef __EMSCRIPTEN__
-MOSAIC_DISABLE_ALL_WARNINGS
-#include <spdlog/sinks/basic_file_sink.h>
-#include <spdlog/sinks/rotating_file_sink.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
-MOSAIC_POP_WARNINGS
-#endif
-
 #include <chrono>
 #include <ctime>
+#include <cassert>
+
+#if defined(MOSAIC_PLATFORM_WINDOWS) || defined(MOSAIC_PLATFORM_LINUX) || \
+    defined(MOSAIC_PLATFORM_MACOS)
+#include <colorconsole.hpp>
+#elif defined(MOSAIC_PLATFORM_EMSCRIPTEN)
+#include <emscripten.h>
+#elif defined(MOSAIC_PLATFORM_ANDROID)
+#include <android/log.h>
+#endif
 
 namespace mosaic
 {
 namespace core
 {
 
-bool LoggerManager::s_isInitialized = false;
-
-#ifndef __EMSCRIPTEN__
-std::shared_ptr<spdlog::logger> LoggerManager::s_instance = nullptr;
-#endif
-
-bool LoggerManager::initialize(const std::string& _loggerName,
-                               const std::string& _filePath) noexcept
+void DefaultSink::trace(const std::string& _message) const
 {
-#ifndef __EMSCRIPTEN__
-    if (s_instance != nullptr) return false;
-
-    auto stdout_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-    auto stderr_sink = std::make_shared<spdlog::sinks::stderr_color_sink_mt>();
-
-    std::string timestamp =
-        std::to_string(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
-    std::string log_filename = _filePath + "/log_" + timestamp + ".log";
-    auto file_sink =
-        std::make_shared<spdlog::sinks::rotating_file_sink_mt>(log_filename, 1048576 * 5, 3);
-
-    stdout_sink->set_level(spdlog::level::info);
-    stderr_sink->set_level(spdlog::level::err);
-    file_sink->set_level(spdlog::level::info);
-
-    std::vector<spdlog::sink_ptr> sinks{stdout_sink, stderr_sink, file_sink};
-    s_instance = std::make_shared<spdlog::logger>(_loggerName, sinks.begin(), sinks.end());
-
-    spdlog::set_default_logger(s_instance);
-    spdlog::set_level(spdlog::level::info);
-    spdlog::flush_on(spdlog::level::info);
+#if defined(MOSAIC_PLATFORM_ANDROID)
+    __android_log_print(ANDROID_LOG_DEBUG, "Mosaic", "%s", _message.c_str());
+#elif defined(MOSAIC_PLATFORM_EMSCRIPTEN)
+    emscripten_log(EM_LOG_DEBUG, __VA_ARGS__)
+#else
+    std::cout << dye::grey(_message) << '\n';
 #endif
+}
+
+void DefaultSink::debug(const std::string& _message) const
+{
+#if defined(MOSAIC_PLATFORM_ANDROID)
+    __android_log_print(ANDROID_LOG_DEBUG, "Mosaic", "%s", _message.c_str());
+#elif defined(MOSAIC_PLATFORM_EMSCRIPTEN)
+    emscripten_log(EM_LOG_DEBUG, __VA_ARGS__)
+#else
+    std::cout << dye::blue(_message) << '\n';
+#endif
+}
+
+void DefaultSink::info(const std::string& _message) const
+{
+#if defined(MOSAIC_PLATFORM_ANDROID)
+    __android_log_print(ANDROID_LOG_INFO, "Mosaic", "%s", _message.c_str());
+#elif defined(MOSAIC_PLATFORM_EMSCRIPTEN)
+    emscripten_log(EM_LOG_INFO, __VA_ARGS__)
+#else
+    std::cout << dye::green(_message) << '\n';
+#endif
+}
+
+void DefaultSink::warn(const std::string& _message) const
+{
+#if defined(MOSAIC_PLATFORM_ANDROID)
+    __android_log_print(ANDROID_LOG_WARN, "Mosaic", "%s", _message.c_str());
+#elif defined(MOSAIC_PLATFORM_EMSCRIPTEN)
+    emscripten_log(EM_LOG_WARN, __VA_ARGS__)
+#else
+    std::cout << dye::yellow(_message) << '\n';
+#endif
+}
+
+void DefaultSink::error(const std::string& _message) const
+{
+#if defined(MOSAIC_PLATFORM_ANDROID)
+    __android_log_print(ANDROID_LOG_ERROR, "Mosaic", "%s", _message.c_str());
+#elif defined(MOSAIC_PLATFORM_EMSCRIPTEN)
+    emscripten_log(EM_LOG_ERROR, __VA_ARGS__)
+#else
+    std::cout << dye::red(_message) << '\n';
+#endif
+}
+
+void DefaultSink::critical(const std::string& _message) const
+{
+#if defined(MOSAIC_PLATFORM_ANDROID)
+    __android_log_print(ANDROID_LOG_ERROR, "Mosaic", "%s", _message.c_str());
+#elif defined(MOSAIC_PLATFORM_EMSCRIPTEN)
+    emscripten_log(EM_LOG_ERROR, __VA_ARGS__)
+#else
+    std::cout << dye::purple(_message) << '\n';
+#endif
+}
+
+LoggerManager* LoggerManager::s_instance = nullptr;
+
+LoggerManager::LoggerManager(const LoggerConfig& _config) : m_config(_config)
+{
+    assert(!s_instance && "Logger instance already exists!");
+
+    s_instance = this;
+}
+
+bool LoggerManager::initialize(const LoggerConfig& _config) noexcept
+{
+    if (s_instance) return false;
+
+    s_instance = new LoggerManager(_config);
 
     return true;
 }
 
 void LoggerManager::shutdown() noexcept
 {
-#ifndef __EMSCRIPTEN__
     if (!s_instance) return;
 
-    spdlog::drop_all();
+    delete s_instance;
     s_instance = nullptr;
-#endif
 }
-
-#ifndef __EMSCRIPTEN__
-std::shared_ptr<spdlog::logger> LoggerManager::get()
-{
-    if (!s_instance)
-        throw std::runtime_error("Logger not initialized. Call LoggerManager::initialize() first.");
-    return s_instance;
-}
-#endif
 
 } // namespace core
 } // namespace mosaic

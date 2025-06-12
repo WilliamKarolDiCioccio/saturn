@@ -4,14 +4,15 @@
   "dependencies": [
     "clipp",
     "fmt",
+    "color-console",
     "glm",
     "gtest",
     "nlohmann-json",
     "stb",
     "benchmark",
     {
-      "name": "spdlog",
-      "platform": "!emscripten"
+      "name": "glfw3",
+      "platform": "!android"
     },
     {
       "name": "volk",
@@ -19,7 +20,7 @@
     },
     {
       "name": "vulkan",
-      "platform": "!emscripten"
+      "platform": "!android & !emscripten"
     },
     {
       "name": "vulkan-memory-allocator",

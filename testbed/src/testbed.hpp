@@ -15,17 +15,12 @@ using namespace mosaic;
 
 class TestbedApplication : public mosaic::core::Application
 {
-   private:
-    std::unique_ptr<mosaic::core::Window> m_window;
-    std::unique_ptr<mosaic::input::InputSystem> m_inputSystem;
-    std::unique_ptr<mosaic::graphics::RenderSystem> m_renderSystem;
-
    public:
     TestbedApplication() : Application("Testbed") {}
 
    private:
-    void onInitialize() override;
-    void onUpdate() override;
+    std::optional<std::string> onInitialize() override;
+    std::optional<std::string> onUpdate() override;
     void onPause() override;
     void onResume() override;
     void onShutdown() override;

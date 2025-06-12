@@ -34,10 +34,10 @@ struct Trace
     int64_t start, end;
 };
 
-class TracerManager final
+class MOSAIC_API TracerManager final
 {
    private:
-    MOSAIC_API static bool s_isInitialized;
+    static bool s_isInitialized;
 
     static std::array<std::string, 2> m_categories;
     static nlohmann::json m_data;
@@ -56,7 +56,7 @@ class TracerManager final
     static void beginTrace(const std::string& _name, TraceCategory _category) noexcept;
     static void endTrace() noexcept;
 
-    MOSAIC_API static std::shared_ptr<TracerManager> get();
+    static std::shared_ptr<TracerManager> get();
 };
 
 } // namespace core

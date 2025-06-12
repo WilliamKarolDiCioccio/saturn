@@ -1,6 +1,9 @@
 #include "mosaic/core/application.hpp"
 
-#include <iostream>
+#include <thread>
+#include <chrono>
+
+using namespace std::chrono_literals;
 
 namespace mosaic
 {
@@ -9,117 +12,96 @@ namespace core
 
 bool Application::s_created = false;
 
-Application::Application(const std::string& _appName) : m_platform(platform::Platform::create())
+Application::Application(const std::string& _appName)
+    : m_exitRequested(false),
+      m_appName(_appName),
+      m_state(ApplicationState::uninitialized),
+      m_inputSystem(std::make_unique<input::InputSystem>()),
+      m_renderSystem(graphics::RenderSystem::create(graphics::RendererAPIType::vulkan))
+
 {
-    assert(!s_created);
+    assert(!s_created && "Application instance already exists!");
 
     s_created = true;
-
-    std::string logFilePath = "./logs/" + _appName + ".log";
-    std::string tracesFilePath = "./traces/" + _appName + ".trace";
-
-    LoggerManager::initialize(_appName, logFilePath);
-    TracerManager::initialize(tracesFilePath);
-}
-
-Application::~Application()
-{
-    LoggerManager::shutdown();
-    TracerManager::shutdown();
 }
 
 pieces::RefResult<Application, std::string> Application::initialize()
 {
-    assert(!m_state.isInitialized && "Application is already initialized!");
-
-    MOSAIC_DEBUG("Initializing Mosaic {0} application", _MOSAIC_VERSION);
-
-    m_platform->initialize();
-
-    m_state.isInitialized = true;
-
-    onInitialize();
-
-    return pieces::OkRef<Application, std::string>(*this);
-}
-
-pieces::RefResult<Application, std::string> Application::run()
-{
-    m_state.isRunning = true;
-
-#ifdef __EMSCRIPTEN__
-    auto callback = [](void* arg)
+    if (m_state != ApplicationState::uninitialized)
     {
-        Application* pApp = reinterpret_cast<Application*>(arg);
-
-        pApp->realRun();
-    };
-
-    emscripten_set_main_loop_arg(callback, this, 0, true);
-#else
-    while (m_state.isRunning)
-    {
-        m_platform->update();
-
-        realRun();
+        return pieces::ErrRef<Application, std::string>("Application already initialized");
     }
-#endif
 
-    shutdown();
+    m_window = mosaic::core::Window::create("Testbed", glm::vec2(1280, 720));
+
+    m_inputSystem->initialize();
+    m_renderSystem->initialize(m_window.get());
+
+    auto result = onInitialize();
+
+    if (result.has_value())
+    {
+        return pieces::ErrRef<Application, std::string>(std::move(result.value()));
+    }
+
+    m_state = ApplicationState::initialized;
 
     return pieces::OkRef<Application, std::string>(*this);
 }
 
-void Application::realRun()
+pieces::RefResult<Application, std::string> Application::update()
 {
-    if (m_state.isPaused) return;
+    if (m_state != ApplicationState::resumed)
+    {
+        return pieces::OkRef<Application, std::string>(*this);
+    }
 
-    onUpdate();
+    core::Timer::tick();
+
+    m_inputSystem->poll();
+    m_renderSystem->render();
+
+    auto result = onUpdate();
+
+    if (result.has_value())
+    {
+        return pieces::ErrRef<Application, std::string>(std::move(result.value()));
+    }
+
+    return pieces::OkRef<Application, std::string>(*this);
 }
 
 void Application::pause()
 {
-    assert(m_state.isInitialized && "Application is not initialized!");
-
-    MOSAIC_DEBUG("Application paused");
-
-    if (m_state.isPaused)
+    if (m_state == ApplicationState::resumed)
     {
-        return;
+        onPause();
+
+        m_state = ApplicationState::paused;
     }
-
-    onPause();
-
-    m_state.isPaused = true;
 }
 
 void Application::resume()
 {
-    assert(m_state.isInitialized && "Application is not initialized!");
-
-    MOSAIC_DEBUG("Application resumed");
-
-    if (!m_state.isPaused)
+    if (m_state == ApplicationState::initialized || m_state == ApplicationState::paused)
     {
-        return;
+        onResume();
+
+        m_state = ApplicationState::resumed;
     }
-
-    onResume();
-
-    m_state.isPaused = false;
 }
 
 void Application::shutdown()
 {
-    assert(m_state.isInitialized && "Application is not initialized!");
+    if (m_state != ApplicationState::shutdown)
+    {
+        onShutdown();
 
-    MOSAIC_DEBUG("Shutting down application");
+        m_inputSystem->shutdown();
+        m_renderSystem->shutdown();
 
-    onShutdown();
-
-    m_platform->shutdown();
-
-    m_state.isRunning = false;
+        m_state = ApplicationState::shutdown;
+    }
 }
 
 } // namespace core

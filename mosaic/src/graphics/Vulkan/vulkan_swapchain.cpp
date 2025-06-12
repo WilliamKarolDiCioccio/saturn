@@ -1,11 +1,10 @@
 #include "vulkan_swapchain.hpp"
 
 #include <algorithm>
-#include <GLFW/glfw3native.h>
 
-#ifdef MOSAIC_PLATFORM_WINDOWS
-#include <windows.h>
-#include <vulkan/vulkan_win32.h>
+#if defined(MOSAIC_PLATFORM_DESKTOP) || defined(MOSAIC_PLATFORM_WEB)
+#include <GLFW/glfw3.h>
+#include <GLFW/glfw3native.h>
 #endif
 
 namespace mosaic
@@ -14,6 +13,8 @@ namespace graphics
 {
 namespace vulkan
 {
+
+#ifdef MOSAIC_PLATFORM_WINDOWS
 
 VkResult acquireExclusiveFullscreenMode(Swapchain& _swapchain)
 {
@@ -36,6 +37,8 @@ VkResult releaseExclusiveFullscreenMode(Swapchain& _swapchain)
 
     return VK_SUCCESS;
 }
+
+#endif
 
 void createImageViews(Swapchain& _swapchain)
 {
@@ -78,19 +81,47 @@ void destroyImageViews(Swapchain& _swapchain)
 
 VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& _availableFormats)
 {
-    auto it = std::find_if(_availableFormats.begin(), _availableFormats.end(),
-                           [](const VkSurfaceFormatKHR& _format)
-                           {
-                               return _format.format == VK_FORMAT_B8G8R8A8_SRGB &&
-                                      _format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
-                           });
+    std::vector<VkFormat> preferredFormats;
 
-    if (it != _availableFormats.end())
+#if defined(MOSAIC_PLATFORM_ANDROID)
+    preferredFormats = {
+        VK_FORMAT_R8G8B8A8_UNORM,
+        VK_FORMAT_B8G8R8A8_UNORM,
+        VK_FORMAT_R8G8B8A8_SRGB,
+        VK_FORMAT_B8G8R8A8_SRGB,
+    };
+#else
+    preferredFormats = {
+        VK_FORMAT_B8G8R8A8_SRGB,
+        VK_FORMAT_R8G8B8A8_SRGB,
+        VK_FORMAT_B8G8R8A8_UNORM,
+        VK_FORMAT_R8G8B8A8_UNORM,
+    };
+#endif
+
+    for (const auto& format : preferredFormats)
     {
-        return *it;
+        auto it = std::find_if(_availableFormats.begin(), _availableFormats.end(),
+                               [format](const VkSurfaceFormatKHR& available)
+                               {
+                                   return available.format == format &&
+                                          available.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+                               });
+
+        if (it != _availableFormats.end()) return *it;
     }
 
-    return _availableFormats[0];
+    for (const auto& format : preferredFormats)
+    {
+        auto it = std::find_if(_availableFormats.begin(), _availableFormats.end(),
+                               [format](const VkSurfaceFormatKHR& available)
+                               { return available.format == format; });
+
+        if (it != _availableFormats.end()) return *it;
+    }
+
+    throw std::runtime_error(
+        "Failed to find a suitable Vulkan surface format! No preferred formats available.");
 }
 
 VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& _availablePresentModes)
@@ -150,6 +181,8 @@ void createSwapchain(Swapchain& _swapchain, const Device& _device, const Surface
 
     void* headExtPtr = nullptr;
 
+#ifdef MOSAIC_PLATFORM_WINDOWS
+
     _swapchain.exclusiveFullscreenAvailable =
         std::find(_device.availableExtensions.begin(), _device.availableExtensions.end(),
                   VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME) != _device.availableExtensions.end();
@@ -159,7 +192,6 @@ void createSwapchain(Swapchain& _swapchain, const Device& _device, const Surface
     fullScreenExclusiveInfo.fullScreenExclusive =
         VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT;
 
-#ifdef MOSAIC_PLATFORM_WINDOWS
     HWND win32Handle = glfwGetWin32Window(static_cast<GLFWwindow*>(_nativeWindowHandle));
     HMONITOR monitor = MonitorFromWindow(win32Handle, MONITOR_DEFAULTTONEAREST);
 
@@ -170,12 +202,13 @@ void createSwapchain(Swapchain& _swapchain, const Device& _device, const Surface
     };
 
     fullScreenExclusiveInfo.pNext = &win32FullScreenExclusiveInfo;
-#endif
 
     if (_exclusiveFullscreenRequestable && _swapchain.exclusiveFullscreenAvailable)
     {
         headExtPtr = (void*)&fullScreenExclusiveInfo;
     }
+
+#endif
 
     createInfo.pNext = headExtPtr;
 
@@ -213,6 +246,8 @@ void createSwapchain(Swapchain& _swapchain, const Device& _device, const Surface
     createInfo.clipped = VK_TRUE;
     createInfo.oldSwapchain = nullptr;
 
+    MOSAIC_INFO("Surface dimensions: {}x{}", _swapchain.extent.width, _swapchain.extent.height);
+
     if (vkCreateSwapchainKHR(_swapchain.device, &createInfo, nullptr, &_swapchain.swapchain) !=
         VK_SUCCESS)
     {
@@ -226,12 +261,17 @@ void createSwapchain(Swapchain& _swapchain, const Device& _device, const Surface
 
     createImageViews(_swapchain);
 
+#ifdef MOSAIC_PLATFORM_WINDOWS
     if (_swapchain.exclusiveFullscreenAvailable) acquireExclusiveFullscreenMode(_swapchain);
+#endif
 }
 
 void destroySwapchain(Swapchain& _swapchain)
 {
+#ifdef MOSAIC_PLATFORM_WINDOWS
     if (_swapchain.exclusiveFullscreenAvailable) releaseExclusiveFullscreenMode(_swapchain);
+#endif
+
     destroyImageViews(_swapchain);
     vkDestroySwapchainKHR(_swapchain.device, _swapchain.swapchain, nullptr);
 }

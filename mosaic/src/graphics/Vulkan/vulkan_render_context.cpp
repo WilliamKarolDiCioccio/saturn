@@ -1,5 +1,9 @@
 #include "vulkan_render_context.hpp"
 
+#if defined(MOSAIC_PLATFORM_ANDROID)
+#include "mosaic/platform/AGDK/agdk_platform.hpp"
+#endif
+
 #include "vulkan_render_system.hpp"
 
 namespace mosaic
@@ -8,6 +12,14 @@ namespace graphics
 {
 namespace vulkan
 {
+
+VulkanRenderContext::VulkanRenderContext(const core::Window* _window,
+                                         const RenderContextSettings& _settings)
+    : m_currentFrame(0),
+      m_framebufferResized(false),
+      m_instance(nullptr),
+      m_device(nullptr),
+      RenderContext(_window, _settings) {};
 
 pieces::RefResult<RenderContext, std::string> VulkanRenderContext::initialize(
     RenderSystem* _renderSystem)
@@ -29,8 +41,24 @@ pieces::RefResult<RenderContext, std::string> VulkanRenderContext::initialize(
 
     createFrames();
 
+#if defined(MOSAIC_PLATFORM_DESKTOP) || defined(MOSAIC_PLATFORM_WEB)
+
     const_cast<core::Window*>(m_window)->registerWindowResizeCallback(
         [this](int height, int width) { m_framebufferResized = true; });
+
+#elif defined(MOSAIC_PLATFORM_ANDROID)
+
+    auto platform = static_cast<platform::agdk::AGDKPlatform*>(core::Platform::getInstance());
+
+    platform->getPlatformContext()->registerPlatformContextChangedCallback(
+        [this](void* _context)
+        {
+            auto context = static_cast<platform::agdk::AGDKPlatformContext*>(_context);
+
+            if (context->isWindowChanged()) recreateSurface();
+        });
+
+#endif
 
     return pieces::OkRef<RenderContext, std::string>(*this);
 }
@@ -73,6 +101,26 @@ void VulkanRenderContext::resizeFramebuffer()
     createSwapchainFramebuffers(m_swapchain, *m_device, m_renderPass);
 
     m_framebufferResized = false;
+}
+
+void VulkanRenderContext::recreateSurface()
+{
+    if (!m_window->getNativeHandle()) return;
+
+    vkDeviceWaitIdle(m_device->device);
+
+    destroySwapchainFramebuffers(m_swapchain, *m_device);
+    destroyGraphicsPipeline(m_pipeline, *m_device);
+    destroyRenderPass(m_renderPass, *m_device);
+    destroySwapchain(m_swapchain);
+    destroySurface(m_surface, *m_instance);
+
+    createSurface(m_surface, *m_instance, m_window->getNativeHandle());
+    createSwapchain(m_swapchain, *m_device, m_surface, m_window->getNativeHandle(),
+                    m_window->getFramebufferSize(), m_window->getWindowProperties().isFullscreen);
+    createRenderPass(m_renderPass, *m_device, m_swapchain);
+    createGraphicsPipeline(m_pipeline, *m_device, m_swapchain, m_renderPass);
+    createSwapchainFramebuffers(m_swapchain, *m_device, m_renderPass);
 }
 
 void VulkanRenderContext::beginFrame()

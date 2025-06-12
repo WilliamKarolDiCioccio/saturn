@@ -2,9 +2,10 @@
 
 #include "mosaic/defines.hpp"
 
-#if defined(MOSAIC_PLATFORM_WINDOWS) || defined(MOSAIC_PLATFORM_LINUX) || \
-    defined(MOSAIC_PLATFORM_MACOS) || defined(MOSAIC_PLATFORM_EMSCRIPTEN)
+#if defined(MOSAIC_PLATFORM_DESKTOP) || defined(MOSAIC_PLATFORM_WEB)
 #include "mosaic/platform/GLFW/glfw_input_mappings.hpp"
+#else
+#include "mosaic/platform/AGDK/agdk_input_mappings.hpp"
 #endif
 
 namespace mosaic
@@ -12,10 +13,14 @@ namespace mosaic
 namespace input
 {
 
-#if defined(MOSAIC_PLATFORM_WINDOWS) || defined(MOSAIC_PLATFORM_LINUX) || \
-    defined(MOSAIC_PLATFORM_MACOS) || defined(MOSAIC_PLATFORM_EMSCRIPTEN)
+#if defined(MOSAIC_PLATFORM_DESKTOP) || defined(MOSAIC_PLATFORM_WEB)
 using KeyboardKey = mosaic::platform::glfw::GLFWKeyboardKey;
 using MouseButton = mosaic::platform::glfw::GLFWMouseButton;
+using InputAction = mosaic::platform::glfw::GLFWInputAction;
+#else
+using KeyboardKey = mosaic::platform::agdk::AGDKKeyboardKey;
+using MouseButton = mosaic::platform::agdk::AGDKMouseButton;
+using InputAction = mosaic::platform::agdk::AGDKInputAction;
 #endif
 
 /**
@@ -64,7 +69,7 @@ constexpr std::array<KeyboardKey, 349> c_keyboardKeys = {
     KeyboardKey::key_enter,
     KeyboardKey::key_escape,
     KeyboardKey::key_left_shift,
-    KeyboardKey::key_right_Shift,
+    KeyboardKey::key_right_shift,
     KeyboardKey::key_left_control,
     KeyboardKey::key_right_control,
     KeyboardKey::key_left_alt,
