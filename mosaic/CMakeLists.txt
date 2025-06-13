@@ -79,39 +79,41 @@ if(EMSCRIPTEN OR ANDROID)
   add_library(mosaic STATIC ${FRAMEWORK_SRC})
 else()
   add_library(mosaic SHARED ${FRAMEWORK_SRC})
+  target_compile_definitions(mosaic PRIVATE _MOSAIC_BUILD_EXPORT_DLL)
 endif()
 
 # ----------------------------------------
 # Preprocessor Definitions
 # ----------------------------------------
 
-target_compile_definitions(
-  mosaic PRIVATE _MOSAIC_BUILD_DLL WEBGPU_CPP_IMPLEMENTATION VK_NO_PROTOTYPES)
-
 # Platform-specific Vulkan and GLFW defines
-if(NOT EMSCRIPTEN AND NOT ANDROID)
+if(EMSCRIPTEN)
+  target_compile_definitions(
+    mosaic
+    PUBLIC GLM_FORCE_PURE
+    PRIVATE WEBGPU_CPP_IMPLEMENTATION)
+else()
   if(CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_compile_definitions(
-      mosaic PRIVATE WIN32_LEAN_AND_MEAN GLFW_EXPOSE_NATIVE_WIN32
-                     VOLK_STATIC_DEFINES VK_USE_PLATFORM_WIN32_KHR)
+      mosaic
+      PRIVATE WIN32_LEAN_AND_MEAN GLFW_EXPOSE_NATIVE_WIN32 VK_NO_PROTOTYPES
+              VOLK_STATIC_DEFINES VK_USE_PLATFORM_WIN32_KHR
+              WEBGPU_CPP_IMPLEMENTATION)
   elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
     target_compile_definitions(
-      mosaic PRIVATE GLFW_EXPOSE_NATIVE_X11 VOLK_STATIC_DEFINES
-                     VK_USE_PLATFORM_XLIB_KHR)
+      mosaic
+      PRIVATE GLFW_EXPOSE_NATIVE_X11 VK_NO_PROTOTYPES VOLK_STATIC_DEFINES
+              VK_USE_PLATFORM_XLIB_KHR WEBGPU_CPP_IMPLEMENTATION)
   elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     target_compile_definitions(
-      mosaic PRIVATE GLFW_EXPOSE_NATIVE_COCOA VOLK_STATIC_DEFINES
-                     VK_USE_PLATFORM_MACOS_MVK)
+      mosaic
+      PRIVATE GLFW_EXPOSE_NATIVE_COCOA VK_NO_PROTOTYPES VOLK_STATIC_DEFINES
+              VK_USE_PLATFORM_MACOS_MVK WEBGPU_CPP_IMPLEMENTATION)
+  elseif(CMAKE_SYSTEM_NAME MATCHES "Android")
+    target_compile_definitions(
+      mosaic PRIVATE VK_NO_PROTOTYPES VOLK_STATIC_DEFINES
+                     VK_USE_PLATFORM_ANDROID_KHR)
   endif()
-endif()
-
-# Emscripten-specific flags
-if(EMSCRIPTEN)
-  target_include_directories(
-    mosaic PRIVATE "$ENV{EMSDK}/upstream/emscripten/system/include")
-  target_link_options(
-    mosaic PRIVATE -sUSE_WEBGPU=1 -sASYNCIFY -sALLOW_MEMORY_GROWTH
-    -sEXPORTED_RUNTIME_METHODS=['ccall','cwrap'])
 endif()
 
 # ----------------------------------------
@@ -122,6 +124,26 @@ target_include_directories(
   mosaic
   PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src" "${Stb_INCLUDE_DIR}"
   PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+
+if(EMSCRIPTEN)
+  target_include_directories(
+    mosaic PRIVATE "$ENV{EMSDK}/upstream/emscripten/system/include")
+endif()
+
+# ----------------------------------------
+# Compile Options
+# ----------------------------------------
+
+if(EMSCRIPTEN)
+  target_link_options(
+    mosaic
+    PRIVATE
+    sUSE_GLFW=3
+    -sUSE_WEBGPU=1
+    -sASYNCIFY
+    -sALLOW_MEMORY_GROWTH
+    -sEXPORTED_RUNTIME_METHODS=['ccall','cwrap'])
+endif()
 
 # ----------------------------------------
 # Version Header
@@ -156,7 +178,6 @@ target_link_libraries(
                 nlohmann_json::nlohmann_json)
 
 if(EMSCRIPTEN)
-  target_link_options(mosaic PUBLIC -sUSE_GLFW=3)
   target_link_libraries(mosaic PRIVATE webgpu glfw glfw3webgpu)
 elseif(ANDROID)
   target_link_libraries(

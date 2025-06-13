@@ -5,9 +5,6 @@
 #include <functional>
 #include <vector>
 
-#ifdef __EMSCRIPTEN__
-#define GLM_FORCE_PURE
-#endif
 #include <glm/glm.hpp>
 
 #include "mosaic/defines.hpp"

@@ -52,13 +52,13 @@
 
 // Import/Export macros
 #if defined(MOSAIC_COMPILER_MSVC)
-#if defined(_MOSAIC_BUILD_DLL)
+#if defined(_MOSAIC_BUILD_EXPORT_DLL)
 #define MOSAIC_API __declspec(dllexport)
 #else
 #define MOSAIC_API __declspec(dllimport)
 #endif
 #elif defined(MOSAIC_COMPILER_GCC) || defined(MOSAIC_COMPILER_CLANG)
-#if defined(_MOSAIC_BUILD_DLL)
+#if defined(_MOSAIC_BUILD_EXPORT_DLL)
 #define MOSAIC_API __attribute__((visibility("default")))
 #else
 #define MOSAIC_API
