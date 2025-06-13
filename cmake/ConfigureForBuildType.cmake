@@ -31,37 +31,75 @@ function(configure_for_build_type target)
               /w14826 # Conversion from 'type1' to 'type2' is sign-extended
               /w14928 # Illegal copy-initialization
     )
+  elseif(EMSCRIPTEN)
+    target_compile_options(
+      ${target}
+      PRIVATE -Wall
+              -Wextra
+              -Wpedantic
+              -Wformat=2
+              -Wformat-security
+              -Wnon-virtual-dtor
+              -Woverloaded-virtual
+              -Wshadow
+              -Wunused)
   endif()
 
   # Debug configuration
   if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
+
     target_compile_options(${target} PRIVATE $<$<CONFIG:Debug>:-O0 -g>)
     target_compile_definitions(${target}
                                PRIVATE $<$<CONFIG:Debug>:MOSAIC_DEBUG_BUILD>)
+
   elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+
     target_compile_options(${target} PRIVATE $<$<CONFIG:Debug>:/Od /Z7 /RTC1
                                              /MDd>)
     target_compile_definitions(${target}
                                PRIVATE $<$<CONFIG:Debug>:MOSAIC_DEBUG_BUILD>)
+
+  elseif(EMSCRIPTEN)
+
+    target_compile_options(${target} PRIVATE $<$<CONFIG:Debug>:-O0 -g>)
+    target_compile_definitions(${target}
+                               PRIVATE $<$<CONFIG:Debug>:MOSAIC_DEBUG_BUILD>)
+    target_link_options(${target} PRIVATE $<$<CONFIG:Debug>:-sASSERTIONS=2
+                        -sSTACK_OVERFLOW_CHECK=2 -sSAFE_HEAP=1>)
+
   endif()
 
   # Dev configuration
   if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
+
     target_compile_options(
       ${target} PRIVATE $<$<CONFIG:Dev>:-O2 -g -fstack-protector
                         -fno-omit-frame-pointer>)
     target_compile_definitions(${target}
-                               PRIVATE $<$<CONFIG:Dev>:MOSAIC_DEV_BUILD NDEBUG>)
+                               PRIVATE $<$<CONFIG:Dev>:MOSAIC_DEV_BUILD>)
     target_link_options(${target} PRIVATE $<$<CONFIG:Dev>:-flto>)
+
   elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+
     target_compile_options(${target} PRIVATE $<$<CONFIG:Dev>:/GS /O2 /Ob1 /Zi>)
     target_compile_definitions(${target}
-                               PRIVATE $<$<CONFIG:Dev>:MOSAIC_DEV_BUILD NDEBUG>)
+                               PRIVATE $<$<CONFIG:Dev>:MOSAIC_DEV_BUILD>)
     target_link_options(${target} PRIVATE $<$<CONFIG:Dev>:/LTCG>)
+
+  elseif(EMSCRIPTEN)
+
+    target_compile_options(
+      ${target} PRIVATE $<$<CONFIG:Dev>:-O2 -g -fstack-protector
+                        -fno-omit-frame-pointer>)
+    target_compile_definitions(${target}
+                               PRIVATE $<$<CONFIG:Dev>:MOSAIC_DEV_BUILD>)
+    target_link_options(${target} PRIVATE $<$<CONFIG:Dev>:-flto -sASSERTIONS=1>)
+
   endif()
 
   # Release configuration
   if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
+
     target_compile_options(
       ${target}
       PRIVATE $<$<CONFIG:Release>:-O3
@@ -78,9 +116,11 @@ function(configure_for_build_type target)
               -fPIE
               -fvisibility=hidden>)
     target_compile_definitions(
-      ${target} PRIVATE $<$<CONFIG:Release>:MOSAIC_RELEASE_BUILD NDEBUG>)
+      ${target} PRIVATE $<$<CONFIG:Release>:MOSAIC_RELEASE_BUILD>)
     target_link_options(${target} PRIVATE $<$<CONFIG:Release>:-flto>)
+
   elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+
     target_compile_options(
       ${target}
       PRIVATE $<$<CONFIG:Release>:/GS
@@ -96,13 +136,34 @@ function(configure_for_build_type target)
               /w14905
               /w14906>)
     target_compile_definitions(
-      ${target} PRIVATE $<$<CONFIG:Release>:MOSAIC_RELEASE_BUILD NDEBUG
+      ${target} PRIVATE $<$<CONFIG:Release>:MOSAIC_RELEASE_BUILD
                         _FORTIFY_SOURCE=2>)
     target_link_options(${target} PRIVATE $<$<CONFIG:Release>:/LTCG>)
+
+  elseif(EMSCRIPTEN)
+
+    target_compile_options(
+      ${target}
+      PRIVATE $<$<CONFIG:Release>:-O3
+              -Wconversion
+              -Wsign-conversion
+              -Wcast-qual
+              -Wdouble-promotion
+              -Wold-style-cast
+              -Wdeprecated
+              -Wundef
+              -fstack-protector-strong
+              -fno-common
+              -fvisibility=hidden>)
+    target_compile_definitions(
+      ${target} PRIVATE $<$<CONFIG:Release>:MOSAIC_RELEASE_BUILD>)
+    target_link_options(${target} PRIVATE $<$<CONFIG:Release>:-flto>)
+
   endif()
 
   # Sanitizers configuration
   if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
+
     target_compile_options(
       ${target}
       PRIVATE $<$<CONFIG:Sanitizers>:-g
@@ -120,7 +181,9 @@ function(configure_for_build_type target)
     target_link_options(
       ${target} PRIVATE $<$<CONFIG:Sanitizers>:-fsanitize=address
       -fsanitize=undefined -fsanitize=thread>)
+
   elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+
     target_compile_options(
       ${target} PRIVATE $<$<CONFIG:Sanitizers>:/Zi /Od /RTC1 /DEBUG:FULL /MDd
                         /fsanitize=address>)
@@ -128,5 +191,29 @@ function(configure_for_build_type target)
       ${target} PRIVATE $<$<CONFIG:Sanitizers>:MOSAIC_SANITIZERS>)
     target_link_options(${target} PRIVATE
                         $<$<CONFIG:Sanitizers>:/INCREMENTAL:NO /DEBUG:FULL>)
+
+  elseif(EMSCRIPTEN)
+
+    target_compile_options(
+      ${target}
+      PRIVATE $<$<CONFIG:Sanitizers>:-g
+              -O0
+              -fno-omit-frame-pointer
+              -fno-optimize-sibling-calls
+              -fno-inline
+              -fno-common
+              -fsanitize=address
+              -fsanitize=undefined>)
+    target_compile_definitions(
+      ${target} PRIVATE $<$<CONFIG:Sanitizers>:MOSAIC_SANITIZERS>)
+    target_link_options(
+      ${target}
+      PRIVATE
+      $<$<CONFIG:Sanitizers>:-fsanitize=address
+      -fsanitize=undefined
+      -sASSERTIONS=2
+      -sSTACK_OVERFLOW_CHECK=2
+      -sSAFE_HEAP=1>)
+
   endif()
 endfunction()

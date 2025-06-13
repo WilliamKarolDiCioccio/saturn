@@ -72,6 +72,9 @@ We use **vcpkg in manifest mode** to manage most dependencies.
 
 3. Confirm that `-pthread`, `-matomics`, and `-mbulk-memory` flags are supported — see build notes below if WebGPU issues arise.
 
+> [!NOTE]
+> We suggest debugging Emscripten builds directly inside the browser either using the built-in dev-tools or installing the WASM debugging plugin available on the [Chrome Web Store](https://chromewebstore.google.com/detail/cc++-devtools-support-dwa/pdcpmagijalfljmkmjngeonclgbbannb). The project is automatically configured to generate teh relevant debug information.
+
 #### 🪟 Setup for Windows (Visual Studio 2022)
 
 - Install **Visual Studio 2022** with the following components:
