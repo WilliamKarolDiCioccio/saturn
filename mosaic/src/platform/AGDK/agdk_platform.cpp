@@ -95,10 +95,10 @@ pieces::RefResult<core::Platform, std::string> AGDKPlatform::initialize()
 
 pieces::RefResult<core::Platform, std::string> AGDKPlatform::run()
 {
+    auto context = static_cast<AGDKPlatformContext*>(getPlatformContext());
+
     if (m_app->shouldExit())
     {
-        auto context = static_cast<AGDKPlatformContext*>(getPlatformContext());
-
         if (context && context->getActivity())
         {
             GameActivity_finish(context->getActivity());
@@ -111,7 +111,7 @@ pieces::RefResult<core::Platform, std::string> AGDKPlatform::run()
         return pieces::OkRef<core::Platform, std::string>(*this);
     }
 
-    if (m_app->isResumed())
+    if (m_app->isResumed() && context && context->getCurrentWindow())
     {
         auto result = m_app->update();
 
