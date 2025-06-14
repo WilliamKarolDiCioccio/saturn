@@ -12,9 +12,6 @@ namespace agdk
 
 class AGDKRawInputHandler : public input::RawInputHandler
 {
-   private:
-    window::Window* m_window;
-
    public:
     AGDKRawInputHandler(const window::Window* window);
     ~AGDKRawInputHandler() override = default;

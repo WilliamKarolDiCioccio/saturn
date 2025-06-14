@@ -57,7 +57,7 @@ void destroyRenderPass(RenderPass& _renderPass, const Device& _device)
     vkDestroyRenderPass(_device.device, _renderPass.renderPass, nullptr);
 }
 
-void beginRenderPass(RenderPass& _renderPass, const Device& _device, const Swapchain& _swapchain,
+void beginRenderPass(RenderPass& _renderPass, const Swapchain& _swapchain,
                      const CommandBuffer& _commandBuffer, uint32_t _imageIndex)
 {
     VkRenderPassBeginInfo renderPassInfo{};
@@ -74,10 +74,7 @@ void beginRenderPass(RenderPass& _renderPass, const Device& _device, const Swapc
     vkCmdBeginRenderPass(_commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
 
-void endRenderPass(RenderPass& _renderPass, const Device& _device, VkCommandBuffer commandBuffer)
-{
-    vkCmdEndRenderPass(commandBuffer);
-}
+void endRenderPass(VkCommandBuffer commandBuffer) { vkCmdEndRenderPass(commandBuffer); }
 
 } // namespace vulkan
 } // namespace graphics

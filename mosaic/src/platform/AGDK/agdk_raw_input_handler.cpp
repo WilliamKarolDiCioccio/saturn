@@ -8,7 +8,7 @@ namespace agdk
 {
 
 AGDKRawInputHandler::AGDKRawInputHandler(const window::Window* _window)
-    : m_window(const_cast<window::Window*>(_window)), input::RawInputHandler(_window) {};
+    : input::RawInputHandler(_window) {};
 
 pieces::RefResult<input::RawInputHandler, std::string> AGDKRawInputHandler::initialize()
 {

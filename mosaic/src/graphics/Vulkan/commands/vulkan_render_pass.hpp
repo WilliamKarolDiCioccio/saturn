@@ -24,10 +24,10 @@ void createRenderPass(RenderPass& _renderPass, const Device& _device, const Swap
 
 void destroyRenderPass(RenderPass& _renderPass, const Device& _device);
 
-void beginRenderPass(RenderPass& _renderPass, const Device& _device, const Swapchain& _swapchain,
+void beginRenderPass(RenderPass& _renderPass, const Swapchain& _swapchain,
                      const CommandBuffer& _commandBuffer, uint32_t imageIndex);
 
-void endRenderPass(RenderPass& _renderPass, const Device& _device, VkCommandBuffer commandBuffer);
+void endRenderPass(VkCommandBuffer commandBuffer);
 
 } // namespace vulkan
 } // namespace graphics

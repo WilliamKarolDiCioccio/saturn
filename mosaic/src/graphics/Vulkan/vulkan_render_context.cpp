@@ -15,11 +15,11 @@ namespace vulkan
 
 VulkanRenderContext::VulkanRenderContext(const window::Window* _window,
                                          const RenderContextSettings& _settings)
-    : m_currentFrame(0),
-      m_framebufferResized(false),
+    : RenderContext(_window, _settings),
       m_instance(nullptr),
       m_device(nullptr),
-      RenderContext(_window, _settings) {};
+      m_currentFrame(0),
+      m_framebufferResized(false) {};
 
 pieces::RefResult<RenderContext, std::string> VulkanRenderContext::initialize(
     RenderSystem* _renderSystem)
@@ -161,9 +161,9 @@ void VulkanRenderContext::drawScene()
     auto& frame = m_frameData[m_currentFrame];
 
     // Begin recording commands
-    beingCommandBuffer(frame.commandBuffer, *m_device, m_surface);
+    beingCommandBuffer(frame.commandBuffer, m_surface);
 
-    bindGraphicsPipeline(m_pipeline, *m_device, frame.commandBuffer);
+    bindGraphicsPipeline(m_pipeline, frame.commandBuffer);
 
     // Setup viewport
     VkViewport viewport{};
@@ -182,12 +182,12 @@ void VulkanRenderContext::drawScene()
     vkCmdSetScissor(frame.commandBuffer, 0, 1, &scissor);
 
     // Render pass and drawing
-    beginRenderPass(m_renderPass, *m_device, m_swapchain, frame.commandBuffer, frame.imageIndex);
+    beginRenderPass(m_renderPass, m_swapchain, frame.commandBuffer, frame.imageIndex);
     vkCmdDraw(frame.commandBuffer, 3, 1, 0, 0);
-    endRenderPass(m_renderPass, *m_device, frame.commandBuffer);
+    endRenderPass(frame.commandBuffer);
 
     // End recording
-    endCommandBuffer(frame.commandBuffer, *m_device);
+    endCommandBuffer(frame.commandBuffer);
 }
 
 void VulkanRenderContext::endFrame()

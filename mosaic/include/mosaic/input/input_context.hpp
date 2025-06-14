@@ -98,13 +98,13 @@ class MOSAIC_API InputContext
 
     inline const glm::vec2 getCursorSpeed() const { return m_cursorSpeed; }
 
-    inline const double getCursorLinearSpeed() const { return m_cursorLinearSpeed; }
+    inline double getCursorLinearSpeed() const { return m_cursorLinearSpeed; }
 
     inline const glm::vec2 getCursorAccelleration() const { return m_cursorAccelleration; }
 
-    inline const double getCursorLinearAccelleration() const { return m_cursorLinearAccelleration; }
+    inline double getCursorLinearAccelleration() const { return m_cursorLinearAccelleration; }
 
-    inline const MovementDirection getCursorMovementDirection() const
+    inline MovementDirection getCursorMovementDirection() const
     {
         return m_cursorMovementDirection;
     }

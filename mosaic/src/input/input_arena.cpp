@@ -339,7 +339,7 @@ const glm::vec2 InputArena::getCursorSpeed() const
     return getAveragedCursorDeltas() / timeSpan;
 };
 
-const double InputArena::getCursorLinearSpeed() const { return glm::length(getCursorSpeed()); }
+double InputArena::getCursorLinearSpeed() const { return glm::length(getCursorSpeed()); }
 
 const glm::vec2 InputArena::getCursorAccelleration() const
 {
@@ -356,12 +356,12 @@ const glm::vec2 InputArena::getCursorAccelleration() const
     return speed / timeSpan;
 }
 
-const double InputArena::getCursorLinearAccelleration() const
+double InputArena::getCursorLinearAccelleration() const
 {
     return glm::length(getCursorAccelleration());
 }
 
-const MovementDirection InputArena::getCursorMovementDirection() const
+MovementDirection InputArena::getCursorMovementDirection() const
 {
     const glm::vec2 delta = getAveragedCursorDeltas();
 

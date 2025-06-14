@@ -151,10 +151,10 @@ class InputArena
     const glm::vec2 getCursorDelta() const;
     const glm::vec2 getAveragedCursorDeltas() const;
     const glm::vec2 getCursorSpeed() const;
-    const double getCursorLinearSpeed() const;
+    double getCursorLinearSpeed() const;
     const glm::vec2 getCursorAccelleration() const;
-    const double getCursorLinearAccelleration() const;
-    const MovementDirection getCursorMovementDirection() const;
+    double getCursorLinearAccelleration() const;
+    MovementDirection getCursorMovementDirection() const;
 };
 
 } // namespace input

@@ -54,58 +54,60 @@ glm::ivec2 AGDKWindow::getFramebufferSize() const
     return glm::ivec2(x, y);
 }
 
-void AGDKWindow::setTitle(const std::string& _title)
+void AGDKWindow::setTitle([[maybe_unused]] const std::string& _title)
 {
     // AGDK does not provide a method to set the window title.
 }
 
-void AGDKWindow::setMinimized(bool _minimized)
+void AGDKWindow::setMinimized([[maybe_unused]] bool _minimized)
 {
     // AGDK does not provide a method to set the window to minimized.
 }
 
-void AGDKWindow::setMaximized(bool _maximized)
+void AGDKWindow::setMaximized([[maybe_unused]] bool _maximized)
 {
     // AGDK does not provide a method to set the window to maximized.
 }
 
-void AGDKWindow::setFullscreen(bool _fullscreen)
+void AGDKWindow::setFullscreen([[maybe_unused]] bool _fullscreen)
 {
     // AGDK does not provide a method to set the window to fullscreen.
 }
 
-void AGDKWindow::setSize(glm::vec2 _size)
+void AGDKWindow::setSize([[maybe_unused]] glm::vec2 _size)
 {
     // AGDK does not provide a method to set the window size directly.
 }
 
-void AGDKWindow::setResizeable(bool _resizeable)
+void AGDKWindow::setResizeable([[maybe_unused]] bool _resizeable)
 {
     // AGDK does not provide a method to set the window to be resizable.
 }
 
-void AGDKWindow::setVSync(bool _enabled)
+void AGDKWindow::setVSync([[maybe_unused]] bool _enabled)
 {
     MOSAIC_WARN("AGDKWindow::setVSync: Not implemented for AGDK platform.");
 }
 
-void AGDKWindow::setCursorMode(window::CursorMode _mode)
+void AGDKWindow::setCursorMode([[maybe_unused]] window::CursorMode _mode)
 {
     // AGDK does not provide a method to set the cursor mode.
 }
 
-void AGDKWindow::setCursorType(window::CursorType _type)
+void AGDKWindow::setCursorType([[maybe_unused]] window::CursorType _type)
 {
     // AGDK does not provide a method to set the cursor type.
 }
 
-void AGDKWindow::setCursorTypeIcon(window::CursorType _type, const std::string& _path, int _width,
-                                   int _height)
+void AGDKWindow::setCursorTypeIcon([[maybe_unused]] window::CursorType _type,
+                                   [[maybe_unused]] const std::string& _path,
+                                   [[maybe_unused]] int _width, [[maybe_unused]] int _height)
 {
     // AGDK does not provide a method to set the cursor type icon.
 }
 
-void AGDKWindow::setCursorIcon(const std::string& _path, int _width, int _height)
+void AGDKWindow::setCursorIcon([[maybe_unused]] const std::string& _path,
+                               [[maybe_unused]] int _width, [[maybe_unused]] int _height)
 {
     // AGDK does not provide a method to set the cursor icon.
 }
@@ -115,7 +117,8 @@ void AGDKWindow::resetCursorIcon()
     // AGDK does not provide a method to reset the cursor icon.
 }
 
-void AGDKWindow::setWindowIcon(const std::string& _path, int _width, int _height)
+void AGDKWindow::setWindowIcon([[maybe_unused]] const std::string& _path,
+                               [[maybe_unused]] int _width, [[maybe_unused]] int _height)
 {
     // AGDK does not provide a method to set the window icon.
 }
@@ -125,7 +128,7 @@ void AGDKWindow::resetWindowIcon()
     // AGDK does not provide a method to reset the window icon.
 }
 
-void AGDKWindow::setClipboardString(const std::string& _string)
+void AGDKWindow::setClipboardString([[maybe_unused]] const std::string& _string)
 {
     MOSAIC_WARN(
         "AGDKWindow::setClipboardString: Not implemented for AGDK platform. (requires JNI bridge)");

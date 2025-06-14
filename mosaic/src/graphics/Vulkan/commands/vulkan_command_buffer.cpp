@@ -28,8 +28,7 @@ void destroyCommandBuffer(CommandBuffer& _commandBuffer, const Device& _device,
     vkFreeCommandBuffers(_device.device, _commandPool.commandPool, 1, &_commandBuffer);
 }
 
-void beingCommandBuffer(CommandBuffer& _commandBuffer, const Device& _device,
-                        const Surface& _surface)
+void beingCommandBuffer(CommandBuffer& _commandBuffer, const Surface& _surface)
 {
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -42,7 +41,7 @@ void beingCommandBuffer(CommandBuffer& _commandBuffer, const Device& _device,
     }
 }
 
-void endCommandBuffer(CommandBuffer& _commandBuffer, const Device& _device)
+void endCommandBuffer(CommandBuffer& _commandBuffer)
 {
     if (vkEndCommandBuffer(_commandBuffer) != VK_SUCCESS)
     {

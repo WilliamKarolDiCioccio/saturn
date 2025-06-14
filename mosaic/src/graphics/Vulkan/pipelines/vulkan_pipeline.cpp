@@ -158,8 +158,7 @@ void destroyGraphicsPipeline(Pipeline& _pipeline, const Device& _device)
     vkDestroyPipeline(_device.device, _pipeline.pipeline, nullptr);
 }
 
-void bindGraphicsPipeline(const Pipeline& _pipeline, const Device& _device,
-                          const CommandBuffer& _commandBuffer)
+void bindGraphicsPipeline(const Pipeline& _pipeline, const CommandBuffer& _commandBuffer)
 {
     vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline.pipeline);
 }

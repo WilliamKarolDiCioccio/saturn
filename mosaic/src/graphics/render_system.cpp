@@ -15,7 +15,8 @@ namespace mosaic
 namespace graphics
 {
 
-pieces::Result<RenderContext*, std::string> RenderSystem::createContext(const window::Window* _window)
+pieces::Result<RenderContext*, std::string> RenderSystem::createContext(
+    const window::Window* _window)
 {
     if (m_contexts.find(_window) != m_contexts.end())
     {
@@ -84,13 +85,17 @@ std::unique_ptr<RenderSystem> RenderSystem::create(RendererAPIType _apiType)
 {
     switch (_apiType)
     {
-#ifndef MOSAIC_PLATFORM_ANDROID
         case RendererAPIType::web_gpu:
+#ifndef MOSAIC_PLATFORM_ANDROID
             return std::make_unique<webgpu::WebGPURenderSystem>();
+#else
+            throw std::runtime_error("WebGPU backend is not supported on Android platform");
 #endif
-#ifndef MOSAIC_PLATFORM_EMSCRIPTEN
         case RendererAPIType::vulkan:
+#ifndef MOSAIC_PLATFORM_EMSCRIPTEN
             return std::make_unique<vulkan::VulkanRenderSystem>();
+#else
+            throw std::runtime_error("Vulkan backend is not supported on Emscripten platform");
 #endif
     }
 }

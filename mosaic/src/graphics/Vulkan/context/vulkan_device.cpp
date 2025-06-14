@@ -289,8 +289,6 @@ void createDevice(Device& _device, const Instance& _instance, const Surface& _su
     QueueFamilySupportDetails indices =
         findDeviceQueueFamiliesSupport(physicalDevice, _surface.surface);
 
-    constexpr float queuePriorities = 1.0f;
-
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
     std::set<uint32_t> uniqueQueueFamilies = {indices.graphicsFamily.value(),
                                               indices.presentFamily.value()};
@@ -308,11 +306,12 @@ void createDevice(Device& _device, const Instance& _instance, const Surface& _su
     }
 
     constexpr VkPhysicalDeviceFeatures deviceFeatures{
-        
+
     };
 
     const VkDeviceCreateInfo deviceCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+        .pNext = nullptr,
         .queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size()),
         .pQueueCreateInfos = queueCreateInfos.data(),
         .enabledLayerCount = static_cast<uint32_t>(_device.availableLayers.size()),

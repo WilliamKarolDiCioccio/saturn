@@ -18,10 +18,9 @@ void createCommandBuffer(CommandBuffer& _commandBuffer, const Device& _device,
 void destroyCommandBuffer(CommandBuffer& _commandBuffer, const Device& _device,
                           const CommandPool& _commandPool);
 
-void beingCommandBuffer(CommandBuffer& _commandPool, const Device& _device,
-                        const Surface& _surface);
+void beingCommandBuffer(CommandBuffer& _commandPool, const Surface& _surface);
 
-void endCommandBuffer(CommandBuffer& _commandPool, const Device& _device);
+void endCommandBuffer(CommandBuffer& _commandPool);
 
 } // namespace vulkan
 } // namespace graphics

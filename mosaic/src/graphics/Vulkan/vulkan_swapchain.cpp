@@ -156,8 +156,8 @@ VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& _capabilities,
 }
 
 void createSwapchain(Swapchain& _swapchain, const Device& _device, const Surface& _surface,
-                     void* _nativeWindowHandle, glm::uvec2 _framebufferExtent,
-                     bool _exclusiveFullscreenRequestable)
+                     [[maybe_unused]] void* _nativeWindowHandle, glm::uvec2 _framebufferExtent,
+                     [[maybe_unused]] bool _exclusiveFullscreenRequestable)
 {
     _swapchain.device = _device.device;
 

@@ -26,8 +26,7 @@ void createGraphicsPipeline(Pipeline& _pipeline, const Device& _device, const Sw
 
 void destroyGraphicsPipeline(Pipeline& _pipeline, const Device& _device);
 
-void bindGraphicsPipeline(const Pipeline& _pipeline, const Device& _device,
-                          const CommandBuffer& _commandBuffer);
+void bindGraphicsPipeline(const Pipeline& _pipeline, const CommandBuffer& _commandBuffer);
 
 } // namespace vulkan
 } // namespace graphics
