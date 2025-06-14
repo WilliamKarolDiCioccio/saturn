@@ -1,6 +1,6 @@
 #pragma once
 
-#include "mosaic/core/window.hpp"
+#include "mosaic/window/window.hpp"
 #include "mosaic/platform/AGDK/agdk_platform.hpp"
 
 namespace mosaic
@@ -10,11 +10,15 @@ namespace platform
 namespace agdk
 {
 
-class AGDKWindow : public core::Window
+class AGDKWindow : public window::Window
 {
    public:
-    AGDKWindow(const std::string& _title, glm::ivec2 _size);
     ~AGDKWindow() override = default;
+
+   public:
+    pieces::RefResult<window::Window, std::string> initialize(
+        const window::WindowProperties& _properties) override;
+    void shutdown() override;
 
     void* getNativeHandle() const override;
     bool shouldClose() const override;
@@ -28,9 +32,9 @@ class AGDKWindow : public core::Window
     void setResizeable(bool _resizeable) override;
     void setVSync(bool _enabled) override;
 
-    void setCursorMode(core::CursorMode _mode) override;
-    void setCursorType(core::CursorType _type) override;
-    void setCursorTypeIcon(core::CursorType _type, const std::string& _path, int _width = 0,
+    void setCursorMode(window::CursorMode _mode) override;
+    void setCursorType(window::CursorType _type) override;
+    void setCursorTypeIcon(window::CursorType _type, const std::string& _path, int _width = 0,
                            int _height = 0) override;
 
     void setCursorIcon(const std::string& _path, int _width = 0, int _height = 0) override;

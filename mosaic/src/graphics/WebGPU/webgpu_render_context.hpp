@@ -29,7 +29,7 @@ class WebGPURenderContext : public RenderContext
     WGPUQueue m_presentQueue;
 
    public:
-    WebGPURenderContext(const core::Window* _window, const RenderContextSettings& _settings);
+    WebGPURenderContext(const window::Window* _window, const RenderContextSettings& _settings);
     ~WebGPURenderContext() override = default;
 
    public:

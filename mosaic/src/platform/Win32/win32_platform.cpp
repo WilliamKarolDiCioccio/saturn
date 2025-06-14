@@ -15,11 +15,6 @@ namespace win32
 
 pieces::RefResult<core::Platform, std::string> Win32Platform::initialize()
 {
-    if (!glfwInit())
-    {
-        return pieces::ErrRef<Platform, std::string>("Failed to initialize GLFW");
-    }
-
     auto result = m_app->initialize();
 
     if (result.isErr())
@@ -36,8 +31,6 @@ pieces::RefResult<core::Platform, std::string> Win32Platform::run()
 {
     while (!m_app->shouldExit())
     {
-        glfwPollEvents();
-
         if (m_app->isResumed())
         {
             auto result = m_app->update();
@@ -56,12 +49,7 @@ void Win32Platform::pause() { m_app->pause(); }
 
 void Win32Platform::resume() { m_app->resume(); }
 
-void Win32Platform::shutdown()
-{
-    m_app->shutdown();
-
-    glfwTerminate();
-}
+void Win32Platform::shutdown() { m_app->shutdown(); }
 
 } // namespace win32
 } // namespace platform

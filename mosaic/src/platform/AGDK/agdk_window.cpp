@@ -7,8 +7,11 @@ namespace platform
 namespace agdk
 {
 
-AGDKWindow::AGDKWindow(const std::string& _title, glm::ivec2 _size) : core::Window(_title, _size)
+pieces::RefResult<window::Window, std::string> AGDKWindow::initialize(
+    const window::WindowProperties& _properties)
 {
+    m_properties = _properties;
+
     static int windowCount = 0;
 
     if (windowCount > 0)
@@ -17,7 +20,11 @@ AGDKWindow::AGDKWindow(const std::string& _title, glm::ivec2 _size) : core::Wind
     }
 
     windowCount++;
+
+    return pieces::OkRef<window::Window, std::string>(*this);
 }
+
+void AGDKWindow::shutdown() {}
 
 void* AGDKWindow::getNativeHandle() const
 {
@@ -82,17 +89,17 @@ void AGDKWindow::setVSync(bool _enabled)
     MOSAIC_WARN("AGDKWindow::setVSync: Not implemented for AGDK platform.");
 }
 
-void AGDKWindow::setCursorMode(core::CursorMode _mode)
+void AGDKWindow::setCursorMode(window::CursorMode _mode)
 {
     // AGDK does not provide a method to set the cursor mode.
 }
 
-void AGDKWindow::setCursorType(core::CursorType _type)
+void AGDKWindow::setCursorType(window::CursorType _type)
 {
     // AGDK does not provide a method to set the cursor type.
 }
 
-void AGDKWindow::setCursorTypeIcon(core::CursorType _type, const std::string& _path, int _width,
+void AGDKWindow::setCursorTypeIcon(window::CursorType _type, const std::string& _path, int _width,
                                    int _height)
 {
     // AGDK does not provide a method to set the cursor type icon.

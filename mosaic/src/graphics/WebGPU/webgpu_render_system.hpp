@@ -19,7 +19,7 @@ class WebGPURenderSystem : public RenderSystem
     ~WebGPURenderSystem() override = default;
 
    public:
-    pieces::RefResult<RenderSystem, std::string> initialize(const core::Window* _window) override;
+    pieces::RefResult<RenderSystem, std::string> initialize(const window::Window* _window) override;
     void shutdown() override;
 };
 

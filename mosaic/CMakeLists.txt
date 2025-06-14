@@ -9,7 +9,9 @@ set(FRAMEWORK_SRC
     "src/core/platform.cpp"
     "src/core/tracer.cpp"
     "src/core/timer.cpp"
-    "src/core/window.cpp"
+    # Window
+    "src/window/window.cpp"
+    "src/window/window_system.cpp"
     # Input
     "src/input/input_system.cpp"
     "src/input/input_arena.cpp"
@@ -23,9 +25,14 @@ set(FRAMEWORK_SRC
 
 # Platform specific
 if(ANDROID)
-  list(APPEND FRAMEWORK_SRC "src/platform/AGDK/agdk_window.cpp"
-       "src/platform/AGDK/agdk_raw_input_handler.cpp"
-       "src/platform/AGDK/agdk_platform.cpp" "src/external/game_activity.cpp")
+  list(
+    APPEND
+    FRAMEWORK_SRC
+    "src/platform/AGDK/agdk_window.cpp"
+    "src/platform/AGDK/agdk_window_system.cpp"
+    "src/platform/AGDK/agdk_raw_input_handler.cpp"
+    "src/platform/AGDK/agdk_platform.cpp"
+    "src/external/game_activity.cpp")
 else()
   if(WIN32)
     list(APPEND FRAMEWORK_SRC "src/platform/Win32/win32_platform.cpp")
@@ -34,6 +41,7 @@ else()
   endif()
 
   list(APPEND FRAMEWORK_SRC "src/platform/GLFW/glfw_window.cpp"
+       "src/platform/GLFW/glfw_window_system.cpp"
        "src/platform/GLFW/glfw_raw_input_handler.cpp")
 endif()
 

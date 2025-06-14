@@ -13,7 +13,7 @@ namespace graphics
 namespace vulkan
 {
 
-VulkanRenderContext::VulkanRenderContext(const core::Window* _window,
+VulkanRenderContext::VulkanRenderContext(const window::Window* _window,
                                          const RenderContextSettings& _settings)
     : m_currentFrame(0),
       m_framebufferResized(false),
@@ -43,7 +43,7 @@ pieces::RefResult<RenderContext, std::string> VulkanRenderContext::initialize(
 
 #if defined(MOSAIC_PLATFORM_DESKTOP) || defined(MOSAIC_PLATFORM_WEB)
 
-    const_cast<core::Window*>(m_window)->registerWindowResizeCallback(
+    const_cast<window::Window*>(m_window)->registerWindowResizeCallback(
         [this](int height, int width) { m_framebufferResized = true; });
 
 #elif defined(MOSAIC_PLATFORM_ANDROID)

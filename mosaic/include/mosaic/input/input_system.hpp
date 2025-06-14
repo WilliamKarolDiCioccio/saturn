@@ -40,7 +40,7 @@ namespace input
 class MOSAIC_API InputSystem
 {
    public:
-    std::unordered_map<const core::Window*, std::unique_ptr<InputContext>> m_contexts;
+    std::unordered_map<const window::Window*, std::unique_ptr<InputContext>> m_contexts;
 
    public:
     InputSystem() = default;
@@ -54,8 +54,8 @@ class MOSAIC_API InputSystem
     pieces::RefResult<InputSystem, std::string> initialize();
     void shutdown();
 
-    pieces::Result<InputContext*, std::string> registerWindow(core::Window* _window);
-    void unregisterWindow(core::Window* _window);
+    pieces::Result<InputContext*, std::string> registerWindow(window::Window* _window);
+    void unregisterWindow(window::Window* _window);
 
     inline void unregisterAllWindows()
     {
@@ -70,9 +70,7 @@ class MOSAIC_API InputSystem
     /**
      * @brief Updates all registered input contexts.
      *
-     * This is the first invocation in the main loop of the application. It should be called before
-     * any other input handling functions to ensure fresh input data is available and minimize
-     * latency.
+     * This should be invocated after window system update in the main loop of the application.
      */
     inline void poll() const
     {
@@ -82,7 +80,7 @@ class MOSAIC_API InputSystem
         }
     }
 
-    inline InputContext* getContext(const core::Window* _window) const
+    inline InputContext* getContext(const window::Window* _window) const
     {
         if (m_contexts.find(_window) != m_contexts.end())
         {

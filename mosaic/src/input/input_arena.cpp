@@ -5,7 +5,7 @@ namespace mosaic
 namespace input
 {
 
-InputArena::InputArena(core::Window* _window)
+InputArena::InputArena(window::Window* _window)
     : m_rawInputHandler(RawInputHandler::create(_window)),
       m_mouseScrollWheelSamples(MOUSE_WHEEL_NUM_SAMPLES),
       m_cursorPosSamples(MOUSE_CURSOR_NUM_SAMPLES) {};

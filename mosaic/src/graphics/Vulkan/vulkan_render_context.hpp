@@ -53,7 +53,7 @@ class VulkanRenderContext : public RenderContext
     bool m_framebufferResized;
 
    public:
-    VulkanRenderContext(const core::Window* _window, const RenderContextSettings& _settings);
+    VulkanRenderContext(const window::Window* _window, const RenderContextSettings& _settings);
     ~VulkanRenderContext() override = default;
 
    public:

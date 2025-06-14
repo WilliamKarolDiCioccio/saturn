@@ -1,7 +1,7 @@
 #pragma once
 
 #include <webgpu/webgpu.h>
-#include "mosaic/core/window.hpp"
+#include "mosaic/window/window.hpp"
 #include <glfw3webgpu.h>
 
 #ifdef WEBGPU_BACKEND_WGPU

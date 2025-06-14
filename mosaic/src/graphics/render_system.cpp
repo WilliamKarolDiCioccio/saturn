@@ -15,7 +15,7 @@ namespace mosaic
 namespace graphics
 {
 
-pieces::Result<RenderContext*, std::string> RenderSystem::createContext(const core::Window* _window)
+pieces::Result<RenderContext*, std::string> RenderSystem::createContext(const window::Window* _window)
 {
     if (m_contexts.find(_window) != m_contexts.end())
     {
@@ -68,7 +68,7 @@ pieces::Result<RenderContext*, std::string> RenderSystem::createContext(const co
     return pieces::Ok<RenderContext*, std::string>(m_contexts.at(_window).get());
 }
 
-void RenderSystem::destroyContext(const core::Window* _window)
+void RenderSystem::destroyContext(const window::Window* _window)
 {
     auto it = m_contexts.find(_window);
 

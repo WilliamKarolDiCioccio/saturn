@@ -5,7 +5,7 @@ namespace mosaic
 namespace input
 {
 
-InputContext::InputContext(core::Window* _window)
+InputContext::InputContext(window::Window* _window)
     : m_arena(std::make_unique<InputArena>(_window)),
       m_wheelOffset(0.f),
       m_averagedWheelDeltas(0.f),

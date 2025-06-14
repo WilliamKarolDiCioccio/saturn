@@ -1,6 +1,6 @@
 #pragma once
 
-#include "mosaic/core/window.hpp"
+#include "mosaic/window/window.hpp"
 
 #include <GLFW/glfw3.h>
 
@@ -17,14 +17,17 @@ namespace glfw
  * This class provides concrete implementation of window functionality using GLFW.
  * It handles GLFW-specific operations and maintains the GLFW window handle.
  */
-class MOSAIC_API GLFWWindow : public core::Window
+class MOSAIC_API GLFWWindow : public window::Window
 {
    private:
     GLFWwindow* m_glfwHandle;
 
    public:
-    GLFWWindow(const std::string& _title, glm::ivec2 _size);
-    ~GLFWWindow() override;
+    ~GLFWWindow() override = default;
+
+    pieces::RefResult<window::Window, std::string> initialize(
+        const window::WindowProperties& _properties) override;
+    void shutdown() override;
 
     void* getNativeHandle() const override;
     bool shouldClose() const override;
@@ -38,9 +41,9 @@ class MOSAIC_API GLFWWindow : public core::Window
     void setResizeable(bool _resizeable) override;
     void setVSync(bool _enabled) override;
 
-    void setCursorMode(core::CursorMode _mode) override;
-    void setCursorType(core::CursorType _type) override;
-    void setCursorTypeIcon(core::CursorType _type, const std::string& _path, int _width = 0,
+    void setCursorMode(window::CursorMode _mode) override;
+    void setCursorType(window::CursorType _type) override;
+    void setCursorTypeIcon(window::CursorType _type, const std::string& _path, int _width = 0,
                            int _height = 0) override;
 
     void setCursorIcon(const std::string& _path, int _width = 0, int _height = 0) override;

@@ -5,13 +5,15 @@
 #include <functional>
 #include <vector>
 
+#include <pieces/result.hpp>
+
 #include <glm/glm.hpp>
 
 #include "mosaic/defines.hpp"
 
 namespace mosaic
 {
-namespace core
+namespace window
 {
 
 /**
@@ -100,8 +102,11 @@ struct WindowProperties
  * This class provides a generic interface for window management that can be
  * implemented by different windowing backends (GLFW, SDL, etc.).
  *
- * It keeps track of the
- * window properties and cursor properties and allows to manipulate them easily.
+ * It keeps track of the window properties and cursor properties and allows to manipulate them
+ * easily.
+ *
+ * @note This class is not meant to be instantiated directly. Use the static method
+ * `create()` to obtain an instance.
  *
  * @see WindowProperties
  * @see CursorProperties
@@ -139,12 +144,16 @@ class MOSAIC_API Window
     std::vector<WindowContentScaleCallback> m_windowContentScaleCallbacks;
 
    public:
-    Window(const std::string& _title, glm::ivec2 _size);
+    Window() = default;
     virtual ~Window() = default;
 
-    static std::unique_ptr<Window> create(const std::string& _title, glm::ivec2 _size);
+    static std::unique_ptr<Window> create();
 
    public:
+    virtual pieces::RefResult<Window, std::string> initialize(
+        const WindowProperties& _properties) = 0;
+    virtual void shutdown() = 0;
+
     // Fundamental window operations
     virtual void* getNativeHandle() const = 0;
     virtual bool shouldClose() const = 0;
@@ -254,5 +263,5 @@ class MOSAIC_API Window
     void invokeContentScaleCallbacks(float _xscale, float _yscale);
 };
 
-} // namespace core
+} // namespace window
 } // namespace mosaic

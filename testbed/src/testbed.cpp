@@ -5,16 +5,11 @@ namespace testbed
 
 std::optional<std::string> TestbedApplication::onInitialize()
 {
-    m_window->setResizeable(true);
+    auto window = m_windowSystem->getWindow("MainWindow");
 
-    auto registrationResult = m_inputSystem->registerWindow(m_window.get());
+    window->setResizeable(true);
 
-    if (registrationResult.isErr())
-    {
-        return registrationResult.error();
-    }
-
-    auto inputContext = registrationResult.unwrap();
+    auto inputContext = m_inputSystem->getContext(window);
 
     inputContext->updateVirtualKeyboardKeys({
         {"closeApp", input::KeyboardKey::key_escape},
@@ -112,13 +107,6 @@ std::optional<std::string> TestbedApplication::onInitialize()
         },
     });
 
-    auto creationResult = m_renderSystem->createContext(m_window.get());
-
-    if (creationResult.isErr())
-    {
-        return creationResult.error();
-    }
-
     MOSAIC_INFO("Testbed initialized.");
 
     return std::nullopt;
@@ -126,7 +114,8 @@ std::optional<std::string> TestbedApplication::onInitialize()
 
 std::optional<std::string> TestbedApplication::onUpdate()
 {
-    auto inputContext = m_inputSystem->getContext(m_window.get());
+    auto window = m_windowSystem->getWindow("MainWindow");
+    auto inputContext = m_inputSystem->getContext(window);
 
     if (inputContext->isActionTriggered("moveLeft")) MOSAIC_INFO("Moving left.");
     if (inputContext->isActionTriggered("moveRight")) MOSAIC_INFO("Moving right.");
@@ -134,7 +123,7 @@ std::optional<std::string> TestbedApplication::onUpdate()
     if (inputContext->isActionTriggered("moveDown")) MOSAIC_INFO("Moving down.");
     if (inputContext->isActionTriggered("resetCamera")) MOSAIC_INFO("Resetting camera.");
 
-    if (m_window->shouldClose() || inputContext->isActionTriggered("closeApp"))
+    if (window->shouldClose() || inputContext->isActionTriggered("closeApp"))
     {
         requestExit();
 

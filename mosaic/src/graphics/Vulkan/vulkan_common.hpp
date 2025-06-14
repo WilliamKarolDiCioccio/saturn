@@ -1,7 +1,7 @@
 #pragma once
 
 #include "mosaic/core/logger.hpp"
-#include "mosaic/core/window.hpp"
+#include "mosaic/window/window.hpp"
 
 #include <volk.h>
 #include <vulkan/vulkan.h>

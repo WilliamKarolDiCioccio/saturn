@@ -9,10 +9,10 @@
 #include "logger.hpp"
 #include "tracer.hpp"
 #include "timer.hpp"
-#include "window.hpp"
 
 #include "mosaic/defines.hpp"
 #include "mosaic/version.hpp"
+#include "mosaic/window/window_system.hpp"
 #include "mosaic/input/input_system.hpp"
 #include "mosaic/graphics/render_system.hpp"
 
@@ -46,7 +46,7 @@ class MOSAIC_API Application
     ApplicationState m_state;
 
    protected:
-    std::unique_ptr<core::Window> m_window;
+    std::unique_ptr<window::WindowSystem> m_windowSystem;
     std::unique_ptr<input::InputSystem> m_inputSystem;
     std::unique_ptr<graphics::RenderSystem> m_renderSystem;
 

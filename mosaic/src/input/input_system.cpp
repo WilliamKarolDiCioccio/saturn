@@ -12,7 +12,7 @@ pieces::RefResult<InputSystem, std::string> InputSystem::initialize()
 
 void InputSystem::shutdown() { unregisterAllWindows(); }
 
-pieces::Result<InputContext*, std::string> InputSystem::registerWindow(core::Window* _window)
+pieces::Result<InputContext*, std::string> InputSystem::registerWindow(window::Window* _window)
 {
     if (m_contexts.find(_window) != m_contexts.end())
     {
@@ -35,7 +35,7 @@ pieces::Result<InputContext*, std::string> InputSystem::registerWindow(core::Win
     return pieces::Ok<InputContext*, std::string>(m_contexts.at(_window).get());
 }
 
-void InputSystem::unregisterWindow(core::Window* _window)
+void InputSystem::unregisterWindow(window::Window* _window)
 {
     auto it = m_contexts.find(_window);
 

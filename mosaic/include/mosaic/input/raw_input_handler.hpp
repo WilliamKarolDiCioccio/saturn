@@ -9,7 +9,7 @@
 #include <pieces/result.hpp>
 
 #include "mosaic/core/logger.hpp"
-#include "mosaic/core/window.hpp"
+#include "mosaic/window/window.hpp"
 
 #include "input_mappings.hpp"
 
@@ -39,7 +39,7 @@ class RawInputHandler
     std::queue<MouseScrollInputData> m_mouseScrollQueue;
 
    public:
-    RawInputHandler(const core::Window* _window);
+    RawInputHandler(const window::Window* _window);
     virtual ~RawInputHandler() = default;
 
     RawInputHandler(RawInputHandler&) = delete;
@@ -47,7 +47,7 @@ class RawInputHandler
     RawInputHandler(const RawInputHandler&) = delete;
     RawInputHandler& operator=(const RawInputHandler&) = delete;
 
-    static std::unique_ptr<RawInputHandler> create(core::Window* _window);
+    static std::unique_ptr<RawInputHandler> create(window::Window* _window);
 
    public:
     virtual pieces::RefResult<RawInputHandler, std::string> initialize() = 0;

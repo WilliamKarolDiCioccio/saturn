@@ -1,4 +1,4 @@
-#include "mosaic/core/window.hpp"
+#include "mosaic/window/window.hpp"
 
 #if defined(MOSAIC_PLATFORM_DESKTOP) || defined(MOSAIC_PLATFORM_WEB)
 #include "platform/GLFW/glfw_window.hpp"
@@ -8,21 +8,15 @@
 
 namespace mosaic
 {
-namespace core
+namespace window
 {
 
-Window::Window(const std::string& _title, glm::ivec2 _size)
-{
-    m_properties.title = _title;
-    m_properties.size = _size;
-}
-
-std::unique_ptr<Window> Window::create(const std::string& _title, glm::ivec2 _size)
+std::unique_ptr<Window> Window::create()
 {
 #if defined(MOSAIC_PLATFORM_DESKTOP) || defined(MOSAIC_PLATFORM_WEB)
-    return std::make_unique<platform::glfw::GLFWWindow>(_title, _size);
+    return std::make_unique<platform::glfw::GLFWWindow>();
 #elif defined(MOSAIC_PLATFORM_ANDROID)
-    return std::make_unique<platform::agdk::AGDKWindow>(_title, _size);
+    return std::make_unique<platform::agdk::AGDKWindow>();
 #endif
 }
 
@@ -114,5 +108,5 @@ void Window::invokeContentScaleCallbacks(float _xscale, float _yscale)
     }
 }
 
-} // namespace core
+} // namespace window
 } // namespace mosaic

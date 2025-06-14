@@ -60,7 +60,7 @@ class MOSAIC_API InputContext
     std::unordered_map<std::string, bool> m_triggeredActionsCache;
 
    public:
-    InputContext(core::Window* _window);
+    InputContext(window::Window* _window);
 
     InputContext(InputContext&) = delete;
     InputContext& operator=(InputContext&) = delete;

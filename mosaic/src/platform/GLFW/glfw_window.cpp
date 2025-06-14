@@ -16,44 +16,85 @@ namespace platform
 namespace glfw
 {
 
-GLFWWindow::GLFWWindow(const std::string& _title, glm::ivec2 _size)
-    : m_glfwHandle(nullptr), core::Window(_title, _size)
+pieces::RefResult<window::Window, std::string> GLFWWindow::initialize(
+    const window::WindowProperties& _properties)
 {
+    m_properties = _properties;
+
 #ifdef MOSAIC_PLATFORM_EMSCRIPTEN
     static int windowCount = 0;
-
     if (windowCount > 0)
     {
         throw std::runtime_error("Only one GLFW window is allowed in Emscripten builds.");
     }
-
     windowCount++;
 #endif
 
+    // Base window hints
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-    glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
+    glfwWindowHint(GLFW_RESIZABLE, m_properties.isResizeable ? GLFW_TRUE : GLFW_FALSE);
+    glfwWindowHint(GLFW_VISIBLE, m_properties.isMinimized ? GLFW_FALSE : GLFW_TRUE);
     glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
-    glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
+    glfwWindowHint(GLFW_DECORATED, !m_properties.isFullscreen
+                                       ? GLFW_TRUE
+                                       : GLFW_FALSE); // Remove decoration for fullscreen
 
 #ifndef MOSAIC_PLATFORM_EMSCRIPTEN
+    // Set window position hints if supported
     glfwWindowHint(GLFW_POSITION_X, m_properties.position.x);
     glfwWindowHint(GLFW_POSITION_Y, m_properties.position.y);
 #endif
 
-    m_glfwHandle = glfwCreateWindow(_size.x, _size.y, _title.c_str(), nullptr, nullptr);
+    GLFWmonitor* monitor = nullptr;
+    const GLFWvidmode* mode = nullptr;
+
+    // Setup fullscreen if requested
+    if (m_properties.isFullscreen)
+    {
+        monitor = glfwGetPrimaryMonitor();
+        mode = glfwGetVideoMode(monitor);
+        if (mode)
+        {
+            glfwWindowHint(GLFW_RED_BITS, mode->redBits);
+            glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
+            glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
+            glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
+        }
+    }
+
+    const int width = m_properties.size.x;
+    const int height = m_properties.size.y;
+
+    m_glfwHandle = glfwCreateWindow(width, height, m_properties.title.c_str(), monitor, nullptr);
 
     if (!m_glfwHandle)
     {
         throw std::runtime_error("Failed to create GLFW window.");
     }
 
+#ifndef MOSAIC_PLATFORM_EMSCRIPTEN
+    // Move window if not in fullscreen (fullscreen ignores position)
+    if (!m_properties.isFullscreen)
+    {
+        glfwSetWindowPos(m_glfwHandle, m_properties.position.x, m_properties.position.y);
+    }
+
+    // Maximize if requested
+    if (m_properties.isMaximized)
+    {
+        glfwMaximizeWindow(m_glfwHandle);
+    }
+#endif
+
     registerCallbacks();
 
-    MOSAIC_DEBUG("Window created: {0} ({1} x {2})", _title, _size.x, _size.y);
+    MOSAIC_DEBUG("Window created: {0} ({1} x {2})", m_properties.title, m_properties.size.x,
+                 m_properties.size.y);
+
+    return pieces::OkRef<window::Window, std::string>(*this);
 }
 
-GLFWWindow::~GLFWWindow()
+void GLFWWindow::shutdown()
 {
     if (!m_glfwHandle)
     {
@@ -176,28 +217,28 @@ void GLFWWindow::setWindowIcon(const std::string& _path, int _width, int _height
 
 void GLFWWindow::resetWindowIcon() { glfwSetWindowIcon(m_glfwHandle, 0, nullptr); }
 
-void GLFWWindow::setCursorMode(core::CursorMode _mode)
+void GLFWWindow::setCursorMode(window::CursorMode _mode)
 {
     switch (_mode)
     {
-        case core::CursorMode::normal:
+        case window::CursorMode::normal:
             glfwSetInputMode(m_glfwHandle, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
             break;
-        case core::CursorMode::captured:
+        case window::CursorMode::captured:
 #ifndef __EMSCRIPTEN__
             glfwSetInputMode(m_glfwHandle, GLFW_CURSOR, GLFW_CURSOR_CAPTURED);
 #endif
             break;
-        case core::CursorMode::hidden:
+        case window::CursorMode::hidden:
             glfwSetInputMode(m_glfwHandle, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
             break;
-        case core::CursorMode::disabled:
+        case window::CursorMode::disabled:
             glfwSetInputMode(m_glfwHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
             break;
     }
 }
 
-void GLFWWindow::setCursorType(core::CursorType _type)
+void GLFWWindow::setCursorType(window::CursorType _type)
 {
     if (m_properties.cursorProperties.currentType == _type) return;
 
@@ -205,7 +246,7 @@ void GLFWWindow::setCursorType(core::CursorType _type)
     setCursorIcon(m_properties.cursorProperties.srcPaths[static_cast<int>(_type)]);
 }
 
-void GLFWWindow::setCursorTypeIcon(core::CursorType _type, const std::string& _path, int _width,
+void GLFWWindow::setCursorTypeIcon(window::CursorType _type, const std::string& _path, int _width,
                                    int _height)
 {
     if (m_properties.cursorProperties.srcPaths[static_cast<int>(_type)] == _path) return;

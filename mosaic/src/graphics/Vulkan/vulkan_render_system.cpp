@@ -8,7 +8,7 @@ namespace vulkan
 {
 
 pieces::RefResult<RenderSystem, std::string> VulkanRenderSystem::initialize(
-    const core::Window* _window)
+    const window::Window* _window)
 {
     createInstance(m_instance);
 

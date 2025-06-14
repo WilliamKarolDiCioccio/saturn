@@ -7,8 +7,8 @@ namespace platform
 namespace glfw
 {
 
-GLFWRawInputHandler::GLFWRawInputHandler(const core::Window* _window)
-    : m_window(const_cast<core::Window*>(_window)), input::RawInputHandler(_window) {};
+GLFWRawInputHandler::GLFWRawInputHandler(const window::Window* _window)
+    : m_window(const_cast<window::Window*>(_window)), input::RawInputHandler(_window) {};
 
 pieces::RefResult<input::RawInputHandler, std::string> GLFWRawInputHandler::initialize()
 {

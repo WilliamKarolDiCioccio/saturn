@@ -8,7 +8,7 @@ namespace webgpu
 {
 
 pieces::RefResult<RenderSystem, std::string> WebGPURenderSystem::initialize(
-    const core::Window* _window)
+    const window::Window* _window)
 {
     return pieces::OkRef<RenderSystem, std::string>(*this);
 }

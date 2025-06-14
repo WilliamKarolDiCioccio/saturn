@@ -16,6 +16,7 @@ Application::Application(const std::string& _appName)
     : m_exitRequested(false),
       m_appName(_appName),
       m_state(ApplicationState::uninitialized),
+      m_windowSystem(mosaic::window::WindowSystem::create()),
       m_inputSystem(std::make_unique<input::InputSystem>()),
       m_renderSystem(graphics::RenderSystem::create(graphics::RendererAPIType::vulkan))
 
@@ -32,16 +33,38 @@ pieces::RefResult<Application, std::string> Application::initialize()
         return pieces::ErrRef<Application, std::string>("Application already initialized");
     }
 
-    m_window = mosaic::core::Window::create("Testbed", glm::vec2(1280, 720));
+    m_windowSystem->initialize();
+
+    auto wndCreateResult = m_windowSystem->createWindow("MainWindow");
+
+    if (wndCreateResult.isErr())
+    {
+        return pieces::ErrRef<Application, std::string>(std::move(wndCreateResult.error()));
+    }
 
     m_inputSystem->initialize();
-    m_renderSystem->initialize(m_window.get());
 
-    auto result = onInitialize();
+    auto inputCtxRegResult = m_inputSystem->registerWindow(wndCreateResult.unwrap());
 
-    if (result.has_value())
+    if (inputCtxRegResult.isErr())
     {
-        return pieces::ErrRef<Application, std::string>(std::move(result.value()));
+        return pieces::ErrRef<Application, std::string>(std::move(inputCtxRegResult.error()));
+    }
+
+    m_renderSystem->initialize(wndCreateResult.unwrap());
+
+    auto rndrCtxCreateRes = m_renderSystem->createContext(wndCreateResult.unwrap());
+
+    if (rndrCtxCreateRes.isErr())
+    {
+        return pieces::ErrRef<Application, std::string>(std::move(inputCtxRegResult.error()));
+    }
+
+    auto userInitResult = onInitialize();
+
+    if (userInitResult.has_value())
+    {
+        return pieces::ErrRef<Application, std::string>(std::move(userInitResult.value()));
     }
 
     m_state = ApplicationState::initialized;
@@ -58,6 +81,7 @@ pieces::RefResult<Application, std::string> Application::update()
 
     core::Timer::tick();
 
+    m_windowSystem->update();
     m_inputSystem->poll();
     m_renderSystem->render();
 
@@ -97,8 +121,9 @@ void Application::shutdown()
     {
         onShutdown();
 
-        m_inputSystem->shutdown();
         m_renderSystem->shutdown();
+        m_inputSystem->shutdown();
+        m_windowSystem->shutdown();
 
         m_state = ApplicationState::shutdown;
     }

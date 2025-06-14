@@ -11,10 +11,10 @@ namespace mosaic
 namespace input
 {
 
-RawInputHandler::RawInputHandler(const core::Window* _window)
+RawInputHandler::RawInputHandler(const window::Window* _window)
     : m_nativeHandle(_window->getNativeHandle()), m_isActive(false) {};
 
-std::unique_ptr<RawInputHandler> RawInputHandler::create(core::Window* _window)
+std::unique_ptr<RawInputHandler> RawInputHandler::create(window::Window* _window)
 {
 #if defined(MOSAIC_PLATFORM_DESKTOP) || defined(MOSAIC_PLATFORM_WEB)
     return std::make_unique<platform::glfw::GLFWRawInputHandler>(_window);

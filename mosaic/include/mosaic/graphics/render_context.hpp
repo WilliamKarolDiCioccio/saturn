@@ -2,7 +2,7 @@
 
 #include <pieces/result.hpp>
 
-#include "mosaic/core/window.hpp"
+#include "mosaic/window/window.hpp"
 
 #include "buffer.hpp"
 #include "texture.hpp"
@@ -29,11 +29,11 @@ class RenderSystem;
 class RenderContext
 {
    protected:
-    const core::Window* m_window;
+    const window::Window* m_window;
     RenderContextSettings m_settings;
 
    public:
-    RenderContext(const core::Window* _window, const RenderContextSettings& _settings);
+    RenderContext(const window::Window* _window, const RenderContextSettings& _settings);
     virtual ~RenderContext() = default;
 
    public:

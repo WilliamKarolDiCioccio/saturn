@@ -16,7 +16,7 @@ namespace graphics
 namespace webgpu
 {
 
-WebGPURenderContext::WebGPURenderContext(const core::Window* _window,
+WebGPURenderContext::WebGPURenderContext(const window::Window* _window,
                                          const RenderContextSettings& _settings)
     : m_instance(nullptr),
       m_surface(nullptr),

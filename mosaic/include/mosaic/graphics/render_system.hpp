@@ -6,7 +6,7 @@
 #include <pieces/result.hpp>
 
 #include "mosaic/defines.hpp"
-#include "mosaic/core/window.hpp"
+#include "mosaic/window/window.hpp"
 
 #include "render_context.hpp"
 
@@ -26,7 +26,7 @@ class MOSAIC_API RenderSystem
 {
    private:
     RendererAPIType m_apiType;
-    std::unordered_map<const core::Window*, std::unique_ptr<RenderContext>> m_contexts;
+    std::unordered_map<const window::Window*, std::unique_ptr<RenderContext>> m_contexts;
 
    public:
     RenderSystem(RendererAPIType _apiType) : m_apiType(_apiType) {};
@@ -41,11 +41,11 @@ class MOSAIC_API RenderSystem
 
    public:
     virtual pieces::RefResult<RenderSystem, std::string> initialize(
-        const core::Window* _window) = 0;
+        const window::Window* _window) = 0;
     virtual void shutdown() = 0;
 
-    pieces::Result<RenderContext*, std::string> createContext(const core::Window* _window);
-    void destroyContext(const core::Window* _window);
+    pieces::Result<RenderContext*, std::string> createContext(const window::Window* _window);
+    void destroyContext(const window::Window* _window);
 
     // createMaterial()
     // createShader()
@@ -71,7 +71,7 @@ class MOSAIC_API RenderSystem
         }
     }
 
-    inline RenderContext* getContext(const core::Window* _window) const
+    inline RenderContext* getContext(const window::Window* _window) const
     {
         if (m_contexts.find(_window) != m_contexts.end())
         {

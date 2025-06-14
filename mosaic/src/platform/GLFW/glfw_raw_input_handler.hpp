@@ -25,10 +25,10 @@ namespace glfw
 class GLFWRawInputHandler : public input::RawInputHandler
 {
    private:
-    core::Window* m_window;
+    window::Window* m_window;
 
    public:
-    GLFWRawInputHandler(const core::Window* window);
+    GLFWRawInputHandler(const window::Window* window);
     ~GLFWRawInputHandler() override = default;
 
    public:
