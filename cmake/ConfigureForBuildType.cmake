@@ -30,6 +30,7 @@ function(configure_for_build_type target)
                       # virtual
               /w14826 # Conversion from 'type1' to 'type2' is sign-extended
               /w14928 # Illegal copy-initialization
+              /Zc:preprocessor # C++ 20 conformant preprocessor
     )
   elseif(EMSCRIPTEN)
     target_compile_options(
