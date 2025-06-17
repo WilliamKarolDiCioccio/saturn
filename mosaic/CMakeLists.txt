@@ -14,9 +14,9 @@ set(FRAMEWORK_SRC
     "src/window/window_system.cpp"
     # Input
     "src/input/input_system.cpp"
-    "src/input/input_arena.cpp"
-    "src/input/raw_input_handler.cpp"
     "src/input/input_context.cpp"
+    "src/input/sources/mouse_input_source.cpp"
+    "src/input/sources/keyboard_input_source.cpp"
     # Graphics
     "src/graphics/render_context.cpp"
     "src/graphics/render_system.cpp"
@@ -30,7 +30,6 @@ if(ANDROID)
     FRAMEWORK_SRC
     "src/platform/AGDK/agdk_window.cpp"
     "src/platform/AGDK/agdk_window_system.cpp"
-    "src/platform/AGDK/agdk_raw_input_handler.cpp"
     "src/platform/AGDK/agdk_platform.cpp"
     "src/external/game_activity.cpp")
 else()
@@ -40,9 +39,13 @@ else()
     list(APPEND FRAMEWORK_SRC "src/platform/Emscripten/emscripten_platform.cpp")
   endif()
 
-  list(APPEND FRAMEWORK_SRC "src/platform/GLFW/glfw_window.cpp"
-       "src/platform/GLFW/glfw_window_system.cpp"
-       "src/platform/GLFW/glfw_raw_input_handler.cpp")
+  list(
+    APPEND
+    FRAMEWORK_SRC
+    "src/platform/GLFW/glfw_window.cpp"
+    "src/platform/GLFW/glfw_window_system.cpp"
+    "src/platform/GLFW/glfw_keyboard_input_source.cpp"
+    "src/platform/GLFW/glfw_mouse_input_source.cpp")
 endif()
 
 if(NOT EMSCRIPTEN)
@@ -104,7 +107,7 @@ else()
   if(CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_compile_definitions(
       mosaic
-      PRIVATE WIN32_LEAN_AND_MEAN GLFW_EXPOSE_NATIVE_WIN32 VK_NO_PROTOTYPES
+      PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX GLFW_EXPOSE_NATIVE_WIN32 VK_NO_PROTOTYPES
               VOLK_STATIC_DEFINES VK_USE_PLATFORM_WIN32_KHR
               WEBGPU_CPP_IMPLEMENTATION)
   elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")

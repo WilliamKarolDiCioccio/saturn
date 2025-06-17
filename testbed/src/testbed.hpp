@@ -1,6 +1,3 @@
-#include <iostream>
-#include <memory>
-
 #include <mosaic/core/application.hpp>
 #include <mosaic/core/logger.hpp>
 #include <mosaic/core/timer.hpp>

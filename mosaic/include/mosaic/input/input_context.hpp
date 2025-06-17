@@ -1,10 +1,15 @@
 #pragma once
 
+#include <optional>
 #include <fstream>
 #include <nlohmann/json.hpp>
 
 #include "action.hpp"
-#include "input_arena.hpp"
+
+#include "mosaic/core/logger.hpp"
+#include "sources/input_source.hpp"
+#include "sources/mouse_input_source.hpp"
+#include "sources/keyboard_input_source.hpp"
 
 namespace mosaic
 {
@@ -16,51 +21,43 @@ namespace input
  *
  * `InputContext`'s responsibilities include:
  *
- * - Registering and unregistering actions, which are high-level abstractions of input events.
+ * - Managing input sources, such as mouse and keyboard, to capture input events.
  *
- * - Allowing for dyamic remapping of virtual keys and buttons to their GLFW equivalents.
+ * - Managing actions, which are high-level abstractions of input events.
  *
- * - Allowing for easy serialization and deserialization of virtual key/button mappings in JSON
- * format.
+ * - Dynamic mapping and serialization/deserialization of virtual keys and buttons to their native
+ * equivalents.
  *
  * - Improving performance by caching input and action states.
  *
  * @note Due to their common and limited usage some input events can also be checked outside of the
  * action system. For example, mouse cursor and wheel have dedicated getters.
  *
- * @see InputArena
  * @see Action
+ * @see MouseInputSource
+ * @see KeyboardInputSource
  */
 class MOSAIC_API InputContext
 {
    private:
-    // Underlying for input processing
-    std::unique_ptr<InputArena> m_arena;
+    const window::Window* m_window;
 
-    // Virtual keys and buttons mapped to their GLFW equivalents
+    // Input sources
+    std::unique_ptr<MouseInputSource> m_mouseSource;
+    std::unique_ptr<KeyboardInputSource> m_keyboardInputSource;
+
+    // Virtual keys and buttons mapped to their native equivalents
     std::unordered_map<std::string, KeyboardKey> m_virtualKeyboardKeys;
     std::unordered_map<std::string, MouseButton> m_virtualMouseButtons;
 
-    // Bound actions triggers and cache
+    // Bound actions triggers
     std::unordered_map<std::string, Action> m_actions;
 
     // Cache
-    glm::vec2 m_wheelOffset;
-    glm::vec2 m_averagedWheelDeltas;
-    glm::vec2 m_wheelSpeed;
-    glm::vec2 m_wheelAccelleration;
-    glm::vec2 m_cursorPosition;
-    glm::vec2 m_cursorDelta;
-    glm::vec2 m_averagedCursorDeltas;
-    glm::vec2 m_cursorSpeed;
-    double m_cursorLinearSpeed;
-    glm::vec2 m_cursorAccelleration;
-    double m_cursorLinearAccelleration;
-    MovementDirection m_cursorMovementDirection;
     std::unordered_map<std::string, bool> m_triggeredActionsCache;
 
    public:
-    InputContext(window::Window* _window);
+    InputContext(const window::Window* _window) : m_window(_window) {};
 
     InputContext(InputContext&) = delete;
     InputContext& operator=(InputContext&) = delete;
@@ -78,35 +75,119 @@ class MOSAIC_API InputContext
     void updateVirtualKeyboardKeys(const std::unordered_map<std::string, KeyboardKey>&& _map);
     void updateVirtualMouseButtons(const std::unordered_map<std::string, MouseButton>&& _map);
 
-    void registerActions(const std::unordered_map<std::string, Action>&& _actions);
+    void registerActions(const std::vector<Action>&& _actions);
     void unregisterActions(const std::vector<std::string>&& _name);
-    bool isActionTriggered(const std::string& _name);
 
-    inline const glm::vec2 getWheelOffset() const { return m_wheelOffset; }
+    [[nodiscard]] bool isActionTriggered(const std::string& _name, bool _onlyCurrPoll = true);
 
-    inline const glm::vec2 getAveragedWheelDeltas() const { return m_averagedWheelDeltas; }
+    [[nodiscard]] KeyboardKey translateKey(const std::string& _key) const;
+    [[nodiscard]] MouseButton translateButton(const std::string& _button) const;
 
-    inline const glm::vec2 getWheelSpeed() const { return m_wheelSpeed; }
-
-    inline const glm::vec2 getWheelAccelleration() const { return m_wheelAccelleration; }
-
-    inline const glm::vec2 getCursorPosition() const { return m_cursorPosition; }
-
-    inline const glm::vec2 getCursorDelta() const { return m_cursorDelta; }
-
-    inline const glm::vec2 getAveragedCursorDeltas() const { return m_averagedCursorDeltas; }
-
-    inline const glm::vec2 getCursorSpeed() const { return m_cursorSpeed; }
-
-    inline double getCursorLinearSpeed() const { return m_cursorLinearSpeed; }
-
-    inline const glm::vec2 getCursorAccelleration() const { return m_cursorAccelleration; }
-
-    inline double getCursorLinearAccelleration() const { return m_cursorLinearAccelleration; }
-
-    inline MovementDirection getCursorMovementDirection() const
+    template <typename T>
+    pieces::Result<T*, std::string> addSource()
     {
-        return m_cursorMovementDirection;
+        if constexpr (std::is_same_v<T, MouseInputSource>)
+        {
+            if (m_mouseSource != nullptr)
+            {
+                MOSAIC_WARN("Mouse input source already exists.");
+                return pieces::Ok<T*, std::string>(m_mouseSource.get());
+            }
+
+            m_mouseSource = MouseInputSource::create(const_cast<window::Window*>(m_window));
+
+            auto result = m_mouseSource->initialize();
+
+            if (result.isErr())
+            {
+                MOSAIC_ERROR("Failed to initialize mouse input source: {}", result.error());
+                return pieces::Err<T*, std::string>(std::move(result.error()));
+            }
+
+            return pieces::Ok<T*, std::string>(m_mouseSource.get());
+        }
+        else if constexpr (std::is_same_v<T, KeyboardInputSource>)
+        {
+            if (m_keyboardInputSource != nullptr)
+            {
+                MOSAIC_WARN("Keyboard input source already exists.");
+                return pieces::Ok<T*, std::string>(m_keyboardInputSource.get());
+            }
+
+            m_keyboardInputSource =
+                KeyboardInputSource::create(const_cast<window::Window*>(m_window));
+
+            auto result = m_keyboardInputSource->initialize();
+
+            if (result.isErr())
+            {
+                MOSAIC_ERROR("Failed to initialize keyboard input source: {}", result.error());
+                return pieces::Err<T*, std::string>(std::move(result.error()));
+            }
+
+            return pieces::Ok<T*, std::string>(m_keyboardInputSource.get());
+        }
+        else
+        {
+            static_assert(false, "Unsupported input source type");
+        }
+    }
+
+    template <typename T>
+    void removeSource()
+    {
+        if constexpr (std::is_same_v<T, MouseInputSource>)
+        {
+            if (!m_mouseSource) return;
+
+            m_mouseSource->shutdown();
+            m_mouseSource.reset();
+        }
+        else if constexpr (std::is_same_v<T, KeyboardInputSource>)
+        {
+            if (!m_keyboardInputSource) return;
+
+            m_keyboardInputSource->shutdown();
+            m_keyboardInputSource.reset();
+        }
+        else
+        {
+            static_assert(false, "Unsupported input source type");
+        }
+    }
+
+    template <typename T>
+    [[nodiscard]] inline bool hasSource()
+    {
+        if constexpr (std::is_same_v<T, MouseInputSource>)
+        {
+            return m_mouseSource != nullptr;
+        }
+        else if constexpr (std::is_same_v<T, KeyboardInputSource>)
+        {
+            return m_keyboardInputSource != nullptr;
+        }
+        else
+        {
+            static_assert(false, "Unsupported input source type");
+        }
+    }
+
+    template <typename T>
+    [[nodiscard]] inline auto getSource() -> T*
+    {
+        if constexpr (std::is_same_v<T, MouseInputSource>)
+        {
+            return m_mouseSource.get();
+        }
+        else if constexpr (std::is_same_v<T, KeyboardInputSource>)
+        {
+            return m_keyboardInputSource.get();
+        }
+        else
+        {
+            static_assert(false, "Unsupported input source type");
+        }
     }
 };
 

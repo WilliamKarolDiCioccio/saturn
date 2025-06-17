@@ -1,6 +1,8 @@
 #pragma once
 
+#include <string>
 #include <chrono>
+
 #include <glm/vec2.hpp>
 #include <glm/geometric.hpp>
 
@@ -11,10 +13,24 @@ namespace mosaic
 namespace input
 {
 
-using namespace std::chrono_literals;
+/**
+ * @brief The `InputEventType` enum class defines the types of input events that can be generated.
+ */
+enum class InputEventType : uint32_t
+{
+    none = 0,
+    start = 1 << 0,
+    end = 1 << 0,
+    standalone = 1 << 2,
+};
 
-// Keyboard keys and mouse buttons share the same possible states, so we can use the same enum.
-enum class KeyButtonState : uint32_t
+MOSAIC_DEFINE_ENUM_FLAGS_OPERATORS(InputEventType)
+
+/**
+ * @brief The `ActionableState` enum class defines the possible states for buttons, keys, or other
+ * actionable input elements. It uses bit flags to allow combinations of states.
+ */
+enum class ActionableState : uint32_t
 {
     none = 0,
     release = 1 << 0,
@@ -23,91 +39,145 @@ enum class KeyButtonState : uint32_t
     double_press = 1 << 3
 };
 
-MOSAIC_DEFINE_ENUM_FLAGS_OPERATORS(KeyButtonState)
+MOSAIC_DEFINE_ENUM_FLAGS_OPERATORS(ActionableState)
+
+/**
+ * @brief The `GestureType` enum class defines the types of gestures that can be recognized. It uses
+ * bit flags to allow combinations of gesture types.
+ */
+enum class GestureType : uint32_t
+{
+    none = 0,
+    pan = 1 << 1,
+    pinch = 1 << 2,
+    rotate = 1 << 3,
+};
+
+MOSAIC_DEFINE_ENUM_FLAGS_OPERATORS(GestureType)
+
+/**
+ * @brief The `GestureDirection` enum class defines the possible movement directions for mouse and
+ * touch drag events. It uses bit flags to allow combinations of directions.
+ */
+enum GestureDirection : uint32_t
+{
+    none = 0,
+    up = 1 << 0,
+    down = 1 << 1,
+    left = 1 << 2,
+    right = 1 << 3
+};
+
+MOSAIC_DEFINE_ENUM_FLAGS_OPERATORS(GestureDirection)
 
 /**
  * @brief The `InputEventMetadata` struct contains meta-data for input events.
- *
- * It's the `InputArena`'s responsibility to fill this struct with the correct data.
- *
- * @see InputArena
  */
 struct InputEventMetadata
 {
     std::chrono::time_point<std::chrono::high_resolution_clock> timestamp;
     std::chrono::duration<double> duration;
-    uint64_t pollCount = 0;
+    uint64_t pollCount;
+    InputEventType type;
 
     InputEventMetadata(std::chrono::time_point<std::chrono::high_resolution_clock> _now,
-                       std::chrono::duration<double> _duration, uint64_t _pollCount = 0)
-        : timestamp(_now), duration(_duration), pollCount(_pollCount) {};
+                       std::chrono::duration<double> _duration, uint64_t _pollCount = 0,
+                       InputEventType _type = InputEventType::standalone)
+        : timestamp(_now), duration(_duration), pollCount(_pollCount), type(_type) {};
 };
 
-struct KeyboardKeyEvent
-{
-    InputEventMetadata metadata;
-    KeyButtonState state;
-    KeyButtonState lastSignificantState;
-
-    KeyboardKeyEvent()
-        : metadata(std::chrono::high_resolution_clock::now(), 0ms, 0),
-          state(KeyButtonState::none),
-          lastSignificantState(KeyButtonState::none) {};
-
-    KeyboardKeyEvent(KeyButtonState _state, KeyButtonState _lastSignificantState,
-                     std::chrono::time_point<std::chrono::high_resolution_clock> _now,
-                     uint64_t _pollCount, std::chrono::duration<double> _duration = 0ms)
-        : metadata(_now, _duration, _pollCount),
-          state(_state),
-          lastSignificantState(_lastSignificantState) {};
-};
-
+/**
+ * @brief The `MouseButtonEvent` struct contains data and meta-data for mouse button events.
+ *
+ * It is fired when a mouse button shifts from one state to another of those defined in
+ * `ActionableState`.
+ *
+ * @see ActionableState
+ */
 struct MouseButtonEvent
 {
     InputEventMetadata metadata;
-    KeyButtonState state;
-    KeyButtonState lastSignificantState;
+    ActionableState state;
 
     MouseButtonEvent()
-        : metadata(std::chrono::high_resolution_clock::now(), 0ms, 0),
-          state(KeyButtonState::none),
-          lastSignificantState(KeyButtonState::none) {};
+        : metadata(std::chrono::high_resolution_clock::now(), std::chrono::milliseconds(0), 0,
+                   InputEventType::standalone),
+          state(ActionableState::none) {};
 
-    MouseButtonEvent(KeyButtonState _state, KeyButtonState _lastSignificantState,
+    MouseButtonEvent(ActionableState _state,
                      std::chrono::time_point<std::chrono::high_resolution_clock> _now,
-                     std::chrono::duration<double> _duration = 0ms)
-        : metadata(_now, _duration), state(_state), lastSignificantState(_lastSignificantState) {};
+                     uint64_t _pollCount,
+                     std::chrono::duration<double> _duration = std::chrono::milliseconds(0))
+        : metadata(_now, _duration, _pollCount), state(_state) {};
 };
 
-struct MouseCursorPosEvent
+/**
+ * @brief The `MouseCursorMoveEnd` struct contains data and meta-data for mouse cursor movement end.
+ *
+ * It is fired when a mouse cursor move operations starts or ends, which is defined as
+ * a change in the cursor's position by a certain threshold in a certain duration.
+ */
+struct MouseCursorMoveEvent
 {
     InputEventMetadata metadata;
-    glm::vec2 rawPos;
-    glm::vec2 lastRawPos;
+    glm::vec2 position;
+    glm::vec2 delta;
 
-    MouseCursorPosEvent()
-        : metadata(std::chrono::high_resolution_clock::now(), 0ms, 0),
-          rawPos(0.0f),
-          lastRawPos(0.0f) {};
+    MouseCursorMoveEvent()
+        : metadata(std::chrono::high_resolution_clock::now(), std::chrono::milliseconds(0), 0),
+          position(0.0f),
+          delta(0.0f) {};
 
-    MouseCursorPosEvent(glm::vec2 _rawPos, glm::vec2 _lastRawPos,
-                        std::chrono::time_point<std::chrono::high_resolution_clock> _now,
-                        uint64_t _pollCount, std::chrono::duration<double> _duration = 0ms)
-        : metadata(_now, _duration, _pollCount), rawPos(_rawPos), lastRawPos(_lastRawPos) {};
+    MouseCursorMoveEvent(glm::vec2 _position, glm::vec2 _delta,
+                         std::chrono::time_point<std::chrono::high_resolution_clock> _now,
+                         uint64_t _pollCount, InputEventType _type,
+                         std::chrono::duration<double> _duration = std::chrono::milliseconds(0))
+        : metadata(_now, _duration, _pollCount, _type), position(_position), delta(_delta) {};
 };
 
+/**
+ * @brief The `MouseWheelScrollEnd` struct contains data and meta-data for mouse wheel scroll end
+ * events.
+ *
+ * It is fired when a mouse wheel scroll operation starts or ends, which is defined as a change in
+ * the scroll offset by a certain threshold in a certain duration.
+ */
 struct MouseWheelScrollEvent
 {
     InputEventMetadata metadata;
-    glm::vec2 rawScrollOffset;
+    glm::vec2 offset;
+    glm::vec2 delta;
 
     MouseWheelScrollEvent()
-        : metadata(std::chrono::high_resolution_clock::now(), 0ms, 0), rawScrollOffset(0.0f) {};
+        : metadata(std::chrono::high_resolution_clock::now(), std::chrono::milliseconds(0), 0),
+          offset(0.0f),
+          delta(0.0f) {};
 
-    MouseWheelScrollEvent(glm::vec2 _rawScrollOffset,
+    MouseWheelScrollEvent(glm::vec2 _offset, glm::vec2 _delta,
                           std::chrono::time_point<std::chrono::high_resolution_clock> _now,
-                          uint64_t _pollCount, std::chrono::duration<double> _duration = 0ms)
-        : metadata(_now, _duration, _pollCount), rawScrollOffset(_rawScrollOffset) {};
+                          uint64_t _pollCount, InputEventType _type,
+                          std::chrono::duration<double> _duration = std::chrono::milliseconds(0))
+        : metadata(_now, _duration, _pollCount, _type), offset(_offset), delta(_delta) {};
+};
+
+/**
+ * @brief The `KeyboardKeyEvent` struct contains data and meta-data for keyboard key events.
+ */
+struct KeyboardKeyEvent
+{
+    InputEventMetadata metadata;
+    ActionableState state;
+
+    KeyboardKeyEvent()
+        : metadata(std::chrono::high_resolution_clock::now(), std::chrono::milliseconds(0), 0,
+                   InputEventType::standalone),
+          state(ActionableState::none) {};
+
+    KeyboardKeyEvent(ActionableState _state,
+                     std::chrono::time_point<std::chrono::high_resolution_clock> _now,
+                     uint64_t _pollCount,
+                     std::chrono::duration<double> _duration = std::chrono::milliseconds(0))
+        : metadata(_now, _duration, _pollCount), state(_state) {};
 };
 
 } // namespace input

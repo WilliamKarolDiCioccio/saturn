@@ -1,5 +1,9 @@
 #include "testbed.hpp"
 
+#include <chrono>
+
+using namespace std::chrono_literals;
+
 namespace testbed
 {
 
@@ -20,89 +24,93 @@ std::optional<std::string> TestbedApplication::onInitialize()
         {"resetCamera", input::KeyboardKey::key_r},
     });
 
+    inputContext->addSource<input::MouseInputSource>();
+    inputContext->addSource<input::KeyboardInputSource>();
+
     inputContext->registerActions({
-        {
+        input::Action{
             "moveLeft",
+            "Move the camera left.",
+            [](input::InputContext* ctx)
             {
-                input::KeyboardKeyActionTrigger{
-                    {"moveLeft"},
-                    input::KeyboardKey::key_a,
-                    [](const std::unordered_map<std::string, input::KeyboardKeyEvent>& events)
-                    {
-                        return utils::hasFlag(events.at("moveLeft").state,
-                                              input::KeyButtonState::hold);
-                    },
-                },
+                auto src = ctx->getSource<input::KeyboardInputSource>();
+
+                const auto srcPollCount = src->getPollCount();
+                const auto event = src->getKeyEvent(ctx->translateKey("moveLeft"));
+
+                return event.metadata.pollCount == srcPollCount &&
+                       utils::hasFlag(event.state, input::ActionableState::hold);
             },
         },
-        {
+        input::Action{
             "moveRight",
+            "Move the camera right.",
+            [](input::InputContext* ctx)
             {
-                input::KeyboardKeyActionTrigger{
-                    {"moveRight"},
-                    input::KeyboardKey::key_d,
-                    [](const std::unordered_map<std::string, input::KeyboardKeyEvent>& events)
-                    {
-                        return utils::hasFlag(events.at("moveRight").state,
-                                              input::KeyButtonState::hold);
-                    },
-                },
+                auto src = ctx->getSource<input::KeyboardInputSource>();
+
+                const auto srcPollCount = src->getPollCount();
+                const auto event = src->getKeyEvent(ctx->translateKey("moveRight"));
+
+                return event.metadata.pollCount == srcPollCount &&
+                       utils::hasFlag(event.state, input::ActionableState::hold);
             },
         },
-        {
+        input::Action{
             "moveUp",
+            "Move the camera up.",
+            [](input::InputContext* ctx)
             {
-                input::KeyboardKeyActionTrigger{
-                    {"moveUp"},
-                    input::KeyboardKey::key_w,
-                    [](const std::unordered_map<std::string, input::KeyboardKeyEvent>& events)
-                    {
-                        return utils::hasFlag(events.at("moveUp").state,
-                                              input::KeyButtonState::hold);
-                    },
-                },
+                auto src = ctx->getSource<input::KeyboardInputSource>();
+
+                const auto srcPollCount = src->getPollCount();
+                const auto event = src->getKeyEvent(ctx->translateKey("moveUp"));
+
+                return event.metadata.pollCount == srcPollCount &&
+                       utils::hasFlag(event.state, input::ActionableState::hold);
             },
         },
-        {
+        input::Action{
             "moveDown",
+            "Move the camera down.",
+            [](input::InputContext* ctx)
             {
-                input::KeyboardKeyActionTrigger{
-                    {"moveDown"},
-                    input::KeyboardKey::key_s,
-                    [](const std::unordered_map<std::string, input::KeyboardKeyEvent>& events)
-                    {
-                        return utils::hasFlag(events.at("moveDown").state,
-                                              input::KeyButtonState::hold);
-                    },
-                },
+                auto src = ctx->getSource<input::KeyboardInputSource>();
+
+                const auto srcPollCount = src->getPollCount();
+                const auto event = src->getKeyEvent(ctx->translateKey("moveDown"));
+
+                return event.metadata.pollCount == srcPollCount &&
+                       utils::hasFlag(event.state, input::ActionableState::hold);
             },
         },
-        {
+        input::Action{
             "resetCamera",
+            "Reset the camera position.",
+            [](input::InputContext* ctx)
             {
-                input::KeyboardKeyActionTrigger{
-                    {"resetCamera"},
-                    input::KeyboardKey::key_r,
-                    [](const std::unordered_map<std::string, input::KeyboardKeyEvent>& events)
-                    {
-                        return utils::hasFlag(events.at("resetCamera").state,
-                                              input::KeyButtonState::press);
-                    },
-                },
+                auto src = ctx->getSource<input::KeyboardInputSource>();
+
+                const auto srcPollCount = src->getPollCount();
+                const auto event = src->getKeyEvent(ctx->translateKey("resetCamera"));
+
+                return event.metadata.pollCount == srcPollCount &&
+                       utils::hasFlag(event.state, input::ActionableState::release) &&
+                       event.metadata.duration > 2500ms && event.metadata.duration < 5000ms;
             },
         },
-        {
+        input::Action{
             "closeApp",
+            "Close the application.",
+            [](input::InputContext* ctx)
             {
-                input::KeyboardKeyActionTrigger{
-                    {"closeApp"},
-                    input::KeyboardKey::key_escape,
-                    [](const std::unordered_map<std::string, input::KeyboardKeyEvent>& events)
-                    {
-                        return utils::hasFlag(events.at("closeApp").state,
-                                              input::KeyButtonState::double_press);
-                    },
-                },
+                auto src = ctx->getSource<input::KeyboardInputSource>();
+
+                const auto srcPollCount = src->getPollCount();
+                const auto event = src->getKeyEvent(ctx->translateKey("closeApp"));
+
+                return event.metadata.pollCount == srcPollCount &&
+                       utils::hasFlag(event.state, input::ActionableState::double_press);
             },
         },
     });

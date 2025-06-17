@@ -5,52 +5,35 @@
 #include <vector>
 #include <unordered_map>
 
-#include "input_mappings.hpp"
 #include "events.hpp"
+#include "mappings.hpp"
 
 namespace mosaic
 {
 namespace input
 {
 
-struct KeyboardKeyActionTrigger
-{
-    std::vector<std::string> requiredVirtualKeys;
-    KeyboardKey key;
-    std::function<bool(const std::unordered_map<std::string, KeyboardKeyEvent>&)> callback;
-};
-
-struct MouseButtonActionTrigger
-{
-    std::vector<std::string> requiredVirtualKeys;
-    MouseButton button;
-    std::function<bool(const std::unordered_map<std::string, MouseButtonEvent>&)> callback;
-};
-
-struct MouseCursorPosActionTrigger
-{
-    std::function<bool(const MouseCursorPosEvent&)> callback;
-};
-
-struct MouseWheelScrollActionTrigger
-{
-    std::function<bool(const MouseWheelScrollEvent&)> callback;
-};
+class InputContext;
 
 /**
- * @brief This using declares a variant type that can hold any of the action trigger types.
+ * @brief Represents an action that can be triggered by user input.
  *
- * This allows for a lightweight way to handle different types of action triggers without needing to
- * create a class hierarchy or use polymorphism.
+ * An action consists of a name, a description, and a trigger function.
+ * The trigger function takes an InputContext pointer and returns a boolean indicating whether the
+ * action was triggered.
  */
-using ActionTrigger = std::variant<KeyboardKeyActionTrigger, MouseButtonActionTrigger,
-                                   MouseCursorPosActionTrigger, MouseWheelScrollActionTrigger>;
+struct Action
+{
+    std::string name;
+    std::string description;
+    std::function<bool(InputContext*)> trigger;
 
-/**
- * @brief An action can be simply defined as a vector of action triggers that all need to be
- * satisfied in order to trigger the action.
- */
-using Action = std::vector<ActionTrigger>;
+    Action() : name(""), description(""), trigger([](const InputContext*) { return false; }) {};
+
+    Action(const std::string& name, const std::string& description,
+           std::function<bool(InputContext*)> trigger)
+        : name(name), description(description), trigger(trigger) {};
+};
 
 } // namespace input
 } // namespace mosaic

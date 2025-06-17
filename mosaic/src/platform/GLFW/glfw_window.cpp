@@ -225,8 +225,10 @@ void GLFWWindow::setCursorMode(window::CursorMode _mode)
             glfwSetInputMode(m_glfwHandle, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
             break;
         case window::CursorMode::captured:
-#ifndef __EMSCRIPTEN__
+#ifndef MOSAIC_PLATFORM_EMSCRIPTEN
             glfwSetInputMode(m_glfwHandle, GLFW_CURSOR, GLFW_CURSOR_CAPTURED);
+#else
+            MOSAIC_ERROR("GLFW_CURSOR_CAPTURED is not supported in Emscripten builds.");
 #endif
             break;
         case window::CursorMode::hidden:

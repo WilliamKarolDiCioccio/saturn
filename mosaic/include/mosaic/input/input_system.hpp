@@ -32,8 +32,7 @@ namespace input
  * `getGlobalInputSystem()`. It is not meant to be instantiated directly.
  *
  * @see InputContext
- * @see InputArena
- * @see RawInputHandler
+ * @see InputSource
  * @see Window
  * @see https://www.glfw.org/documentation.html
  */
