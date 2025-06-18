@@ -10,7 +10,7 @@ namespace glfw
 GLFWMouseInputSource::GLFWMouseInputSource(window::Window* _window)
     : input::MouseInputSource(_window),
       m_nativeHandle(nullptr),
-      m_cumulativeWheelOffse(0.0f, 0.0f) {};
+      m_cumulativeWheelOffset(0.0f, 0.0f) {};
 
 pieces::RefResult<input::InputSource, std::string> GLFWMouseInputSource::initialize()
 {
@@ -18,12 +18,17 @@ pieces::RefResult<input::InputSource, std::string> GLFWMouseInputSource::initial
 
     m_isActive = glfwGetWindowAttrib(m_nativeHandle, GLFW_FOCUSED);
 
+    if (glfwRawMouseMotionSupported())
+    {
+        glfwSetInputMode(m_nativeHandle, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+    }
+
     m_window->registerWindowFocusCallback([this](int _focused)
                                           { m_isActive = _focused == GLFW_TRUE; });
 
     m_window->registerWindowScrollCallback(
         [this](double xoffset, double yoffset)
-        { m_cumulativeWheelOffse += glm::vec2(xoffset, yoffset); });
+        { m_cumulativeWheelOffset += glm::vec2(xoffset, yoffset); });
 
     return pieces::OkRef<input::InputSource, std::string>(*this);
 }
@@ -32,7 +37,9 @@ void GLFWMouseInputSource::shutdown() {}
 
 void GLFWMouseInputSource::pollDevice()
 {
-    // Already polled by the window system
+    m_cumulativeWheelOffset = glm::vec2(0.0f); // Reset wheel offset for the next frame
+
+    // glfwPollEvents() is already called by the window manager, so we don't need to call it here.
 }
 
 input::InputAction GLFWMouseInputSource::queryButtonState(input::MouseButton _button) const
@@ -48,7 +55,7 @@ glm::vec2 GLFWMouseInputSource::queryCursorPosition() const
     return glm::vec2(xpos, ypos);
 }
 
-glm::vec2 GLFWMouseInputSource::queryWheelOffset() const { return m_cumulativeWheelOffse; }
+glm::vec2 GLFWMouseInputSource::queryWheelOffset() const { return m_cumulativeWheelOffset; }
 
 } // namespace glfw
 } // namespace platform
