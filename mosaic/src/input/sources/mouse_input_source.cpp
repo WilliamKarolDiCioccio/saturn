@@ -268,7 +268,7 @@ const glm::vec2 MouseInputSource::getWheelSpeed() const
     return averaged / timeSpan;
 }
 
-const glm::vec2 MouseInputSource::getWheelAccelleration() const
+const glm::vec2 MouseInputSource::getWheelAcceleration() const
 {
     if (m_mouseScrollWheelSamples.empty()) return glm::vec2(0.f);
 
@@ -323,7 +323,7 @@ double MouseInputSource::getCursorLinearSpeed() const
     return glm::length(getCursorSpeed()); // already scaled by sensitivity
 }
 
-const glm::vec2 MouseInputSource::getCursorAccelleration() const
+const glm::vec2 MouseInputSource::getCursorAcceleration() const
 {
     if (m_cursorPosSamples.empty()) return glm::vec2(0.f);
 
@@ -338,9 +338,9 @@ const glm::vec2 MouseInputSource::getCursorAccelleration() const
     return speed / timeSpan;
 }
 
-double MouseInputSource::getCursorLinearAccelleration() const
+double MouseInputSource::getCursorLinearAcceleration() const
 {
-    return glm::length(getCursorAccelleration());
+    return glm::length(getCursorAcceleration());
 }
 
 GestureDirection MouseInputSource::getCursorGestureDirection() const

@@ -99,14 +99,14 @@ class MOSAIC_API MouseInputSource : public InputSource
 
     [[nodiscard]] const glm::vec2 getAveragedWheelDeltas() const;
     [[nodiscard]] const glm::vec2 getWheelSpeed() const;
-    [[nodiscard]] const glm::vec2 getWheelAccelleration() const;
+    [[nodiscard]] const glm::vec2 getWheelAcceleration() const;
     [[nodiscard]] GestureDirection getCursorGestureDirection() const;
 
     [[nodiscard]] const glm::vec2 getAveragedCursorDeltas() const;
     [[nodiscard]] const glm::vec2 getCursorSpeed() const;
     [[nodiscard]] double getCursorLinearSpeed() const;
-    [[nodiscard]] const glm::vec2 getCursorAccelleration() const;
-    [[nodiscard]] double getCursorLinearAccelleration() const;
+    [[nodiscard]] const glm::vec2 getCursorAcceleration() const;
+    [[nodiscard]] double getCursorLinearAcceleration() const;
 
     [[nodiscard]] inline const MouseWheelScrollEvent& getWheelScrollEvent() const
     {
