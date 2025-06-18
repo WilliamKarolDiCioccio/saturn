@@ -66,6 +66,10 @@ class MOSAIC_API MouseInputSource : public InputSource
     glm::vec2 m_cursorPosition;
     glm::vec2 m_cursorDelta;
 
+    // Customizable parameters
+    glm::vec2 m_wheelSensitivity;
+    glm::vec2 m_cursorSensitivity;
+
    public:
     MouseInputSource(window::Window* _window);
     virtual ~MouseInputSource() = default;
@@ -80,9 +84,18 @@ class MOSAIC_API MouseInputSource : public InputSource
     void processInput() override;
 
     [[nodiscard]] inline const glm::vec2 getWheelOffset() const { return m_wheelOffset; }
-    [[nodiscard]] inline const glm::vec2 getWheelDelta() const { return m_wheelDelta; }
+
+    [[nodiscard]] inline const glm::vec2 getWheelDelta() const
+    {
+        return m_wheelDelta * m_wheelSensitivity;
+    }
+
     [[nodiscard]] inline const glm::vec2 getCursorPosition() const { return m_cursorPosition; }
-    [[nodiscard]] inline const glm::vec2 getCursorDelta() const { return m_cursorDelta; }
+
+    [[nodiscard]] inline const glm::vec2 getCursorDelta() const
+    {
+        return m_cursorDelta * m_cursorSensitivity;
+    }
 
     [[nodiscard]] const glm::vec2 getAveragedWheelDeltas() const;
     [[nodiscard]] const glm::vec2 getWheelSpeed() const;
@@ -126,6 +139,23 @@ class MOSAIC_API MouseInputSource : public InputSource
         -> decltype(m_mouseButtonEvents[0].data())
     {
         return m_mouseButtonEvents[static_cast<uint32_t>(_button)].data();
+    }
+
+    inline void setWheelSensitivity(const glm::vec2& _sensitivity)
+    {
+        m_wheelSensitivity = glm::clamp(_sensitivity, 0.1f, 10.f);
+    }
+
+    [[nodiscard]] inline const glm::vec2& getWheelSensitivity() const { return m_wheelSensitivity; }
+
+    inline void setCursorSensitivity(const glm::vec2& _sensitivity)
+    {
+        m_cursorSensitivity = glm::clamp(_sensitivity, 0.1f, 10.f);
+    }
+
+    [[nodiscard]] inline const glm::vec2& getCursorSensitivity() const
+    {
+        return m_cursorSensitivity;
     }
 
    protected:

@@ -16,7 +16,9 @@ MouseInputSource::MouseInputSource(window::Window* _window)
       m_wheelOffset(0.f),
       m_wheelDelta(0.f),
       m_cursorPosition(0.f),
-      m_cursorDelta(0.f)
+      m_cursorDelta(0.f),
+      m_wheelSensitivity(1.0f),
+      m_cursorSensitivity(1.0f)
 {
     auto currentTime = std::chrono::high_resolution_clock::now();
 
@@ -238,16 +240,17 @@ const glm::vec2 MouseInputSource::getAveragedWheelDeltas() const
     double xSum = 0.0;
     double ySum = 0.0;
 
+    glm::vec2 sum(0.f);
+
     for (size_t i = 0; i < m_mouseScrollWheelSamples.size(); ++i)
     {
-        xSum += m_mouseScrollWheelSamples[i].offset.x;
-        ySum += m_mouseScrollWheelSamples[i].offset.y;
+        // Offset is already a delta as wheel can scroll inifinitely
+        sum += m_mouseScrollWheelSamples[i].offset;
     }
 
-    return {
-        xSum / static_cast<double>(m_mouseScrollWheelSamples.size()),
-        ySum / static_cast<double>(m_mouseScrollWheelSamples.size()),
-    };
+    glm::vec2 averaged = sum / static_cast<float>(m_mouseScrollWheelSamples.size());
+
+    return averaged * m_wheelSensitivity;
 }
 
 const glm::vec2 MouseInputSource::getWheelSpeed() const
@@ -260,7 +263,9 @@ const glm::vec2 MouseInputSource::getWheelSpeed() const
 
     if (timeSpan == 0) return {0.0, 0.0};
 
-    return getAveragedWheelDeltas() / timeSpan;
+    glm::vec2 averaged = getAveragedWheelDeltas(); // already scaled by sensitivity
+
+    return averaged / timeSpan;
 }
 
 const glm::vec2 MouseInputSource::getWheelAccelleration() const
@@ -273,7 +278,7 @@ const glm::vec2 MouseInputSource::getWheelAccelleration() const
 
     if (timeSpan == 0) return glm::vec2(0.f);
 
-    auto speed = getAveragedWheelDeltas() / timeSpan;
+    glm::vec2 speed = getWheelSpeed(); // already scaled appropriately
 
     return speed / timeSpan;
 }
@@ -293,7 +298,9 @@ const glm::vec2 MouseInputSource::getAveragedCursorDeltas() const
         sum += currPos - lastPos;
     }
 
-    return sum / static_cast<float>(m_cursorPosSamples.size());
+    glm::vec2 averaged = sum / static_cast<float>(m_cursorPosSamples.size());
+
+    return averaged * m_cursorSensitivity;
 }
 
 const glm::vec2 MouseInputSource::getCursorSpeed() const
@@ -306,10 +313,15 @@ const glm::vec2 MouseInputSource::getCursorSpeed() const
 
     if (timeSpan == 0) return glm::vec2(0.f);
 
-    return getAveragedCursorDeltas() / timeSpan;
+    glm::vec2 averaged = getAveragedCursorDeltas(); // already scaled by sensitivity
+
+    return averaged / timeSpan;
 };
 
-double MouseInputSource::getCursorLinearSpeed() const { return glm::length(getCursorSpeed()); }
+double MouseInputSource::getCursorLinearSpeed() const
+{
+    return glm::length(getCursorSpeed()); // already scaled by sensitivity
+}
 
 const glm::vec2 MouseInputSource::getCursorAccelleration() const
 {
@@ -321,7 +333,7 @@ const glm::vec2 MouseInputSource::getCursorAccelleration() const
 
     if (timeSpan == 0) return glm::vec2(0.f);
 
-    const glm::vec2 speed = getAveragedCursorDeltas() / timeSpan;
+    const glm::vec2 speed = getCursorSpeed(); // already scaled by sensitivity
 
     return speed / timeSpan;
 }
