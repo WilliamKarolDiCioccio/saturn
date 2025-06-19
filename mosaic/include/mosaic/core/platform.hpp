@@ -73,6 +73,14 @@ class MOSAIC_API Platform
 
     [[nodiscard]] PlatformContext* getPlatformContext() { return m_platformContext.get(); }
 
+    virtual std::optional<bool> showQuestionDialog(const std::string& _title,
+                                                   const std::string& _message,
+                                                   bool _allowCancel = false) const = 0;
+    virtual void showInfoDialog(const std::string& _title, const std::string& _message) const = 0;
+    virtual void showWarningDialog(const std::string& _title,
+                                   const std::string& _message) const = 0;
+    virtual void showErrorDialog(const std::string& _title, const std::string& _message) const = 0;
+
    public:
     virtual pieces::RefResult<Platform, std::string> initialize() = 0;
     virtual pieces::RefResult<Platform, std::string> run() = 0;

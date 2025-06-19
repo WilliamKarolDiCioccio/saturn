@@ -142,6 +142,21 @@ void AGDKPlatform::resume()
 
 void AGDKPlatform::shutdown() { m_app->shutdown(); }
 
+std::optional<bool> AGDKPlatform::showQuestionDialog(const std::string& _title,
+                                                     const std::string& _message,
+                                                     bool _allowCancel) const
+{
+    return std::nullopt;
+}
+
+void AGDKPlatform::showInfoDialog(const std::string& _title, const std::string& _message) const {}
+
+void AGDKPlatform::showWarningDialog(const std::string& _title, const std::string& _message) const
+{
+}
+
+void AGDKPlatform::showErrorDialog(const std::string& _title, const std::string& _message) const {}
+
 } // namespace agdk
 } // namespace platform
 } // namespace mosaic
