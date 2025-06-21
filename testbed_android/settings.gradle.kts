@@ -19,5 +19,9 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Testbed"
+rootProject.name = "testbed"
+
 include(":app")
+include(":engine_bridge")
+
+project(":engine_bridge").projectDir = file("../mosaic_bridge_android")
