@@ -9,7 +9,6 @@ namespace agdk
 
 AGDKPlatformContext::AGDKPlatformContext()
     : m_activity(nullptr),
-      m_env(nullptr),
       m_assetManager(nullptr),
       m_currentWindow(nullptr),
       m_pendingWindow(nullptr),
@@ -21,7 +20,6 @@ void AGDKPlatformContext::setApp(android_app* _app)
     if (_app)
     {
         m_activity = _app->activity;
-        m_env = _app->activity->env;
         m_assetManager = _app->activity->assetManager;
         m_currentWindow = _app->window;
     }
@@ -146,16 +144,84 @@ std::optional<bool> AGDKPlatform::showQuestionDialog(const std::string& _title,
                                                      const std::string& _message,
                                                      bool _allowCancel) const
 {
-    return std::nullopt;
+    auto* helper = JNIHelper::getInstance();
+
+    JNIEnv* env = helper->getEnv();
+    if (!env) return std::nullopt;
+
+    jstring jTitle = helper->stringToJstring(_title);
+    jstring jMessage = helper->stringToJstring(_message);
+    jboolean jAllowCancel = static_cast<jboolean>(_allowCancel);
+
+    // See EngineBridge.showQuestionDialog(String title, String message, boolean allowCancel)
+    jobject jResult = helper->callStaticMethod<jobject>(
+        "com/mosaic/engine_bridge/EngineBridge", "showQuestionDialog",
+        "(Ljava/lang/String;Ljava/lang/String;Z)Ljava/lang/Boolean;", jTitle, jMessage,
+        jAllowCancel);
+
+    if (jTitle) env->DeleteLocalRef(jTitle);
+    if (jMessage) env->DeleteLocalRef(jMessage);
+    if (!jResult) return std::nullopt;
+
+    jclass booleanClass = env->FindClass("java/lang/Boolean");
+    jmethodID booleanValue = env->GetMethodID(booleanClass, "booleanValue", "()Z");
+
+    return env->CallBooleanMethod(jResult, booleanValue);
 }
 
-void AGDKPlatform::showInfoDialog(const std::string& _title, const std::string& _message) const {}
+void AGDKPlatform::showInfoDialog(const std::string& _title, const std::string& _message) const
+{
+    auto* helper = JNIHelper::getInstance();
+
+    JNIEnv* env = helper->getEnv();
+    if (!env) return;
+
+    jstring jTitle = helper->stringToJstring(_title);
+    jstring jMessage = helper->stringToJstring(_message);
+
+    // See EngineBridge.showInfoDialog(String title, String message)
+    helper->callStaticVoidMethod("com/mosaic/engine_bridge/EngineBridge", "showInfoDialog",
+                                 "(Ljava/lang/String;Ljava/lang/String;)V", jTitle, jMessage);
+
+    if (jTitle) env->DeleteLocalRef(jTitle);
+    if (jMessage) env->DeleteLocalRef(jMessage);
+}
 
 void AGDKPlatform::showWarningDialog(const std::string& _title, const std::string& _message) const
 {
+    auto* helper = JNIHelper::getInstance();
+
+    JNIEnv* env = helper->getEnv();
+    if (!env) return;
+
+    jstring jTitle = helper->stringToJstring(_title);
+    jstring jMessage = helper->stringToJstring(_message);
+
+    // See EngineBridge.showWarningDialog(String title, String message)
+    helper->callStaticVoidMethod("com/mosaic/engine_bridge/EngineBridge", "showWarningDialog",
+                                 "(Ljava/lang/String;Ljava/lang/String;)V", jTitle, jMessage);
+
+    if (jTitle) env->DeleteLocalRef(jTitle);
+    if (jMessage) env->DeleteLocalRef(jMessage);
 }
 
-void AGDKPlatform::showErrorDialog(const std::string& _title, const std::string& _message) const {}
+void AGDKPlatform::showErrorDialog(const std::string& _title, const std::string& _message) const
+{
+    auto* helper = JNIHelper::getInstance();
+
+    JNIEnv* env = helper->getEnv();
+    if (!env) return;
+
+    jstring jTitle = helper->stringToJstring(_title);
+    jstring jMessage = helper->stringToJstring(_message);
+
+    // See EngineBridge.showErrorDialog(String title, String message)
+    helper->callStaticVoidMethod("com/mosaic/engine_bridge/EngineBridge", "showErrorDialog",
+                                 "(Ljava/lang/String;Ljava/lang/String;)V", jTitle, jMessage);
+
+    if (jTitle) env->DeleteLocalRef(jTitle);
+    if (jMessage) env->DeleteLocalRef(jMessage);
+}
 
 } // namespace agdk
 } // namespace platform

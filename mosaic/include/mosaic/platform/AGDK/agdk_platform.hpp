@@ -7,6 +7,8 @@
 #include <game-text-input/gametextinput.h>
 #include <game-activity/native_app_glue/android_native_app_glue.h>
 
+#include "mosaic/platform/AGDK/jni_helper.hpp"
+
 namespace mosaic
 {
 namespace platform
@@ -18,7 +20,6 @@ class AGDKPlatformContext : public core::PlatformContext
 {
    private:
     GameActivity* m_activity;
-    JNIEnv* m_env = nullptr;
     AAssetManager* m_assetManager;
     ANativeWindow* m_currentWindow;
     ANativeWindow* m_pendingWindow;
@@ -36,10 +37,6 @@ class AGDKPlatformContext : public core::PlatformContext
 
     [[nodiscard]] GameActivity* getActivity() const { return m_activity; }
     [[nodiscard]] AAssetManager* getAssetManager() const { return m_assetManager; }
-
-    // Thread-local resources
-
-    [[nodiscard]] JNIEnv* getEnv() const { return m_env; }
 
     // Dynamic resources
 

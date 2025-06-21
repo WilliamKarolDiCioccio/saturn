@@ -94,6 +94,7 @@ int runApp(Args&&... args)
 #include <game-activity/GameActivity.cpp>
 #include <game-text-input/gametextinput.cpp>
 
+#include <mosaic/platform/AGDK/jni_helper.hpp>
 #include <mosaic/platform/AGDK/agdk_platform.hpp>
 
 extern "C"
@@ -242,13 +243,51 @@ extern "C"
     }
 }
 
+JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved)
+{
+    mosaic::core::LoggerManager::initialize();
+
+    auto helper = mosaic::platform::agdk::JNIHelper::getInstance();
+
+    helper->initialize(vm);
+
+    auto clazzRef = helper->findClass("com/mosaic/engine_bridge/EngineBridge");
+
+    if (!clazzRef)
+    {
+        MOSAIC_ERROR("Failed to find EngineBridge class");
+        return JNI_ERR;
+    }
+
+    helper->createGlobalRef(clazzRef);
+
+    helper->getStaticMethodID("com/mosaic/engine_bridge/EngineBridge", "showInfoDialog",
+                              "(Ljava/lang/String;Ljava/lang/String;)V");
+
+    helper->getStaticMethodID("com/mosaic/engine_bridge/EngineBridge", "showWarningDialog",
+                              "(Ljava/lang/String;Ljava/lang/String;)V");
+
+    helper->getStaticMethodID("com/mosaic/engine_bridge/EngineBridge", "showErrorDialog",
+                              "(Ljava/lang/String;Ljava/lang/String;)V");
+
+    helper->getStaticMethodID("com/mosaic/engine_bridge/EngineBridge", "showQuestionDialog",
+                              "(Ljava/lang/String;Ljava/lang/String;Z)Ljava/lang/Boolean;");
+
+    return JNI_VERSION_1_6;
+}
+
+JNIEXPORT void JNICALL JNI_OnUnload(JavaVM* vm, void* /*reserved*/)
+{
+    mosaic::platform::agdk::JNIHelper::getInstance()->shutdown();
+
+    mosaic::core::LoggerManager::shutdown();
+}
+
 #define MOSAIC_ENTRY_POINT(AppType, ...)                                                       \
     extern "C"                                                                                 \
     {                                                                                          \
         void android_main(struct android_app* _pApp)                                           \
         {                                                                                      \
-            mosaic::core::LoggerManager::initialize();                                         \
-                                                                                               \
             mosaic::core::LoggerManager::getInstance()->addSink<mosaic::core::DefaultSink>(    \
                 "default", mosaic::core::DefaultSink());                                       \
                                                                                                \

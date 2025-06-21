@@ -3,11 +3,23 @@ package com.mosaic.testbed
 import android.view.View
 import com.google.androidgamesdk.GameActivity
 
+import com.mosaic.engine_bridge.EngineBridge
+
 class MainActivity : GameActivity() {
     companion object {
         init {
             System.loadLibrary("testbed")
         }
+    }
+
+    override fun onCreate(savedInstanceState: android.os.Bundle?) {
+        super.onCreate(savedInstanceState)
+        EngineBridge.initialize(this)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        EngineBridge.shutdown()
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {

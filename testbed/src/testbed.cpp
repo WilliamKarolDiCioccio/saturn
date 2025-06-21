@@ -1,4 +1,5 @@
 #include "testbed.hpp"
+#include <mosaic/core/platform.hpp>
 
 #include <chrono>
 
@@ -9,12 +10,16 @@ namespace testbed
 
 std::optional<std::string> TestbedApplication::onInitialize()
 {
+    auto result = core::Platform::getInstance()->showQuestionDialog("Is Mosaic Amazing?",
+                                                                    "Think carefully...", true);
+
     auto window = m_windowSystem->getWindow("MainWindow");
 
     window->setResizeable(true);
 
     auto inputContext = m_inputSystem->getContext(window);
 
+#ifndef MOSAIC_PLATFORM_ANDROID
     inputContext->updateVirtualKeyboardKeys({
         {"closeApp", input::KeyboardKey::key_escape},
         {"moveLeft", input::KeyboardKey::key_a},
@@ -114,6 +119,7 @@ std::optional<std::string> TestbedApplication::onInitialize()
             },
         },
     });
+#endif
 
     MOSAIC_INFO("Testbed initialized.");
 
