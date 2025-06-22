@@ -21,6 +21,32 @@ namespace platform
 namespace agdk
 {
 
+/**
+ * @brief The `JNIHelper` class provides a singleton interface for managing JNI interactions.
+ *
+ * The `JNIHelper` class enables:
+ *
+ * - Class, fields and method lookups.
+ *
+ * - Method invocation with type safety (both static and instance methods).
+ *
+ * - String and array utilities for converting between Java and C++ types.
+ *
+ * - Exception handling and conversion between Java and C++ exceptions.
+ *
+ * - Dynamic native method callbacks registration.
+ *
+ * - Thread safe access to JNI environment via thread-local storage and RAII-style thread
+ * attachment.
+ *
+ * @note Always keep in mind you need the correct class loader context when performing lookups.
+ * @note Java version dependent references all point to Java 11 documentation as it's the target
+ * version of the Android project.
+ *
+ * @see https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/ClassLoader.html
+ * @see https://docs.oracle.com/en/java/javase/11/docs/specs/jni/index.html
+ * @see https://developer.android.com/training/articles/perf-jni#native-libraries
+ */
 class JNIHelper
 {
    private:
@@ -124,7 +150,10 @@ class JNIHelper
     bool registerNativeMethods(const std::string& _className,
                                const std::vector<NativeMethod>& _methods);
 
-    // Thread attachment for engine threads
+    /**
+     * @brief ThreadAttachment is a RAII class that automatically attaches the current thread to the
+     * JNI environment.
+     */
     class ThreadAttachment
     {
        public:

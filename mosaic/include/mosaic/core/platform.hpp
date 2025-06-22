@@ -47,8 +47,8 @@ class MOSAIC_API PlatformContext
  * @brief Abstract base class representing the platform layer of the application.
  *
  * This class provides a generic interface for managing the interaction between the platform and the
- * application. Specifically, it handles the lifecycle and resources and enforces platform-specific
- * behaviors.
+ * application. Specifically, it handles the lifecycle and resources and wraps all functionality
+ * requiring interaction with the underlying platform APIs.
  *
  * Web and mobile runtimes are the primary reasons for this class, as they require specific
  * initialization, running, pausing, resuming, and shutdown behaviors that differ from traditional

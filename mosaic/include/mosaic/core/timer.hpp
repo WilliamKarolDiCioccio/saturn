@@ -35,7 +35,7 @@ struct ScheduledCallback
 };
 
 /**
- * @brief The timer class provides both a static interface for getting the current time and an
+ * @brief The `Timer` class provides both a static interface for getting the current time and an
  * object instance interface for scheduling callbacks to be executed after a certain delay.
  */
 class MOSAIC_API Timer
