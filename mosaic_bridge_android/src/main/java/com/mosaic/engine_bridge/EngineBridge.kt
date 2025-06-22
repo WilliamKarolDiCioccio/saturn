@@ -5,6 +5,13 @@ import android.app.Activity
 import java.lang.ref.WeakReference
 
 /**
+ * Marks a Kotlin function as a native-exported method that should be bound via JNI.
+ */
+@Retention(AnnotationRetention.SOURCE)
+@Target(AnnotationTarget.FUNCTION)
+annotation class NativeExport
+
+/**
  * EngineBridge provides a bridge between the native engine and the Android APIs.
  */
 object EngineBridge {
@@ -21,6 +28,7 @@ object EngineBridge {
     }
 
     @JvmStatic
+    @NativeExport
     fun showQuestionDialog(title: String, message: String, showCancel: Boolean): Boolean? {
         var result: Boolean? = null
         var finished: Boolean = false
@@ -56,6 +64,7 @@ object EngineBridge {
     }
 
     @JvmStatic
+    @NativeExport
     fun showInfoDialog(title: String, message: String) {
         activity?.runOnUiThread {
             android.app.AlertDialog.Builder(activity)
@@ -69,6 +78,7 @@ object EngineBridge {
     }
 
     @JvmStatic
+    @NativeExport
     fun showWarningDialog(title: String, message: String) {
         activity?.runOnUiThread {
             android.app.AlertDialog.Builder(activity)
@@ -82,6 +92,7 @@ object EngineBridge {
     }
 
     @JvmStatic
+    @NativeExport
     fun showErrorDialog(title: String, message: String) {
         activity?.runOnUiThread {
             android.app.AlertDialog.Builder(activity)
