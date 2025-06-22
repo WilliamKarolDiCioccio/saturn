@@ -23,16 +23,26 @@ object EngineBridge {
     @JvmStatic
     fun showQuestionDialog(title: String, message: String, showCancel: Boolean): Boolean? {
         var result: Boolean? = null
+        var finished: Boolean = false
 
         activity?.runOnUiThread {
             val dialogBuilder = android.app.AlertDialog.Builder(activity)
                 .setTitle(title)
                 .setMessage(message)
-                .setPositiveButton("OK") { _, _ -> result = true }
-                .setNegativeButton("NO") { _, _ -> result = false }
+                .setPositiveButton("OK") { _, _ ->
+                    result = true
+                    finished = true
+                }
+                .setNegativeButton("NO") { _, _ ->
+                    result = false
+                    finished = true
+                }
 
             if (showCancel) {
-                dialogBuilder.setNeutralButton("Cancel") { _, _ -> result = null }
+                dialogBuilder.setNeutralButton("Cancel") { _, _ ->
+                    result = null
+                    finished = true
+                }
             }
 
             dialogBuilder.show()
@@ -40,7 +50,7 @@ object EngineBridge {
             Log.w("EngineBridge", "Attempted to show alert with no valid activity.")
         }
 
-        // TODO: Handle asynchronous nature of dialog result
+        while (!finished) Thread.sleep(100)
 
         return result
     }
