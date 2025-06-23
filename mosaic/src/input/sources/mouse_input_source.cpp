@@ -66,7 +66,7 @@ void MouseInputSource::processInput()
         return;
     }
 
-    ++m_pollCount;
+    pollDevice();
 
     // Fixed mouse button processing
     for (const auto& button : c_mouseButtons)

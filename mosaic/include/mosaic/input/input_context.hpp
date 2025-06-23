@@ -10,6 +10,7 @@
 #include "sources/input_source.hpp"
 #include "sources/mouse_input_source.hpp"
 #include "sources/keyboard_input_source.hpp"
+#include "sources/text_input_source.hpp"
 
 namespace mosaic
 {
@@ -36,6 +37,7 @@ namespace input
  * @see Action
  * @see MouseInputSource
  * @see KeyboardInputSource
+ * @see TextInputSource
  */
 class MOSAIC_API InputContext
 {
@@ -45,6 +47,7 @@ class MOSAIC_API InputContext
     // Input sources
     std::unique_ptr<MouseInputSource> m_mouseSource;
     std::unique_ptr<KeyboardInputSource> m_keyboardInputSource;
+    std::unique_ptr<TextInputSource> m_textInputSource;
 
     // Virtual keys and buttons mapped to their native equivalents
     std::unordered_map<std::string, KeyboardKey> m_virtualKeyboardKeys;
@@ -127,6 +130,26 @@ class MOSAIC_API InputContext
 
             return pieces::Ok<T*, std::string>(m_keyboardInputSource.get());
         }
+        else if constexpr (std::is_same_v<T, TextInputSource>)
+        {
+            if (m_textInputSource != nullptr)
+            {
+                MOSAIC_WARN("Text input source already exists.");
+                return pieces::Ok<T*, std::string>(m_textInputSource.get());
+            }
+
+            m_textInputSource = TextInputSource::create(const_cast<window::Window*>(m_window));
+
+            auto result = m_textInputSource->initialize();
+
+            if (result.isErr())
+            {
+                MOSAIC_ERROR("Failed to initialize text input source: {}", result.error());
+                return pieces::Err<T*, std::string>(std::move(result.error()));
+            }
+
+            return pieces::Ok<T*, std::string>(m_textInputSource.get());
+        }
         else
         {
             static_assert(false, "Unsupported input source type");
@@ -150,6 +173,13 @@ class MOSAIC_API InputContext
             m_keyboardInputSource->shutdown();
             m_keyboardInputSource.reset();
         }
+        else if constexpr (std::is_same_v<T, TextInputSource>)
+        {
+            if (!m_textInputSource) return;
+
+            m_textInputSource->shutdown();
+            m_textInputSource.reset();
+        }
         else
         {
             static_assert(false, "Unsupported input source type");
@@ -167,6 +197,10 @@ class MOSAIC_API InputContext
         {
             return m_keyboardInputSource != nullptr;
         }
+        else if constexpr (std::is_same_v<T, TextInputSource>)
+        {
+            return m_textInputSource != nullptr;
+        }
         else
         {
             static_assert(false, "Unsupported input source type");
@@ -183,6 +217,10 @@ class MOSAIC_API InputContext
         else if constexpr (std::is_same_v<T, KeyboardInputSource>)
         {
             return m_keyboardInputSource.get();
+        }
+        else if constexpr (std::is_same_v<T, TextInputSource>)
+        {
+            return m_textInputSource.get();
         }
         else
         {

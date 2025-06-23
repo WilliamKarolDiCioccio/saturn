@@ -20,6 +20,7 @@ void InputContext::update()
 {
     if (m_mouseSource) m_mouseSource->processInput();
     if (m_keyboardInputSource) m_keyboardInputSource->processInput();
+    if (m_textInputSource) m_textInputSource->processInput();
 
     m_triggeredActionsCache.clear();
 }

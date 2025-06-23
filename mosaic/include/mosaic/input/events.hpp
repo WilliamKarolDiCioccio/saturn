@@ -89,7 +89,7 @@ struct InputEventMetadata
 /**
  * @brief The `MouseButtonEvent` struct contains data and meta-data for mouse button events.
  *
- * It is fired when a mouse button shifts from one state to another of those defined in
+ * This event will be fired when a mouse button shifts from one state to another of those defined in
  * `ActionableState`.
  *
  * @see ActionableState
@@ -114,7 +114,7 @@ struct MouseButtonEvent
 /**
  * @brief The `MouseCursorMoveEnd` struct contains data and meta-data for mouse cursor movement end.
  *
- * It is fired when a mouse cursor move operations starts or ends, which is defined as
+ * This event will be fired when a mouse cursor move operations starts or ends, which is defined as
  * a change in the cursor's position by a certain threshold in a certain duration.
  */
 struct MouseCursorMoveEvent
@@ -139,8 +139,8 @@ struct MouseCursorMoveEvent
  * @brief The `MouseWheelScrollEnd` struct contains data and meta-data for mouse wheel scroll end
  * events.
  *
- * It is fired when a mouse wheel scroll operation starts or ends, which is defined as a change in
- * the scroll offset by a certain threshold in a certain duration.
+ * This event will be fired when a mouse wheel scroll operation starts or ends, which is defined as
+ * a change in the scroll offset by a certain threshold in a certain duration.
  */
 struct MouseWheelScrollEvent
 {
@@ -178,6 +178,37 @@ struct KeyboardKeyEvent
                      uint64_t _pollCount,
                      std::chrono::duration<double> _duration = std::chrono::milliseconds(0))
         : metadata(_now, _duration, _pollCount), state(_state) {};
+};
+
+/**
+ * @brief The `TextInputEvent` struct contains data and meta-data for a batched text input event.
+ *
+ * This event is emitted once per frame when text input has occurred, and may contain multiple
+ * codepoints (e.g., due to IME composition or key repeat). The `text` field is UTF-8 encoded.
+ */
+struct TextInputEvent
+{
+    InputEventMetadata metadata;
+
+    // Raw codepoints (UCS-4)
+    std::vector<char32_t> codepoints;
+
+    // UTF-8 encoded string (suitable for display/UI)
+    std::string text;
+
+    TextInputEvent()
+        : metadata(std::chrono::high_resolution_clock::now(), std::chrono::milliseconds(0), 0,
+                   InputEventType::standalone),
+          codepoints(),
+          text() {};
+
+    TextInputEvent(std::vector<char32_t> _codepoints, std::string _text,
+                   std::chrono::time_point<std::chrono::high_resolution_clock> _now,
+                   uint64_t _pollCount,
+                   std::chrono::duration<double> _duration = std::chrono::milliseconds(0))
+        : metadata(_now, _duration, _pollCount, InputEventType::standalone),
+          codepoints(std::move(_codepoints)),
+          text(std::move(_text)) {};
 };
 
 } // namespace input

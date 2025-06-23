@@ -15,7 +15,7 @@ class GLFWMouseInputSource : public input::MouseInputSource
 {
    private:
     GLFWwindow* m_nativeHandle;
-    glm::vec2 m_cumulativeWheelOffset;
+    glm::vec2 m_wheelOffsetBuffer;
 
    public:
     GLFWMouseInputSource(window::Window* _window);
@@ -30,7 +30,7 @@ class GLFWMouseInputSource : public input::MouseInputSource
    private:
     [[nodiscard]] input::InputAction queryButtonState(input::MouseButton _button) const override;
     [[nodiscard]] glm::vec2 queryCursorPosition() const override;
-    [[nodiscard]] glm::vec2 queryWheelOffset() const override;
+    [[nodiscard]] glm::vec2 queryWheelOffset() override;
 };
 
 } // namespace glfw

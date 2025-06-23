@@ -17,6 +17,7 @@ set(FRAMEWORK_SRC
         "src/input/input_context.cpp"
         "src/input/sources/mouse_input_source.cpp"
         "src/input/sources/keyboard_input_source.cpp"
+        "src/input/sources/text_input_source.cpp"
         # Graphics
         "src/graphics/render_context.cpp"
         "src/graphics/render_system.cpp"
@@ -46,7 +47,8 @@ else ()
             "src/platform/GLFW/glfw_window.cpp"
             "src/platform/GLFW/glfw_window_system.cpp"
             "src/platform/GLFW/glfw_keyboard_input_source.cpp"
-            "src/platform/GLFW/glfw_mouse_input_source.cpp")
+            "src/platform/GLFW/glfw_mouse_input_source.cpp"
+            "src/platform/GLFW/glfw_text_input_source.cpp")
 endif ()
 
 if (NOT EMSCRIPTEN)

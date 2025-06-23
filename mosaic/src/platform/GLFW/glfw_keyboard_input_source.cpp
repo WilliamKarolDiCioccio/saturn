@@ -25,6 +25,8 @@ void GLFWKeyboardInputSource::shutdown() {}
 
 void GLFWKeyboardInputSource::pollDevice()
 {
+    ++m_pollCount;
+
     // Already polled by the window system
 }
 

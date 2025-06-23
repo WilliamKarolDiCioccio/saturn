@@ -161,7 +161,7 @@ class MOSAIC_API MouseInputSource : public InputSource
    protected:
     [[nodiscard]] virtual InputAction queryButtonState(MouseButton _button) const = 0;
     [[nodiscard]] virtual glm::vec2 queryCursorPosition() const = 0;
-    [[nodiscard]] virtual glm::vec2 queryWheelOffset() const = 0;
+    [[nodiscard]] virtual glm::vec2 queryWheelOffset() = 0;
 };
 
 } // namespace input

@@ -40,7 +40,9 @@ std::unique_ptr<KeyboardInputSource> KeyboardInputSource::create(window::Window*
 void KeyboardInputSource::processInput()
 {
     if (!isActive()) return;
-    ++m_pollCount;
+
+    pollDevice();
+
     auto currentTime = std::chrono::high_resolution_clock::now();
 
     for (const auto& key : c_keyboardKeys)

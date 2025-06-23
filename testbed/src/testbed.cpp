@@ -31,6 +31,7 @@ std::optional<std::string> TestbedApplication::onInitialize()
 
     inputContext->addSource<input::MouseInputSource>();
     inputContext->addSource<input::KeyboardInputSource>();
+    inputContext->addSource<input::TextInputSource>();
 
     inputContext->registerActions({
         input::Action{
@@ -142,6 +143,15 @@ std::optional<std::string> TestbedApplication::onUpdate()
         requestExit();
 
         return std::nullopt;
+    }
+
+    {
+        auto src = inputContext->getSource<input::TextInputSource>();
+
+        const auto srcPollCount = src->getPollCount();
+        const auto event = src->getTextInputEvent();
+
+        if (srcPollCount == event.metadata.pollCount) MOSAIC_INFO(event.text);
     }
 
     return std::nullopt;
