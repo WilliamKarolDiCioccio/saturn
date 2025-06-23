@@ -2,9 +2,6 @@
 
 #include "input_source.hpp"
 
-#include <unicode/utypes.h>
-#include <unicode/unistr.h>
-
 namespace mosaic
 {
 namespace input

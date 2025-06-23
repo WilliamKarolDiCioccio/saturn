@@ -10,10 +10,7 @@
     "nlohmann-json",
     "stb",
     "benchmark",
-    {
-      "name": "icu",
-      "features": [ "tools" ]
-    },
+    "utfcpp",
     {
       "name": "glfw3",
       "platform": "!android"

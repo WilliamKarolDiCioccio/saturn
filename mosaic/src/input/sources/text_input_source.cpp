@@ -43,7 +43,7 @@ void TextInputSource::processInput()
 
     TextInputEvent event = {
         codepoints,
-        utils::UnicodeStringToUtf8(utils::CodepointsToUnicodeString(codepoints)),
+        utils::CodepointsToUtf8(codepoints),
         currentTime,
         m_pollCount,
     };

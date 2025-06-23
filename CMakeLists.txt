@@ -52,7 +52,7 @@ find_package(GTest CONFIG REQUIRED)
 find_package(benchmark REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(Stb REQUIRED)
-find_package(ICU 61.0 COMPONENTS uc i18n REQUIRED)
+find_package(utf8cpp CONFIG REQUIRED)
 
 if(NOT EMSCRIPTEN)
   find_package(Vulkan REQUIRED)

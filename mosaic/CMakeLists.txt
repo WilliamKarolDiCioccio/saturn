@@ -192,7 +192,7 @@ target_precompile_headers(
 # ----------------------------------------
 
 target_link_libraries(
-        mosaic PUBLIC pieces ICU::uc ICU::i18n fmt::fmt-header-only glm::glm-header-only
+        mosaic PUBLIC pieces utf8cpp::utf8cpp fmt::fmt-header-only glm::glm-header-only
         nlohmann_json::nlohmann_json)
 
 if (EMSCRIPTEN)
