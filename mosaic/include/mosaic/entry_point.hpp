@@ -64,6 +64,8 @@ int runApp(Args&&... args)
         freopen_s(&fp, "CONOUT$", "w", stdout);                                    \
         freopen_s(&fp, "CONOUT$", "w", stderr);                                    \
         freopen_s(&fp, "CONIN$", "r", stdin);                                      \
+        SetConsoleCP(CP_UTF8);                                                     \
+        SetConsoleOutputCP(CP_UTF8);                                               \
         std::ios::sync_with_stdio(true);                                           \
                                                                                    \
         return mosaic::runApp<AppType>(__VA_ARGS__);                               \

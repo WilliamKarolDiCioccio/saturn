@@ -11,6 +11,10 @@
     "stb",
     "benchmark",
     {
+      "name": "icu",
+      "features": [ "tools" ]
+    },
+    {
       "name": "glfw3",
       "platform": "!android"
     },
