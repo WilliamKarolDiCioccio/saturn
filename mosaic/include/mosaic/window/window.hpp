@@ -126,6 +126,7 @@ class MOSAIC_API Window
     using WindowCursorEnterCallback = std::function<void(int)>;
     using WindowPosCallback = std::function<void(int, int)>;
     using WindowContentScaleCallback = std::function<void(float, float)>;
+    using WindowCharCallback = std::function<void(unsigned int)>;
 
    protected:
     WindowProperties m_properties;
@@ -142,6 +143,7 @@ class MOSAIC_API Window
     std::vector<WindowCursorEnterCallback> m_windowCursorEnterCallbacks;
     std::vector<WindowPosCallback> m_windowPosCallbacks;
     std::vector<WindowContentScaleCallback> m_windowContentScaleCallbacks;
+    std::vector<WindowCharCallback> m_windowCharCallbacks;
 
    public:
     Window() = default;
@@ -248,6 +250,11 @@ class MOSAIC_API Window
         m_windowContentScaleCallbacks.push_back(_callback);
     }
 
+    inline void registerWindowCharCallback(WindowCharCallback _callback)
+    {
+        m_windowCharCallbacks.push_back(_callback);
+    }
+
    protected:
     // Helper methods for derived classes to invoke callbacks
     void invokeCloseCallbacks();
@@ -261,6 +268,7 @@ class MOSAIC_API Window
     void invokeCursorEnterCallbacks(int _entered);
     void invokePosCallbacks(int _x, int _y);
     void invokeContentScaleCallbacks(float _xscale, float _yscale);
+    void invokeCharCallbacks(unsigned int _codepoint);
 };
 
 } // namespace window

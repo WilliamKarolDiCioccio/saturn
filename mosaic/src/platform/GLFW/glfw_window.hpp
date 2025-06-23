@@ -69,6 +69,7 @@ class MOSAIC_API GLFWWindow : public window::Window
     static void windowCursorEnterCallback(GLFWwindow* _window, int _entered);
     static void windowPosCallback(GLFWwindow* _window, int _x, int _y);
     static void windowContentScaleCallback(GLFWwindow* _window, float _xscale, float _yscale);
+    static void windowCharCallback(GLFWwindow* _window, unsigned int _codepoint);
 };
 
 } // namespace glfw

@@ -338,6 +338,7 @@ void GLFWWindow::registerCallbacks()
     glfwSetCursorEnterCallback(m_glfwHandle, windowCursorEnterCallback);
     glfwSetWindowPosCallback(m_glfwHandle, windowPosCallback);
     glfwSetWindowContentScaleCallback(m_glfwHandle, windowContentScaleCallback);
+    glfwSetCharCallback(m_glfwHandle, windowCharCallback);
 }
 
 void GLFWWindow::unregisterCallbacks()
@@ -353,6 +354,7 @@ void GLFWWindow::unregisterCallbacks()
     glfwSetCursorEnterCallback(m_glfwHandle, nullptr);
     glfwSetWindowPosCallback(m_glfwHandle, nullptr);
     glfwSetWindowContentScaleCallback(m_glfwHandle, nullptr);
+    glfwSetCharCallback(m_glfwHandle, nullptr);
 
     glfwSetWindowUserPointer(m_glfwHandle, nullptr);
 }
@@ -512,6 +514,20 @@ void GLFWWindow::windowContentScaleCallback(GLFWwindow* window, float xscale, fl
     else
     {
         MOSAIC_ERROR("GLFWWindow::windowContentScaleCallback(): callback receiver is null.");
+    }
+}
+
+void GLFWWindow::windowCharCallback(GLFWwindow* _window, unsigned int _codepoint)
+{
+    GLFWWindow* instance = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(_window));
+
+    if (instance)
+    {
+        instance->invokeCharCallbacks(_codepoint);
+    }
+    else
+    {
+        MOSAIC_ERROR("GLFWWindow::windowCharCallback(): callback receiver is null.");
     }
 }
 

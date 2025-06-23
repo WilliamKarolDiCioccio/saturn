@@ -108,5 +108,13 @@ void Window::invokeContentScaleCallbacks(float _xscale, float _yscale)
     }
 }
 
+void Window::invokeCharCallbacks(unsigned int _codepoint)
+{
+    for (auto& callback : m_windowCharCallbacks)
+    {
+        callback(_codepoint);
+    }
+}
+
 } // namespace window
 } // namespace mosaic
