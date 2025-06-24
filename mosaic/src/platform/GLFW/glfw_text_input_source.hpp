@@ -15,6 +15,7 @@ class GLFWTextInputSource : public input::TextInputSource
 {
    private:
     GLFWwindow* m_nativeHandle;
+    size_t m_charCallbackId, m_focusCallbackId;
     std::vector<char32_t> m_codepointsBuffer;
 
    public:

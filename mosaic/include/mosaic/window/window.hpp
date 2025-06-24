@@ -96,6 +96,45 @@ struct WindowProperties
           cursorProperties() {};
 };
 
+template <typename Fn>
+struct WindowEventCallback
+{
+    using CallbackFn = Fn;
+    Fn callback;
+    size_t id;
+
+    WindowEventCallback(size_t _id, const Fn& _callback)
+        : id(_id), callback(std::move(_callback)) {};
+};
+
+// Callback type definitions
+
+using WindowCloseCallbackFn = std::function<void()>;
+using WindowFocusCallbackFn = std::function<void(int)>;
+using WindowResizeCallbackFn = std::function<void(int, int)>;
+using WindowRefreshCallbackFn = std::function<void()>;
+using WindowIconifyCallbackFn = std::function<void(int)>;
+using WindowMaximizeCallbackFn = std::function<void(int)>;
+using WindowDropCallbackFn = std::function<void(int, const char**)>;
+using WindowScrollCallbackFn = std::function<void(double, double)>;
+using WindowCursorEnterCallbackFn = std::function<void(int)>;
+using WindowPosCallbackFn = std::function<void(int, int)>;
+using WindowContentScaleCallbackFn = std::function<void(float, float)>;
+using WindowCharCallbackFn = std::function<void(unsigned int)>;
+
+using WindowCloseCallback = WindowEventCallback<WindowCloseCallbackFn>;
+using WindowFocusCallback = WindowEventCallback<WindowFocusCallbackFn>;
+using WindowResizeCallback = WindowEventCallback<WindowResizeCallbackFn>;
+using WindowRefreshCallback = WindowEventCallback<WindowRefreshCallbackFn>;
+using WindowIconifyCallback = WindowEventCallback<WindowIconifyCallbackFn>;
+using WindowMaximizeCallback = WindowEventCallback<WindowMaximizeCallbackFn>;
+using WindowDropCallback = WindowEventCallback<WindowDropCallbackFn>;
+using WindowScrollCallback = WindowEventCallback<WindowScrollCallbackFn>;
+using WindowCursorEnterCallback = WindowEventCallback<WindowCursorEnterCallbackFn>;
+using WindowPosCallback = WindowEventCallback<WindowPosCallbackFn>;
+using WindowContentScaleCallback = WindowEventCallback<WindowContentScaleCallbackFn>;
+using WindowCharCallback = WindowEventCallback<WindowCharCallbackFn>;
+
 /**
  * @brief Abstract base class representing a window in the application.
  *
@@ -113,21 +152,6 @@ struct WindowProperties
  */
 class MOSAIC_API Window
 {
-   public:
-    // Callback type definitions
-    using WindowCloseCallback = std::function<void()>;
-    using WindowFocusCallback = std::function<void(int)>;
-    using WindowResizeCallback = std::function<void(int, int)>;
-    using WindowRefreshCallback = std::function<void()>;
-    using WindowIconifyCallback = std::function<void(int)>;
-    using WindowMaximizeCallback = std::function<void(int)>;
-    using WindowDropCallback = std::function<void(int, const char**)>;
-    using WindowScrollCallback = std::function<void(double, double)>;
-    using WindowCursorEnterCallback = std::function<void(int)>;
-    using WindowPosCallback = std::function<void(int, int)>;
-    using WindowContentScaleCallback = std::function<void(float, float)>;
-    using WindowCharCallback = std::function<void(unsigned int)>;
-
    protected:
     WindowProperties m_properties;
 
@@ -159,7 +183,7 @@ class MOSAIC_API Window
     // Fundamental window operations
     virtual void* getNativeHandle() const = 0;
     virtual bool shouldClose() const = 0;
-    virtual glm::ivec2 getFramebufferSize() const = 0;
+    [[nodiscard]] virtual glm::ivec2 getFramebufferSize() const = 0;
 
     // Window properties management
     virtual void setTitle(const std::string& _title) = 0;
@@ -184,75 +208,98 @@ class MOSAIC_API Window
 
     // Clipboard operations
     virtual void setClipboardString(const std::string& _string) = 0;
-    virtual std::string getClipboardString() const = 0;
+    [[nodiscard]] virtual std::string getClipboardString() const = 0;
 
     // Property getters
-    inline const WindowProperties& getWindowProperties() const { return m_properties; }
+    [[nodiscard]] inline const WindowProperties& getWindowProperties() const
+    {
+        return m_properties;
+    }
 
-    inline const CursorProperties& getCursorProperties() const
+    [[nodiscard]] inline const CursorProperties& getCursorProperties() const
     {
         return m_properties.cursorProperties;
     }
 
     // Callback registration methods
-    inline void registerWindowCloseCallback(WindowCloseCallback _callback)
+
+    template <typename T>
+    [[nodiscard]] inline auto getCallbackVector() -> std::vector<T>&
     {
-        m_windowCloseCallbacks.push_back(_callback);
+        if constexpr (std::is_same_v<T, WindowCloseCallback>)
+        {
+            return m_windowCloseCallbacks;
+        }
+        else if constexpr (std::is_same_v<T, WindowFocusCallback>)
+        {
+            return m_windowFocusCallbacks;
+        }
+        else if constexpr (std::is_same_v<T, WindowResizeCallback>)
+        {
+            return m_windowResizeCallbacks;
+        }
+        else if constexpr (std::is_same_v<T, WindowRefreshCallback>)
+        {
+            return m_windowRefreshCallbacks;
+        }
+        else if constexpr (std::is_same_v<T, WindowIconifyCallback>)
+        {
+            return m_windowIconifyCallbacks;
+        }
+        else if constexpr (std::is_same_v<T, WindowMaximizeCallback>)
+        {
+            return m_windowMaximizeCallbacks;
+        }
+        else if constexpr (std::is_same_v<T, WindowDropCallback>)
+        {
+            return m_windowDropCallbacks;
+        }
+        else if constexpr (std::is_same_v<T, WindowScrollCallback>)
+        {
+            return m_windowScrollCallbacks;
+        }
+        else if constexpr (std::is_same_v<T, WindowCursorEnterCallback>)
+        {
+            return m_windowCursorEnterCallbacks;
+        }
+        else if constexpr (std::is_same_v<T, WindowPosCallback>)
+        {
+            return m_windowPosCallbacks;
+        }
+        else if constexpr (std::is_same_v<T, WindowContentScaleCallback>)
+        {
+            return m_windowContentScaleCallbacks;
+        }
+        else if constexpr (std::is_same_v<T, WindowCharCallback>)
+        {
+            return m_windowCharCallbacks;
+        }
+        else
+        {
+            static_assert(false, "Unsupported callback type");
+        }
     }
 
-    inline void registerWindowFocusCallback(WindowFocusCallback _callback)
+    template <typename T>
+    [[nodiscard]] size_t registerWindowCallback(const typename T::CallbackFn& _callback)
     {
-        m_windowFocusCallbacks.push_back(_callback);
+        static std::atomic<size_t> callbackIdCounter(0);
+
+        callbackIdCounter++;
+
+        auto& callbacks = getCallbackVector<T>();
+        callbacks.emplace_back(callbackIdCounter.load(), _callback);
+
+        return callbackIdCounter.load();
     }
 
-    inline void registerWindowResizeCallback(WindowResizeCallback callback)
+    template <typename T>
+    void unregisterWindowCallback(size_t _id)
     {
-        m_windowResizeCallbacks.push_back(callback);
-    }
-
-    inline void registerWindowRefreshCallback(WindowRefreshCallback _callback)
-    {
-        m_windowRefreshCallbacks.push_back(_callback);
-    }
-
-    inline void registerWindowIconifyCallback(WindowIconifyCallback _callback)
-    {
-        m_windowIconifyCallbacks.push_back(_callback);
-    }
-
-    inline void registerWindowMaximizeCallback(WindowMaximizeCallback _callback)
-    {
-        m_windowMaximizeCallbacks.push_back(_callback);
-    }
-
-    inline void registerWindowDropCallback(WindowDropCallback _callback)
-    {
-        m_windowDropCallbacks.push_back(_callback);
-    }
-
-    inline void registerWindowScrollCallback(WindowScrollCallback _callback)
-    {
-        m_windowScrollCallbacks.push_back(_callback);
-    }
-
-    inline void registerWindowCursorEnterCallback(WindowCursorEnterCallback _callback)
-    {
-        m_windowCursorEnterCallbacks.push_back(_callback);
-    }
-
-    inline void registerWindowPosCallback(WindowPosCallback _callback)
-    {
-        m_windowPosCallbacks.push_back(_callback);
-    }
-
-    inline void registerWindowContentScaleCallback(WindowContentScaleCallback _callback)
-    {
-        m_windowContentScaleCallbacks.push_back(_callback);
-    }
-
-    inline void registerWindowCharCallback(WindowCharCallback _callback)
-    {
-        m_windowCharCallbacks.push_back(_callback);
+        auto& callbacks = getCallbackVector<T>();
+        auto it = std::remove_if(callbacks.begin(), callbacks.end(),
+                                 [_id](const T& cb) { return cb.id == _id; });
+        if (it != callbacks.end()) callbacks.erase(it);
     }
 
    protected:

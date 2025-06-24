@@ -39,17 +39,20 @@ void Timer::sleepFor(std::chrono::duration<double> _seconds)
     std::this_thread::sleep_for(_seconds);
 }
 
-ScheduledCallback Timer::scheduleCallback(std::chrono::duration<double> _delaySeconds,
-                                          std::function<void()> _callback)
+size_t Timer::scheduleCallback(std::chrono::duration<double> _delaySeconds,
+                               std::function<void()> _callback)
 {
     static std::atomic<size_t> callbackIdCounter(0);
 
     callbackIdCounter++;
 
     double triggerTime = getCurrentTime() + _delaySeconds.count();
+
     std::lock_guard<std::mutex> lock(m_mutex);
-    m_callbacks.push_back({callbackIdCounter, triggerTime, _callback});
-    return m_callbacks.back();
+
+    m_callbacks.emplace_back(callbackIdCounter, triggerTime, _callback);
+
+    return callbackIdCounter.load();
 }
 
 void Timer::cancelCallback(const size_t _id)

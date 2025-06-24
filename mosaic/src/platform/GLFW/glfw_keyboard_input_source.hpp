@@ -15,6 +15,7 @@ class GLFWKeyboardInputSource : public input::KeyboardInputSource
 {
    private:
     GLFWwindow* m_nativeHandle;
+    size_t m_focusCallbackId;
 
    public:
     GLFWKeyboardInputSource(window::Window* _window);

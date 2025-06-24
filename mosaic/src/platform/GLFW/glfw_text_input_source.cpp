@@ -16,7 +16,7 @@ pieces::RefResult<input::InputSource, std::string> GLFWTextInputSource::initiali
 
     m_isActive = glfwGetWindowAttrib(static_cast<GLFWwindow*>(m_nativeHandle), GLFW_FOCUSED);
 
-    m_window->registerWindowCharCallback(
+    m_charCallbackId = m_window->registerWindowCallback<window::WindowCharCallback>(
         [this](unsigned int codepoint)
         {
             if (!this) return;
@@ -24,10 +24,17 @@ pieces::RefResult<input::InputSource, std::string> GLFWTextInputSource::initiali
             m_codepointsBuffer.emplace_back(static_cast<char32_t>(codepoint));
         });
 
+    m_focusCallbackId = m_window->registerWindowCallback<window::WindowFocusCallback>(
+        [this](int _focused) { m_isActive = _focused == GLFW_TRUE; });
+
     return pieces::OkRef<input::InputSource, std::string>(*this);
 }
 
-void GLFWTextInputSource::shutdown() {}
+void GLFWTextInputSource::shutdown()
+{
+    m_window->unregisterWindowCallback<window::WindowCharCallback>(m_charCallbackId);
+    m_window->unregisterWindowCallback<window::WindowFocusCallback>(m_focusCallbackId);
+}
 
 void GLFWTextInputSource::pollDevice()
 {

@@ -15,6 +15,7 @@ class GLFWMouseInputSource : public input::MouseInputSource
 {
    private:
     GLFWwindow* m_nativeHandle;
+    size_t m_focusCallbackId, m_scrollCallbackId;
     glm::vec2 m_wheelOffsetBuffer;
 
    public:

@@ -30,7 +30,7 @@ struct ScheduledCallback
     bool cancelled;
     std::function<void()> callback;
 
-    ScheduledCallback(size_t _id, double _triggerTime, std::function<void()> _callback)
+    ScheduledCallback(size_t _id, double _triggerTime, const std::function<void()>& _callback)
         : id(_id), triggerTime(_triggerTime), cancelled(false), callback(_callback) {};
 };
 
@@ -93,8 +93,8 @@ class MOSAIC_API Timer
      *
      * @return A ScheduledCallback object representing the scheduled callback.
      */
-    ScheduledCallback scheduleCallback(std::chrono::duration<double> _delaySeconds,
-                                       std::function<void()> _callback);
+    [[nodiscard]] size_t scheduleCallback(std::chrono::duration<double> _delaySeconds,
+                                          std::function<void()> _callback);
 
     /**
      * @brief Cancel a scheduled callback.

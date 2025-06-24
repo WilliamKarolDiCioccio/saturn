@@ -21,16 +21,21 @@ pieces::RefResult<input::InputSource, std::string> GLFWMouseInputSource::initial
         glfwSetInputMode(m_nativeHandle, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
     }
 
-    m_window->registerWindowFocusCallback([this](int _focused)
-                                          { m_isActive = _focused == GLFW_TRUE; });
+    m_focusCallbackId = m_window->registerWindowCallback<window::WindowFocusCallback>(
+        [this](int _focused) { m_isActive = _focused == GLFW_TRUE; });
 
-    m_window->registerWindowScrollCallback([this](double xoffset, double yoffset)
-                                           { m_wheelOffsetBuffer += glm::vec2(xoffset, yoffset); });
+    m_scrollCallbackId = m_window->registerWindowCallback<window::WindowScrollCallback>(
+        [this](double xoffset, double yoffset)
+        { m_wheelOffsetBuffer += glm::vec2(xoffset, yoffset); });
 
     return pieces::OkRef<input::InputSource, std::string>(*this);
 }
 
-void GLFWMouseInputSource::shutdown() {}
+void GLFWMouseInputSource::shutdown()
+{
+    m_window->unregisterWindowCallback<window::WindowFocusCallback>(m_focusCallbackId);
+    m_window->unregisterWindowCallback<window::WindowScrollCallback>(m_scrollCallbackId);
+}
 
 void GLFWMouseInputSource::pollDevice()
 {

@@ -43,7 +43,7 @@ pieces::RefResult<RenderContext, std::string> VulkanRenderContext::initialize(
 
 #if defined(MOSAIC_PLATFORM_DESKTOP) || defined(MOSAIC_PLATFORM_WEB)
 
-    const_cast<window::Window*>(m_window)->registerWindowResizeCallback(
+    const_cast<window::Window*>(m_window)->registerWindowCallback<window::WindowResizeCallback>(
         [this](int height, int width) { m_framebufferResized = true; });
 
 #elif defined(MOSAIC_PLATFORM_ANDROID)
