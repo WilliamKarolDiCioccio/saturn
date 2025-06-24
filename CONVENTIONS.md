@@ -202,7 +202,21 @@ Our folder structure mirrors the modularization of the codebase: each namespace 
 
 We avoid using exceptions for flow control. Exceptions are only used in scenarios where crashing is acceptable or necessary (e.g., irrecoverable logic errors). In most cases, we prefer to use the `Result` class from the `pieces` template library to model recoverable errors. This encourages explicit handling and improves clarity when dealing with failure cases. If a function doesn't produce additional data on failure, a simple `bool` or `return code` may be used instead for simplicity or. For more complex error data without a success counterpart you might use `std::optional`. However, if the failure involves meaningful data for both error and sucess, even when already logged, a `Result` must still be returned so that the information can bubble up to a caller that may know how to respond appropriately.
 
-To ensure proper handling of errors in objects, we recommend not using constructors to call functions or perform operations that can fail. Instead, limit them to invariants and conditions that require crashing the program. For all initialization code that may not succeed use `initialize()` methods that return the desired object or an error message/code.
+### Class Lifecycle and API Design
+
+To maintain predictable control over resource lifetimes and error propagation, we distinguish between object construction and initialization:
+
+Constructors should be limited to establishing invariants and performing trivial setup. They must not perform operations that can fail. Any logic that may return an error should be delegated to an explicit `initialize()` method.
+
+Initialization and shutdown logic should be clearly exposed through `initialize()` and `shutdown()` methods. These must return a Result or equivalent to enable proper error handling. Destruction must be idempotent and never fail.
+
+Factory methods, typically named `create()`, are used to construct platform-specific instances returning a `std::unique_ptr` if initialization is guaranteed to succeed after construction.
+
+For implementation-swappable classes, we adopt the PIMPL (Pointer to IMPLementation) idiom to decouple interface and implementation cleanly, enabling backend switching and faster build times.
+
+For stateless or utility-like types that don’t require explicit lifetime management, static methods are preferred. These classes may wrap internal state behind private static singletons if needed.
+
+This approach guarantees that initialization is always explicit and verifiable, reducing the risk of partially constructed or invalid objects and aligning with our result-based error model.
 
 ### Platform Specific Code and Logic
 
