@@ -245,12 +245,15 @@ def extract_native_exports(kotlin_files: List[Path], verbose: bool = False) -> D
             
             # Parse parameter types
             sig_parts = []
+            param_parsing_success = True
+            
             if params:
                 for param in params.split(','):
                     param = param.strip()
                     if ':' not in param:
                         print(f"Warning: Invalid parameter format in {name}: {param}")
-                        continue
+                        param_parsing_success = False
+                        break
                     
                     # Split on last ':' to handle cases like "param: List<String>"
                     colon_idx = param.rfind(':')
@@ -261,23 +264,26 @@ def extract_native_exports(kotlin_files: List[Path], verbose: bool = False) -> D
                     
                     if not sig:
                         print(f"Error: Unknown parameter type in {name}: {param_type}")
+                        param_parsing_success = False
                         break
                     
                     sig_parts.append(sig)
-                else:
-                    # Parse return type
-                    ret_type, ret_nullable = parse_kotlin_type(ret)
-                    ret_sig = kotlin_to_jni_type(ret_type, ret_nullable)
-                    
-                    if not ret_sig:
-                        print(f"Error: Unknown return type in {name}: {ret}")
-                        continue
-                    
-                    signature = "(" + "".join(sig_parts) + ")" + ret_sig
-                    methods_found.append((name, signature))
-                    
-                    if verbose:
-                        print(f"    Signature: {signature}")
+            
+            # Only proceed if parameter parsing was successful (or no parameters)
+            if param_parsing_success:
+                # Parse return type
+                ret_type, ret_nullable = parse_kotlin_type(ret)
+                ret_sig = kotlin_to_jni_type(ret_type, ret_nullable)
+                
+                if not ret_sig:
+                    print(f"Error: Unknown return type in {name}: {ret}")
+                    continue
+                
+                signature = "(" + "".join(sig_parts) + ")" + ret_sig
+                methods_found.append((name, signature))
+                
+                if verbose:
+                    print(f"    Signature: {signature}")
         
         # Add methods to the class
         if methods_found:
