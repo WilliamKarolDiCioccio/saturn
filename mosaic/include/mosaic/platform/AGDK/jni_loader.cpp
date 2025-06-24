@@ -10,6 +10,24 @@ JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved)
 
     helper->initialize(vm);
 
+    // Load methods for com/mosaic/engine_bridge/SystemServices
+    {
+        auto clazzRef = helper->findClass("com/mosaic/engine_bridge/SystemServices");
+        if (!clazzRef)
+        {
+            MOSAIC_ERROR("Failed to find SystemServices class");
+            return JNI_ERR;
+        }
+
+        helper->createGlobalRef(clazzRef);
+
+        helper->getStaticMethodID("com/mosaic/engine_bridge/SystemServices", "setClipboard",
+                                  "(Ljava/lang/String;)V");
+
+        helper->getStaticMethodID("com/mosaic/engine_bridge/SystemServices", "getClipboard",
+                                  "()Ljava/lang/String;");
+    }
+
     // Load methods for com/mosaic/engine_bridge/SystemUI
     {
         auto clazzRef = helper->findClass("com/mosaic/engine_bridge/SystemUI");

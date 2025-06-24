@@ -130,15 +130,47 @@ void AGDKWindow::resetWindowIcon()
 
 void AGDKWindow::setClipboardString([[maybe_unused]] const std::string& _string)
 {
-    MOSAIC_WARN(
-        "AGDKWindow::setClipboardString: Not implemented for AGDK platform. (requires JNI bridge)");
+    auto* helper = JNIHelper::getInstance();
+
+    JNIEnv* env = helper->getEnv();
+    if (!env)
+    {
+        MOSAIC_ERROR("AGDKWindow::setClipboardString: JNI environment is not available.");
+        return;
+    }
+
+    jstring jContent = helper->stringToJstring(_string);
+
+    // See SystemServices.setClipboardString(String content)
+    helper->callStaticVoidMethod("com/mosaic/engine_bridge/SystemServices", "setClipboard",
+                                 "(Ljava/lang/String;)V", jContent);
+
+    if (jContent) env->DeleteLocalRef(jContent);
 }
 
 std::string AGDKWindow::getClipboardString() const
 {
-    MOSAIC_WARN(
-        "AGDKWindow::getClipboardString: Not implemented for AGDK platform. (requires JNI bridge)");
-    return "";
+    auto* helper = JNIHelper::getInstance();
+
+    JNIEnv* env = helper->getEnv();
+    if (!env)
+    {
+        MOSAIC_ERROR("AGDKWindow::getClipboardString: JNI environment is not available.");
+        return std::string();
+    }
+
+    jstring jContent = helper->callStaticMethod<jstring>("com/mosaic/engine_bridge/SystemServices",
+                                                         "getClipboard", "()Ljava/lang/String;");
+
+    if (!jContent)
+    {
+        MOSAIC_ERROR("AGDKWindow::getClipboardString: Failed to get clipboard content.");
+        return std::string();
+    }
+
+    std::string content = helper->jstringToString(jContent);
+
+    return content;
 }
 
 } // namespace agdk
