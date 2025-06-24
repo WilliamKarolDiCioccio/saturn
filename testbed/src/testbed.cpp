@@ -145,6 +145,7 @@ std::optional<std::string> TestbedApplication::onUpdate()
         return std::nullopt;
     }
 
+#ifndef MOSAIC_PLATFORM_ANDROID
     {
         auto src = inputContext->getSource<input::TextInputSource>();
 
@@ -153,6 +154,7 @@ std::optional<std::string> TestbedApplication::onUpdate()
 
         if (srcPollCount == event.metadata.pollCount) MOSAIC_INFO(event.text);
     }
+#endif
 
     return std::nullopt;
 }

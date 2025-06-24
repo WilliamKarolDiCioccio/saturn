@@ -147,21 +147,30 @@ std::optional<bool> AGDKPlatform::showQuestionDialog(const std::string& _title,
     auto* helper = JNIHelper::getInstance();
 
     JNIEnv* env = helper->getEnv();
-    if (!env) return std::nullopt;
+    if (!env)
+    {
+        MOSAIC_ERROR("AGDKPlatform::showQuestionDialog: JNI environment not available.");
+        return std::nullopt;
+    }
 
     jstring jTitle = helper->stringToJstring(_title);
     jstring jMessage = helper->stringToJstring(_message);
     jboolean jAllowCancel = static_cast<jboolean>(_allowCancel);
 
-    // See EngineBridge.showQuestionDialog(String title, String message, boolean allowCancel)
+    // See SystemUI.showQuestionDialog(String title, String message, boolean allowCancel)
     jobject jResult = helper->callStaticMethod<jobject>(
-        "com/mosaic/engine_bridge/EngineBridge", "showQuestionDialog",
+        "com/mosaic/engine_bridge/SystemUI", "showQuestionDialog",
         "(Ljava/lang/String;Ljava/lang/String;Z)Ljava/lang/Boolean;", jTitle, jMessage,
         jAllowCancel);
 
     if (jTitle) env->DeleteLocalRef(jTitle);
     if (jMessage) env->DeleteLocalRef(jMessage);
-    if (!jResult) return std::nullopt;
+
+    if (!jResult)
+    {
+        MOSAIC_ERROR("AGDKPlatform::showQuestionDialog: Failed to call SystemUI method.");
+        return std::nullopt;
+    }
 
     jclass booleanClass = env->FindClass("java/lang/Boolean");
     jmethodID booleanValue = env->GetMethodID(booleanClass, "booleanValue", "()Z");
@@ -174,13 +183,17 @@ void AGDKPlatform::showInfoDialog(const std::string& _title, const std::string& 
     auto* helper = JNIHelper::getInstance();
 
     JNIEnv* env = helper->getEnv();
-    if (!env) return;
+    if (!env)
+    {
+        MOSAIC_ERROR("AGDKPlatform::showInfoDialog: JNI environment not available.");
+        return;
+    }
 
     jstring jTitle = helper->stringToJstring(_title);
     jstring jMessage = helper->stringToJstring(_message);
 
-    // See EngineBridge.showInfoDialog(String title, String message)
-    helper->callStaticVoidMethod("com/mosaic/engine_bridge/EngineBridge", "showInfoDialog",
+    // See SystemUI.showInfoDialog(String title, String message)
+    helper->callStaticVoidMethod("com/mosaic/engine_bridge/SystemUI", "showInfoDialog",
                                  "(Ljava/lang/String;Ljava/lang/String;)V", jTitle, jMessage);
 
     if (jTitle) env->DeleteLocalRef(jTitle);
@@ -192,13 +205,17 @@ void AGDKPlatform::showWarningDialog(const std::string& _title, const std::strin
     auto* helper = JNIHelper::getInstance();
 
     JNIEnv* env = helper->getEnv();
-    if (!env) return;
+    if (!env)
+    {
+        MOSAIC_ERROR("AGDKPlatform::showWarningDialog: JNI environment not available.");
+        return;
+    }
 
     jstring jTitle = helper->stringToJstring(_title);
     jstring jMessage = helper->stringToJstring(_message);
 
-    // See EngineBridge.showWarningDialog(String title, String message)
-    helper->callStaticVoidMethod("com/mosaic/engine_bridge/EngineBridge", "showWarningDialog",
+    // See SystemUI.showWarningDialog(String title, String message)
+    helper->callStaticVoidMethod("com/mosaic/engine_bridge/SystemUI", "showWarningDialog",
                                  "(Ljava/lang/String;Ljava/lang/String;)V", jTitle, jMessage);
 
     if (jTitle) env->DeleteLocalRef(jTitle);
@@ -210,13 +227,17 @@ void AGDKPlatform::showErrorDialog(const std::string& _title, const std::string&
     auto* helper = JNIHelper::getInstance();
 
     JNIEnv* env = helper->getEnv();
-    if (!env) return;
+    if (!env)
+    {
+        MOSAIC_ERROR("AGDKPlatform::showErrorDialog: JNI environment not available.");
+        return;
+    }
 
     jstring jTitle = helper->stringToJstring(_title);
     jstring jMessage = helper->stringToJstring(_message);
 
-    // See EngineBridge.showErrorDialog(String title, String message)
-    helper->callStaticVoidMethod("com/mosaic/engine_bridge/EngineBridge", "showErrorDialog",
+    // See SystemUI.showErrorDialog(String title, String message)
+    helper->callStaticVoidMethod("com/mosaic/engine_bridge/SystemUI", "showErrorDialog",
                                  "(Ljava/lang/String;Ljava/lang/String;)V", jTitle, jMessage);
 
     if (jTitle) env->DeleteLocalRef(jTitle);
