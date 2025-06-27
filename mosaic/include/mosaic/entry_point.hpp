@@ -6,6 +6,7 @@
 #include <mosaic/core/tracer.hpp>
 #include <mosaic/core/application.hpp>
 #include <mosaic/core/platform.hpp>
+#include <mosaic/core/sys_console.hpp>
 
 #ifndef MOSAIC_PLATFORM_ANDROID
 
@@ -16,6 +17,8 @@ template <typename AppType, typename... Args>
     requires core::IsApplication<AppType>
 int runApp(Args&&... args)
 {
+    core::SystemConsole::redirect();
+
     core::LoggerManager::initialize();
 
     core::LoggerManager::getInstance()->addSink<core::DefaultSink>("default", core::DefaultSink());
@@ -41,6 +44,8 @@ int runApp(Args&&... args)
 
     core::LoggerManager::shutdown();
 
+    core::SystemConsole::restore();
+
     return 0;
 }
 
@@ -52,37 +57,12 @@ int runApp(Args&&... args)
 
 #include <windows.h>
 
-#if defined(MOSAIC_DEBUG_BUILD) || defined(MOSAIC_DEV_BUILD)
-
-#define MOSAIC_ENTRY_POINT(AppType, ...)                                           \
-    int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, \
-                       _In_ PSTR lpCmdLine, _In_ int nCmdShow)                     \
-    {                                                                              \
-        AllocConsole();                                                            \
-                                                                                   \
-        FILE* fp;                                                                  \
-        freopen_s(&fp, "CONOUT$", "w", stdout);                                    \
-        freopen_s(&fp, "CONOUT$", "w", stderr);                                    \
-        freopen_s(&fp, "CONIN$", "r", stdin);                                      \
-        SetConsoleCP(CP_UTF8);                                                     \
-        SetConsoleOutputCP(CP_UTF8);                                               \
-        std::ios::sync_with_stdio(true);                                           \
-                                                                                   \
-        return mosaic::runApp<AppType>(__VA_ARGS__);                               \
-                                                                                   \
-        FreeConsole();                                                             \
-    }
-
-#else
-
 #define MOSAIC_ENTRY_POINT(AppType, ...)                                           \
     int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, \
                        _In_ PSTR lpCmdLine, _In_ int nCmdShow)                     \
     {                                                                              \
         return mosaic::runApp<AppType>(__VA_ARGS__);                               \
     }
-
-#endif
 
 #elif defined(MOSAIC_PLATFORM_LINUX) || defined(MOSAIC_PLATFORM_MACOS) || \
     defined(MOSAIC_PLATFORM_EMSCRIPTEN)

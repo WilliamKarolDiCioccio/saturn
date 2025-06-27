@@ -4,14 +4,7 @@
 #include <ctime>
 #include <cassert>
 
-#if defined(MOSAIC_PLATFORM_WINDOWS) || defined(MOSAIC_PLATFORM_LINUX) || \
-    defined(MOSAIC_PLATFORM_MACOS)
-#include <colorconsole.hpp>
-#elif defined(MOSAIC_PLATFORM_EMSCRIPTEN)
-#include <emscripten.h>
-#elif defined(MOSAIC_PLATFORM_ANDROID)
-#include <android/log.h>
-#endif
+#include "mosaic/core/sys_console.hpp"
 
 namespace mosaic
 {
@@ -20,68 +13,32 @@ namespace core
 
 void DefaultSink::trace(const std::string& _message) const
 {
-#if defined(MOSAIC_PLATFORM_ANDROID)
-    __android_log_print(ANDROID_LOG_DEBUG, "Mosaic", "%s", _message.c_str());
-#elif defined(MOSAIC_PLATFORM_EMSCRIPTEN)
-    emscripten_log(EM_LOG_DEBUG, __VA_ARGS__)
-#else
-    std::cout << dye::grey(_message) << '\n';
-#endif
+    SystemConsole::printTrace(_message + '\n');
 }
 
 void DefaultSink::debug(const std::string& _message) const
 {
-#if defined(MOSAIC_PLATFORM_ANDROID)
-    __android_log_print(ANDROID_LOG_DEBUG, "Mosaic", "%s", _message.c_str());
-#elif defined(MOSAIC_PLATFORM_EMSCRIPTEN)
-    emscripten_log(EM_LOG_DEBUG, __VA_ARGS__)
-#else
-    std::cout << dye::blue(_message) << '\n';
-#endif
+    SystemConsole::printDebug(_message + '\n');
 }
 
 void DefaultSink::info(const std::string& _message) const
 {
-#if defined(MOSAIC_PLATFORM_ANDROID)
-    __android_log_print(ANDROID_LOG_INFO, "Mosaic", "%s", _message.c_str());
-#elif defined(MOSAIC_PLATFORM_EMSCRIPTEN)
-    emscripten_log(EM_LOG_INFO, __VA_ARGS__)
-#else
-    std::cout << dye::green(_message) << '\n';
-#endif
+    SystemConsole::printInfo(_message + '\n');
 }
 
 void DefaultSink::warn(const std::string& _message) const
 {
-#if defined(MOSAIC_PLATFORM_ANDROID)
-    __android_log_print(ANDROID_LOG_WARN, "Mosaic", "%s", _message.c_str());
-#elif defined(MOSAIC_PLATFORM_EMSCRIPTEN)
-    emscripten_log(EM_LOG_WARN, __VA_ARGS__)
-#else
-    std::cout << dye::yellow(_message) << '\n';
-#endif
+    SystemConsole::printWarn(_message + '\n');
 }
 
 void DefaultSink::error(const std::string& _message) const
 {
-#if defined(MOSAIC_PLATFORM_ANDROID)
-    __android_log_print(ANDROID_LOG_ERROR, "Mosaic", "%s", _message.c_str());
-#elif defined(MOSAIC_PLATFORM_EMSCRIPTEN)
-    emscripten_log(EM_LOG_ERROR, __VA_ARGS__)
-#else
-    std::cout << dye::red(_message) << '\n';
-#endif
+    SystemConsole::printError(_message + '\n');
 }
 
 void DefaultSink::critical(const std::string& _message) const
 {
-#if defined(MOSAIC_PLATFORM_ANDROID)
-    __android_log_print(ANDROID_LOG_ERROR, "Mosaic", "%s", _message.c_str());
-#elif defined(MOSAIC_PLATFORM_EMSCRIPTEN)
-    emscripten_log(EM_LOG_ERROR, __VA_ARGS__)
-#else
-    std::cout << dye::purple(_message) << '\n';
-#endif
+    SystemConsole::printCritical(_message + '\n');
 }
 
 LoggerManager* LoggerManager::s_instance = nullptr;
