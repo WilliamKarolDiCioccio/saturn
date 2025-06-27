@@ -1,5 +1,6 @@
 #include "testbed.hpp"
-#include <mosaic/core/platform.hpp>
+
+#include <mosaic/core/sys_ui.hpp>
 
 #include <chrono>
 
@@ -10,8 +11,7 @@ namespace testbed
 
 std::optional<std::string> TestbedApplication::onInitialize()
 {
-    auto result = core::Platform::getInstance()->showQuestionDialog("Is Mosaic Amazing?",
-                                                                    "Think carefully...", true);
+    core::SystemUI::showInfoDialog("Testbed Application", "Welcome to the Testbed Application!");
 
     auto window = m_windowSystem->getWindow("MainWindow");
 

@@ -8,6 +8,7 @@ set(FRAMEWORK_SRC
     "src/core/application.cpp"
     "src/core/platform.cpp"
     "src/core/sys_console.cpp"
+    "src/core/sys_ui.cpp"
     "src/core/tracer.cpp"
     "src/core/timer.cpp"
     # Window
@@ -35,14 +36,17 @@ if(ANDROID)
     "src/platform/AGDK/agdk_platform.cpp"
     "src/platform/AGDK/jni_helper.cpp"
     "src/platform/AGDK/agdk_sys_console.cpp"
+    "src/platform/AGDK/agdk_sys_ui.cpp"
     "src/external/game_activity.cpp")
 else()
   if(WIN32)
     list(APPEND FRAMEWORK_SRC "src/platform/Win32/win32_platform.cpp"
-         "src/platform/Win32/win32_sys_console.cpp")
+         "src/platform/Win32/win32_sys_console.cpp"
+         "src/platform/Win32/win32_sys_ui.cpp")
   elseif(EMSCRIPTEN)
     list(APPEND FRAMEWORK_SRC "src/platform/Emscripten/emscripten_platform.cpp"
-         "src/platform/Emscripten/emscripten_sys_console.cpp")
+         "src/platform/Emscripten/emscripten_sys_console.cpp"
+         "src/platform/Emscripten/emscripten_sys_ui.cpp")
   endif()
 
   list(

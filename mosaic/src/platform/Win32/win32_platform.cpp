@@ -1,10 +1,8 @@
 #include "win32_platform.hpp"
 
 #include <GLFW/glfw3.h>
-#include <VersionHelpers.h>
 
-#pragma comment(lib, "Shell32.lib")
-#pragma comment(lib, "Ole32.lib")
+#pragma comment(lib, "ole32.lib")
 
 namespace mosaic
 {
@@ -15,6 +13,21 @@ namespace win32
 
 pieces::RefResult<core::Platform, std::string> Win32Platform::initialize()
 {
+    HRESULT hres = CoInitializeEx(0, COINIT_APARTMENTTHREADED);
+    if (FAILED(hres))
+    {
+        return pieces::ErrRef<core::Platform, std::string>("Failed to initialize COM library.");
+    }
+
+    hres = CoInitializeSecurity(NULL, -1, NULL, NULL, RPC_C_AUTHN_LEVEL_DEFAULT,
+                                RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE, NULL);
+    if (FAILED(hres))
+    {
+        CoUninitialize();
+
+        return pieces::ErrRef<core::Platform, std::string>("Failed to initialize COM security.");
+    }
+
     auto result = m_app->initialize();
 
     if (result.isErr())
@@ -49,34 +62,11 @@ void Win32Platform::pause() { m_app->pause(); }
 
 void Win32Platform::resume() { m_app->resume(); }
 
-void Win32Platform::shutdown() { m_app->shutdown(); }
-
-std::optional<bool> Win32Platform::showQuestionDialog(const std::string& _title,
-                                                      const std::string& _message,
-                                                      bool _allowCancel) const
+void Win32Platform::shutdown()
 {
-    UINT flags = _allowCancel ? MB_YESNOCANCEL : MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2;
+    m_app->shutdown();
 
-    int result = MessageBoxA(nullptr, _message.c_str(), _title.c_str(), flags);
-
-    if (result == IDCANCEL) return std::nullopt;
-
-    return result == IDYES;
-}
-
-void Win32Platform::showInfoDialog(const std::string& _title, const std::string& _message) const
-{
-    MessageBoxA(nullptr, _message.c_str(), _title.c_str(), MB_OK | MB_ICONINFORMATION);
-}
-
-void Win32Platform::showWarningDialog(const std::string& _title, const std::string& _message) const
-{
-    MessageBoxA(nullptr, _message.c_str(), _title.c_str(), MB_OK | MB_ICONWARNING);
-}
-
-void Win32Platform::showErrorDialog(const std::string& _title, const std::string& _message) const
-{
-    MessageBoxA(nullptr, _message.c_str(), _title.c_str(), MB_OK | MB_ICONERROR);
+    CoUninitialize();
 }
 
 } // namespace win32
