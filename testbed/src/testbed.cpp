@@ -1,7 +1,5 @@
 #include "testbed.hpp"
 
-#include <mosaic/core/sys_ui.hpp>
-
 #include <chrono>
 
 using namespace std::chrono_literals;
@@ -11,8 +9,6 @@ namespace testbed
 
 std::optional<std::string> TestbedApplication::onInitialize()
 {
-    core::SystemUI::showInfoDialog("Testbed Application", "Welcome to the Testbed Application!");
-
     auto window = m_windowSystem->getWindow("MainWindow");
 
     window->setResizeable(true);
@@ -130,6 +126,7 @@ std::optional<std::string> TestbedApplication::onInitialize()
 std::optional<std::string> TestbedApplication::onUpdate()
 {
     auto window = m_windowSystem->getWindow("MainWindow");
+
     auto inputContext = m_inputSystem->getContext(window);
 
     if (inputContext->isActionTriggered("moveLeft")) MOSAIC_INFO("Moving left.");
