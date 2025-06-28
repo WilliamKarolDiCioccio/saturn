@@ -68,15 +68,15 @@ endif()
 # Third-Party (Vendored) Libraries
 # ---------------------------
 if(NOT ANDROID)
-
-  add_subdirectory("vendor/webgpu")
-
   # Special case: GLFW handling
   if(EMSCRIPTEN)
     add_library(glfw INTERFACE)
+    add_library(webgpu INTERFACE)
     target_link_options(glfw INTERFACE -sUSE_GLFW=3)
+    target_link_options(webgpu INTERFACE --use-port=emdawnwebgpu)
   else()
     find_package(glfw3 CONFIG REQUIRED)
+    add_subdirectory("vendor/webgpu")
   endif()
 
   add_subdirectory("vendor/glfw3webgpu")

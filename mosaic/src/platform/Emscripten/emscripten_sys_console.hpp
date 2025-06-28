@@ -1,4 +1,4 @@
-#include "mosaic/core/sysconsole.hpp"
+#include "mosaic/core/sys_console.hpp"
 
 #include <emscripten.h>
 

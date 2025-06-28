@@ -1,4 +1,4 @@
-#include "emscripten_sysconsole.hpp"
+#include "emscripten_sys_console.hpp"
 
 namespace mosaic
 {

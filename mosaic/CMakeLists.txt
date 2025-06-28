@@ -163,7 +163,7 @@ target_include_directories(
 
 if(EMSCRIPTEN)
   target_include_directories(
-    mosaic PRIVATE "$ENV{EMSDK}/upstream/emscripten/system/include")
+    mosaic PRIVATE "$ENV{EMSDK}/upstream/emscripten/cache/sysroot/include")
 endif()
 
 # ----------------------------------------
@@ -171,14 +171,8 @@ endif()
 # ----------------------------------------
 
 if(EMSCRIPTEN)
-  target_link_options(
-    mosaic
-    PRIVATE
-    sUSE_GLFW=3
-    -sUSE_WEBGPU=1
-    -sASYNCIFY
-    -sALLOW_MEMORY_GROWTH
-    -sEXPORTED_RUNTIME_METHODS=['ccall','cwrap'])
+  target_link_options(mosaic PRIVATE
+                      -sEXPORTED_RUNTIME_METHODS=['ccall','cwrap'])
 endif()
 
 # ----------------------------------------

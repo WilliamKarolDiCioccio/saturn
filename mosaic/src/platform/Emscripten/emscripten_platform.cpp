@@ -11,7 +11,7 @@ pieces::RefResult<core::Platform, std::string> EmscriptenPlatform::initialize()
 {
     if (!glfwInit())
     {
-        return pieces::ErrRef<EmscriptenPlatform, std::string>("Failed to initialize GLFW");
+        return pieces::ErrRef<core::Platform, std::string>("Failed to initialize GLFW");
     }
 
     auto result = m_app->initialize();
@@ -23,11 +23,13 @@ pieces::RefResult<core::Platform, std::string> EmscriptenPlatform::initialize()
 
     m_app->resume();
 
-    return pieces::OkRef<EmscriptenPlatform, std::string>(*this);
+    return pieces::OkRef<core::Platform, std::string>(*this);
 }
 
 pieces::RefResult<core::Platform, std::string> EmscriptenPlatform::run()
 {
+    static std::string errorMsg;
+
     auto callback = [](void* _arg)
     {
         auto pApp = reinterpret_cast<core::Application*>(_arg);
@@ -45,12 +47,19 @@ pieces::RefResult<core::Platform, std::string> EmscriptenPlatform::run()
 
             if (result.isErr())
             {
-                return pieces::ErrRef<core::Platform, std::string>(std::move(result.error()));
+                errorMsg = std::move(result.error());
+
+                return emscripten_cancel_main_loop();
             }
         }
     };
 
     emscripten_set_main_loop_arg(callback, this, 0, true);
+
+    if (!errorMsg.empty())
+    {
+        return pieces::ErrRef<core::Platform, std::string>(std::move(errorMsg));
+    }
 
     return pieces::OkRef<core::Platform, std::string>(*this);
 }
