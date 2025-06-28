@@ -58,6 +58,9 @@ We use **vcpkg in manifest mode** to manage most dependencies.
 
 #### 🌐 Setup for Web (Emscripten/WebGPU)
 
+> [!WARNING]
+> Development of all web-related features is currently **on hold** due to ongoing instability in the WebGPU API. The API is still under heavy development and changes frequently, which makes maintaining a stable web build impractical at this time. Web support will resume once the WebGPU specification and tooling become more stable.
+
 1. Install the **Emscripten SDK**:
 
    ```bash
