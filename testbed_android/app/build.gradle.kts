@@ -55,6 +55,8 @@ android {
         }
     }
 
+    buildFeatures { prefab = true }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -72,14 +74,15 @@ android {
     }
 
     // Common CMake arguments for all variants
-    val commonCmakeArgs = listOf(
-        "-DANDROID=TRUE",
-        "-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH",
-        "-DCMAKE_TOOLCHAIN_FILE=${System.getenv("VCPKG_ROOT")}/scripts/buildsystems/vcpkg.cmake",
-        "-DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=${System.getenv("ANDROID_NDK_HOME")}/build/cmake/android.toolchain.cmake",
-        "-DANDROID_STL=c++_shared",
-        "-DANDROID_CPP_FEATURES=rtti exceptions"
-    )
+    val commonCmakeArgs =
+        listOf(
+            "-DANDROID=TRUE",
+            "-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH",
+            "-DCMAKE_TOOLCHAIN_FILE=${System.getenv("VCPKG_ROOT")}/scripts/buildsystems/vcpkg.cmake",
+            "-DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=${System.getenv("ANDROID_NDK_HOME")}/build/cmake/android.toolchain.cmake",
+            "-DANDROID_STL=c++_shared",
+            "-DANDROID_CPP_FEATURES=rtti exceptions"
+        )
 
     // Apply common arguments to all configurations
     defaultConfig.externalNativeBuild.cmake.arguments += commonCmakeArgs
@@ -91,12 +94,12 @@ android {
 dependencies {
     // Engine dependencies
     implementation(project(":engine_bridge"))
+    implementation(libs.androidx.games.activity)
 
-    // Core dependencies
+    // Android dependencies
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
-    implementation(libs.androidx.games.activity)
 
     // Test dependencies
     testImplementation(libs.junit)

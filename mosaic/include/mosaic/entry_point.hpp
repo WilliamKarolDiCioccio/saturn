@@ -72,21 +72,12 @@ int runApp(Args&&... args)
 
 #elif defined(MOSAIC_PLATFORM_ANDROID)
 
-#include <jni.h>
-
 #include <mosaic/platform/AGDK/jni_helper.hpp>
 #include <mosaic/platform/AGDK/jni_loader.cpp>
-
-#include <game-activity/GameActivity.cpp>
-#include <game-text-input/gametextinput.cpp>
-
 #include <mosaic/platform/AGDK/agdk_platform.hpp>
 
 extern "C"
 {
-
-#include <game-activity/native_app_glue/android_native_app_glue.c>
-
     /*!
      * Handles commands sent to this Android application
      * @param pApp the app the commands are coming from
