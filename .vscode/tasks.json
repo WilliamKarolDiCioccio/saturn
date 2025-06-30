@@ -14,7 +14,27 @@
       "presentation": {
         "reveal": "always",
         "panel": "shared"
-      }
+      },
+      "group": "build"
+    },
+    {
+      "label": "Generate JNI OnLoad",
+      "type": "shell",
+      "command": "python",
+      "args": [
+        "./scripts/jni_on_load_generator.py",
+        "-i",
+        ".\\mosaic_bridge_android\\src\\main\\java\\com\\mosaic\\",
+        "-o",
+        ".\\mosaic\\include\\mosaic\\platform\\AGDK\\jni_loader.cpp"
+      ],
+      "problemMatcher": [],
+      "isBackground": false,
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "group": "build"
     }
   ]
 }

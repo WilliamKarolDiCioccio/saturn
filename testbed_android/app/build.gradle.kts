@@ -64,7 +64,11 @@ android {
 
     kotlinOptions { jvmTarget = "11" }
 
-    buildFeatures { prefab = true }
+    buildFeatures {
+        prefab = true
+        dataBinding = true
+        viewBinding = true
+    }
 
     externalNativeBuild {
         cmake {
