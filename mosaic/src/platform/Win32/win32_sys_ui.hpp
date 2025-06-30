@@ -21,6 +21,9 @@ class Win32SystemUI : public core::SystemUI::SystemUIImpl
     void showInfoDialog(const std::string& _title, const std::string& _message) const override;
     void showWarningDialog(const std::string& _title, const std::string& _message) const override;
     void showErrorDialog(const std::string& _title, const std::string& _message) const override;
+    void showSoftwareKeyboard(const std::string& _text, uint32_t _selectionStart,
+                              uint32_t _selectionEnd) const override;
+    void hideSoftwareKeyboard() const override;
 };
 
 } // namespace win32

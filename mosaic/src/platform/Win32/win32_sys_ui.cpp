@@ -34,6 +34,12 @@ void Win32SystemUI::showErrorDialog(const std::string& _title, const std::string
 {
     MessageBoxA(nullptr, _message.c_str(), _title.c_str(), MB_OK | MB_ICONERROR);
 }
+void Win32SystemUI::showSoftwareKeyboard(const std::string& _text, uint32_t _selectionStart,
+                                         uint32_t _selectionEnd) const
+{
+}
+
+void Win32SystemUI::hideSoftwareKeyboard() const {}
 
 } // namespace win32
 } // namespace platform

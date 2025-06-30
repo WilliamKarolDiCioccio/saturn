@@ -1,6 +1,7 @@
 #include "mosaic/core/sys_ui.hpp"
 
-#include "mosaic/platform/agdk/jni_helper.hpp"
+#include "mosaic/platform/AGDK/jni_helper.hpp"
+#include "mosaic/platform/AGDK/agdk_platform.hpp"
 
 namespace mosaic
 {
@@ -21,6 +22,9 @@ class AGDKSystemUI : public core::SystemUI::SystemUIImpl
     void showInfoDialog(const std::string& _title, const std::string& _message) const override;
     void showWarningDialog(const std::string& _title, const std::string& _message) const override;
     void showErrorDialog(const std::string& _title, const std::string& _message) const override;
+    void showSoftwareKeyboard(const std::string& _text, uint32_t _selectionStart,
+                              uint32_t _selectionEnd) const override;
+    void hideSoftwareKeyboard() const override;
 };
 
 } // namespace agdk

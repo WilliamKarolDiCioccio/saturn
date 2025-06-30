@@ -45,5 +45,13 @@ void SystemUI::showErrorDialog(const std::string& _title, const std::string& _me
     impl->showErrorDialog(_title, _message);
 }
 
+void SystemUI::showSoftwareKeyboard(const std::string& _text, uint32_t _selectionStart,
+                                    uint32_t _selectionEnd)
+{
+    impl->showSoftwareKeyboard(_text, _selectionStart, _selectionEnd);
+}
+
+void SystemUI::hideSoftwareKeyboard() { impl->hideSoftwareKeyboard(); }
+
 } // namespace core
 } // namespace mosaic

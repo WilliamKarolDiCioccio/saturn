@@ -60,6 +60,13 @@ void EmscriptenSystemUI::showErrorDialog(const std::string& _title,
         _title.c_str(), _message.c_str());
 }
 
+void EmscriptenSystemUI::showSoftwareKeyboard(const std::string& _text, uint32_t _selectionStart,
+                                              uint32_t _selectionEnd) const
+{
+}
+
+void EmscriptenSystemUI::hideSoftwareKeyboard() const {}
+
 } // namespace emscripten
 } // namespace platform
 } // namespace mosaic

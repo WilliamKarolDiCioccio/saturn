@@ -28,6 +28,9 @@ class SystemUI
                                        const std::string& _message) const = 0;
         virtual void showErrorDialog(const std::string& _title,
                                      const std::string& _message) const = 0;
+        virtual void showSoftwareKeyboard(const std::string& _text, uint32_t _selectionStart,
+                                          uint32_t _selectionEnd) const = 0;
+        virtual void hideSoftwareKeyboard() const = 0;
     };
 
    private:
@@ -46,6 +49,10 @@ class SystemUI
     MOSAIC_API static void showWarningDialog(const std::string& _title,
                                              const std::string& _message);
     MOSAIC_API static void showErrorDialog(const std::string& _title, const std::string& _message);
+    MOSAIC_API static void showSoftwareKeyboard(const std::string& _text = "",
+                                                uint32_t _selectionStart = 0,
+                                                uint32_t _selectionEnd = 0);
+    MOSAIC_API static void hideSoftwareKeyboard();
 };
 
 } // namespace core

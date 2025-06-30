@@ -1,5 +1,7 @@
 #include "agdk_sys_ui.hpp"
 
+#include <game-activity/native_app_glue/android_native_app_glue.h>
+
 namespace mosaic
 {
 namespace platform
@@ -109,6 +111,30 @@ void AGDKSystemUI::showErrorDialog(const std::string& _title, const std::string&
 
     if (jTitle) env->DeleteLocalRef(jTitle);
     if (jMessage) env->DeleteLocalRef(jMessage);
+}
+
+void AGDKSystemUI::showSoftwareKeyboard(const std::string& _text, uint32_t _selectionStart,
+                                        uint32_t _selectionEnd) const
+{
+    auto platform = AGDKPlatform::getInstance();
+    auto context = static_cast<AGDKPlatformContext*>(platform->getPlatformContext());
+    
+    GameTextInputState initialState = {};
+    initialState.text_UTF8 = _text.c_str();
+    initialState.selection.start = _selectionStart;
+    initialState.selection.end = _selectionEnd;
+
+    GameActivity_setTextInputState(context->getActivity(), &initialState);
+
+    GameActivity_showSoftInput(context->getActivity(), 0);
+}
+
+void AGDKSystemUI::hideSoftwareKeyboard() const
+{
+    auto platform = AGDKPlatform::getInstance();
+    auto context = static_cast<AGDKPlatformContext*>(platform->getPlatformContext());
+
+    GameActivity_hideSoftInput(context->getActivity(), 0);
 }
 
 } // namespace agdk
