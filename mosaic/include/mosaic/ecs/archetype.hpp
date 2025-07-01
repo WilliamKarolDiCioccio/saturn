@@ -13,7 +13,7 @@ namespace mosaic
 namespace ecs
 {
 
-constexpr uint16_t MAX_PAGE_SIZE = 1024;
+constexpr uint16_t k_maxPageSize = 1024;
 
 class ArchetypeBase
 {

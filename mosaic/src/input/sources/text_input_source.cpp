@@ -2,6 +2,8 @@
 
 #if defined(MOSAIC_PLATFORM_DESKTOP) || defined(MOSAIC_PLATFORM_WEB)
 #include "platform/GLFW/glfw_text_input_source.hpp"
+#elif defined(MOSAIC_PLATFORM_ANDROID)
+#include "mosaic/platform/AGDK/agdk_text_input_source.hpp"
 #endif
 
 #include "mosaic/utils/unicode.hpp"
@@ -25,7 +27,7 @@ std::unique_ptr<TextInputSource> TextInputSource::create(window::Window* _window
 #if defined(MOSAIC_PLATFORM_DESKTOP) || defined(MOSAIC_PLATFORM_WEB)
     return std::make_unique<platform::glfw::GLFWTextInputSource>(_window);
 #else
-    throw std::runtime_error("Mouse input source not supported on mobile devices");
+    return std::make_unique<platform::agdk::AGDKTextInputSource>(_window);
 #endif
 }
 

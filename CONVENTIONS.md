@@ -124,11 +124,11 @@ network_manager.cpp
 ### Macros and Constants
 
 - Macros: Use **ALL_CAPS** with underscores. Restrict macro usage to source files to avoid polluting the global namespace.
-- Constants: Use **camelCase** with a **`c_` prefix** to denote compile-time constants.
+- Constants: Use **camelCase** with a **`k_` prefix** to denote compile-time constants.
 
 ```cpp
 #define MAX_BUFFER_SIZE 1024
-const int c_defaultTimeout = 30;
+const int k_defaultTimeout = 30;
 ```
 
 ### Enums

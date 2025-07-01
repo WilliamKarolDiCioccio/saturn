@@ -20,7 +20,7 @@ class MOSAIC_API TextInputSource : public InputSource
 {
    protected:
     // Events
-    pieces::CircularBuffer<input::TextInputEvent, EVENT_HISTORY_MAX_SIZE> m_textEvents;
+    pieces::CircularBuffer<input::TextInputEvent, k_eventHistoryMaxSize> m_textEvents;
 
    public:
     TextInputSource(window::Window* _window);

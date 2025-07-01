@@ -65,7 +65,7 @@ void KeyboardInputSource::processInput()
             if (wasDown)
             {
                 if (utils::hasFlag(lastEvent.state, ActionableState::press) &&
-                    timeSinceLastEvent >= KEY_HOLD_MIN_DURATION)
+                    timeSinceLastEvent >= k_keyHoldMinDuration)
                 {
                     currEvent = KeyboardKeyEvent{
                         ActionableState::hold,
@@ -94,8 +94,8 @@ void KeyboardInputSource::processInput()
             else
             {
                 if (utils::hasFlag(lastEvent.state, ActionableState::release) &&
-                    timeSinceLastEvent >= DOUBLE_CLICK_MIN_INTERVAL &&
-                    timeSinceLastEvent <= DOUBLE_CLICK_MAX_INTERVAL)
+                    timeSinceLastEvent >= k_doubleClickMinInterval &&
+                    timeSinceLastEvent <= k_doubleClickMaxInterval)
                 {
                     currEvent = KeyboardKeyEvent{
                         ActionableState::press | ActionableState::double_press, currentTime,
@@ -121,7 +121,7 @@ void KeyboardInputSource::processInput()
                 auto totalPressDuration = std::chrono::duration_cast<std::chrono::milliseconds>(
                     currentTime - lastEvent.metadata.timestamp);
 
-                if (totalPressDuration >= KEY_RELEASE_DURATION)
+                if (totalPressDuration >= k_keyReleaseDuration)
                 {
                     currEvent = KeyboardKeyEvent{
                         ActionableState::release, currentTime, m_pollCount,

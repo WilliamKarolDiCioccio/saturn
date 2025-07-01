@@ -20,7 +20,7 @@ class MOSAIC_API KeyboardInputSource : public InputSource
 {
    protected:
     // Events
-    std::array<pieces::CircularBuffer<KeyboardKeyEvent, EVENT_HISTORY_MAX_SIZE>,
+    std::array<pieces::CircularBuffer<KeyboardKeyEvent, k_eventHistoryMaxSize>,
                c_keyboardKeys.size()>
         m_keyboardKeyEvents;
 

@@ -49,16 +49,16 @@ class MOSAIC_API MouseInputSource : public InputSource
     };
 
     // Events
-    std::array<pieces::CircularBuffer<MouseButtonEvent, EVENT_HISTORY_MAX_SIZE>,
+    std::array<pieces::CircularBuffer<MouseButtonEvent, k_eventHistoryMaxSize>,
                c_mouseButtons.size()>
         m_mouseButtonEvents;
-    pieces::CircularBuffer<MouseWheelScrollEvent, EVENT_HISTORY_MAX_SIZE> m_mouseScrollEvents;
-    pieces::CircularBuffer<MouseCursorMoveEvent, EVENT_HISTORY_MAX_SIZE> m_cursorMoveEvents;
+    pieces::CircularBuffer<MouseWheelScrollEvent, k_eventHistoryMaxSize> m_mouseScrollEvents;
+    pieces::CircularBuffer<MouseCursorMoveEvent, k_eventHistoryMaxSize> m_cursorMoveEvents;
 
     // Samples
-    pieces::CircularBuffer<MouseWheelScrollSample, MOUSE_WHEEL_NUM_SAMPLES>
+    pieces::CircularBuffer<MouseWheelScrollSample, k_mouseWheelNumSamples>
         m_mouseScrollWheelSamples;
-    pieces::CircularBuffer<MouseCursorPosSample, MOUSE_CURSOR_NUM_SAMPLES> m_cursorPosSamples;
+    pieces::CircularBuffer<MouseCursorPosSample, k_mouseCursorNumSamples> m_cursorPosSamples;
 
     // Derived
     glm::vec2 m_wheelOffset;

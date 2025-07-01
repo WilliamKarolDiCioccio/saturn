@@ -89,7 +89,7 @@ void MouseInputSource::processInput()
             if (wasDown)
             {
                 if (utils::hasFlag(lastEvent.state, ActionableState::press) &&
-                    timeSinceLastEvent >= KEY_HOLD_MIN_DURATION)
+                    timeSinceLastEvent >= k_keyHoldMinDuration)
                 {
                     currEvent = MouseButtonEvent{
                         ActionableState::hold,
@@ -118,8 +118,8 @@ void MouseInputSource::processInput()
             else
             {
                 if (utils::hasFlag(lastEvent.state, ActionableState::release) &&
-                    timeSinceLastEvent >= DOUBLE_CLICK_MIN_INTERVAL &&
-                    timeSinceLastEvent <= DOUBLE_CLICK_MAX_INTERVAL)
+                    timeSinceLastEvent >= k_doubleClickMinInterval &&
+                    timeSinceLastEvent <= k_doubleClickMaxInterval)
                 {
                     currEvent = MouseButtonEvent{
                         ActionableState::press | ActionableState::double_press, currentTime,
@@ -145,7 +145,7 @@ void MouseInputSource::processInput()
                 auto totalPressDuration = std::chrono::duration_cast<std::chrono::milliseconds>(
                     currentTime - lastEvent.metadata.timestamp);
 
-                if (totalPressDuration >= KEY_RELEASE_DURATION)
+                if (totalPressDuration >= k_keyReleaseDuration)
                 {
                     currEvent = MouseButtonEvent{
                         ActionableState::release, currentTime, m_pollCount,
@@ -166,7 +166,7 @@ void MouseInputSource::processInput()
 
         const auto lastSample = m_cursorPosSamples.back().unwrap();
 
-        if (currentTime - lastSample.timestamp > INPUT_SAMPLING_RATE)
+        if (currentTime - lastSample.timestamp > k_inputSamplingRate)
         {
             MouseCursorPosSample sample(pos, currentTime);
 
@@ -203,7 +203,7 @@ void MouseInputSource::processInput()
 
         const auto lastSample = m_mouseScrollWheelSamples.back().unwrap();
 
-        if (currentTime - lastSample.timestamp > INPUT_SAMPLING_RATE)
+        if (currentTime - lastSample.timestamp > k_inputSamplingRate)
         {
             MouseWheelScrollSample sample(glm::vec2(offset), currentTime);
 

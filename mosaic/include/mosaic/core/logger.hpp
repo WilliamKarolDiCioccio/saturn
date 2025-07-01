@@ -17,8 +17,8 @@ namespace mosaic
 namespace core
 {
 
-constexpr uint16_t MOSAIC_LOG_HISTORY_SIZE = 1024;
-constexpr const char* MOSAIC_LOGS_BASE_PATH = "logs/";
+constexpr uint16_t k_logHistorySize = 1024;
+constexpr const char* k_logsBasePath = "logs/";
 
 class Sink;
 
@@ -80,8 +80,8 @@ struct LoggerConfig
         : showLevel(true),
           showTimestamp(true),
           showStackTrace(false),
-          historySize(MOSAIC_LOG_HISTORY_SIZE),
-          baseLogsPath(MOSAIC_LOGS_BASE_PATH)
+          historySize(k_logHistorySize),
+          baseLogsPath(k_logsBasePath)
     {
         levelEnabled.fill(true);
     }
