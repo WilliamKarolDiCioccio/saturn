@@ -12,6 +12,7 @@ set(FRAMEWORK_SRC
     "src/core/sys_ui.cpp"
     "src/core/tracer.cpp"
     "src/core/timer.cpp"
+    "src/core/cmd_line_parser.cpp"
     # Window
     "src/window/window.cpp"
     "src/window/window_system.cpp"

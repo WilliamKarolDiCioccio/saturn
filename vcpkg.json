@@ -2,7 +2,6 @@
   "name": "mosaic",
   "version": "1.0.0",
   "dependencies": [
-    "clipp",
     "fmt",
     "color-console",
     "glm",

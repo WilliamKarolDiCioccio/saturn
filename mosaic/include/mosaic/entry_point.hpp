@@ -2,8 +2,9 @@
 
 #include <memory>
 
-#include <mosaic/core/logger.hpp>
-#include <mosaic/core/tracer.hpp>
+#include <mosaic/core/cmd_line_parser.hpp>
+#include <mosaic/core/sys_ui.hpp>
+#include <mosaic/core/sys_console.hpp>
 #include <mosaic/core/application.hpp>
 #include <mosaic/core/platform.hpp>
 #include <mosaic/core/sys_console.hpp>
@@ -15,9 +16,23 @@ namespace mosaic
 
 template <typename AppType, typename... Args>
     requires core::IsApplication<AppType>
-int runApp(Args&&... args)
+int runApp(const std::vector<std::string>& _cmdLineArgs, Args&&... _appConstuctorArgs)
 {
-    core::SystemConsole::redirect();
+    core::SystemConsole::attachParent();
+
+    auto parseResult = core::CommandLineParser::parseCommandLine(_cmdLineArgs);
+
+    if (parseResult.has_value())
+    {
+        core::SystemConsole::print(core::CommandLineParser::getHelpText());
+        return 1;
+    }
+
+    if (core::CommandLineParser::shouldTerminate()) return 0;
+
+    core::SystemConsole::detachParent();
+
+    core::SystemConsole::create();
 
     core::LoggerManager::initialize();
 
@@ -27,7 +42,7 @@ int runApp(Args&&... args)
     // tracer.
 
     {
-        auto app = std::make_unique<AppType>(std::forward<Args>(args)...);
+        auto app = std::make_unique<AppType>(std::forward<Args>(_appConstuctorArgs)...);
 
         auto platform = core::Platform::create(app.get());
 
@@ -36,6 +51,7 @@ int runApp(Args&&... args)
         if (result.isErr())
         {
             MOSAIC_ERROR(result.error().c_str());
+            core::SystemConsole::destroy();
             return 1;
         }
 
@@ -44,7 +60,7 @@ int runApp(Args&&... args)
 
     core::LoggerManager::shutdown();
 
-    core::SystemConsole::restore();
+    core::SystemConsole::destroy();
 
     return 0;
 }
@@ -57,18 +73,49 @@ int runApp(Args&&... args)
 
 #include <windows.h>
 
-#define MOSAIC_ENTRY_POINT(AppType, ...)                                           \
-    int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, \
-                       _In_ PSTR lpCmdLine, _In_ int nCmdShow)                     \
-    {                                                                              \
-        return mosaic::runApp<AppType>(__VA_ARGS__);                               \
+#include <mosaic/platform/Win32/wstring.hpp>
+
+#define MOSAIC_ENTRY_POINT(AppType, ...)                                            \
+    int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,  \
+                       _In_ PSTR lpCmdLine, _In_ int nCmdShow)                      \
+    {                                                                               \
+        int argc = 0;                                                               \
+        LPWSTR* argv_w = CommandLineToArgvW(GetCommandLineW(), &argc);              \
+                                                                                    \
+        if (argv_w == nullptr)                                                      \
+        {                                                                           \
+            mosaic::core::SystemUI::showErrorDialog("Error parsing cmd line args!", \
+                                                    "argv_w is nullptr.");          \
+            return 1;                                                               \
+        }                                                                           \
+                                                                                    \
+        std::vector<std::string> args;                                              \
+        args.reserve(argc);                                                         \
+        for (int i = 0; i < argc; ++i)                                              \
+        {                                                                           \
+            args.emplace_back(mosaic::platform::win32::WStringToString(argv_w[i])); \
+        }                                                                           \
+                                                                                    \
+        LocalFree(argv_w);                                                          \
+                                                                                    \
+        return mosaic::runApp<AppType>(args __VA_OPT__(, __VA_ARGS__));             \
     }
 
 #elif defined(MOSAIC_PLATFORM_LINUX) || defined(MOSAIC_PLATFORM_MACOS) || \
     defined(MOSAIC_PLATFORM_EMSCRIPTEN)
 
-#define MOSAIC_ENTRY_POINT(AppType, ...) \
-    int main(int argc, char** argv) { return mosaic::runApp<AppType>(__VA_ARGS__); }
+#define MOSAIC_ENTRY_POINT(AppType, ...)                                \
+    int main(int _argc, char** _argv)                                   \
+    {                                                                   \
+        std::vector<std::string> args;                                  \
+        args.reserve(_argc);                                            \
+        for (int i = 0; i < _argc; ++i)                                 \
+        {                                                               \
+            args.emplace_back(_argv[i]);                                \
+        }                                                               \
+                                                                        \
+        return mosaic::runApp<AppType>(args __VA_OPT__(, __VA_ARGS__)); \
+    }
 
 #elif defined(MOSAIC_PLATFORM_ANDROID)
 
