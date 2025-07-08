@@ -10,6 +10,8 @@
 #include <wbemidl.h>
 #include <comdef.h>
 
+#include "mosaic/platform/Win32/wstring.hpp"
+
 namespace mosaic
 {
 namespace platform
