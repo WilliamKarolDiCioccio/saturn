@@ -24,9 +24,13 @@ std::unique_ptr<SystemConsole::SystemConsoleImpl> SystemConsole::impl =
     std::make_unique<platform::agdk::AGDKSystemConsole>();
 #endif
 
-void SystemConsole::redirect() { impl->redirect(); }
+void SystemConsole::attachParent() { impl->attachParent(); }
 
-void SystemConsole::restore() { impl->restore(); }
+void SystemConsole::detachParent() { impl->detachParent(); }
+
+void SystemConsole::create() { impl->create(); }
+
+void SystemConsole::destroy() { impl->destroy(); }
 
 void SystemConsole::print(const std::string& _message) { impl->print(_message); }
 

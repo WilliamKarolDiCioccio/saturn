@@ -7,15 +7,16 @@ namespace platform
 namespace agdk
 {
 
-void AGDKSystemConsole::redirect() const
-{
-    // No redirection needed for Android
-}
+// AGDKSystemConsole management methods are no-ops implementations since AGDK uses the
+// built-in Android logging system (a.k.a. logcat).
 
-void AGDKSystemConsole::restore() const
-{
-    // No restoration needed for Android
-}
+void AGDKSystemConsole::attachParent() {}
+
+void AGDKSystemConsole::detachParent() {}
+
+void AGDKSystemConsole::create() const {}
+
+void AGDKSystemConsole::destroy() const {}
 
 void AGDKSystemConsole::print(const std::string& _message) const
 {

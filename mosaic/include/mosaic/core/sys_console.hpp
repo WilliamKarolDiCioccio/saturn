@@ -19,8 +19,10 @@ class SystemConsole
         virtual ~SystemConsoleImpl() = default;
 
        public:
-        virtual void redirect() const = 0;
-        virtual void restore() const = 0;
+        virtual void attachParent() = 0;
+        virtual void detachParent() = 0;
+        virtual void create() const = 0;
+        virtual void destroy() const = 0;
 
         virtual void print(const std::string& _message) const = 0;
         virtual void printTrace(const std::string& _message) const = 0;
@@ -41,8 +43,10 @@ class SystemConsole
     SystemConsole& operator=(SystemConsole&&) = delete;
 
    public:
-    MOSAIC_API static void redirect();
-    MOSAIC_API static void restore();
+    MOSAIC_API static void attachParent();
+    MOSAIC_API static void detachParent();
+    MOSAIC_API static void create();
+    MOSAIC_API static void destroy();
 
     MOSAIC_API static void print(const std::string& _message);
     MOSAIC_API static void printTrace(const std::string& _message);

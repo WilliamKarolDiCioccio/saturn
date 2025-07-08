@@ -7,15 +7,16 @@ namespace platform
 namespace emscripten
 {
 
-void EmscriptenSystemConsole::redirect() const
-{
-    // No redirection needed for Emscripten
-}
+// EmscriptenSystemConsole management methods are no-ops implementations since Emscripten uses the
+// built-in browser's console.
 
-void EmscriptenSystemConsole::restore() const
-{
-    // No restoration needed for Emscripten
-}
+void EmscriptenSystemConsole::attachParent() {}
+
+void EmscriptenSystemConsole::detachParent() {}
+
+void EmscriptenSystemConsole::create() const {}
+
+void EmscriptenSystemConsole::destroy() const {}
 
 void EmscriptenSystemConsole::print(const std::string& _message) const
 {

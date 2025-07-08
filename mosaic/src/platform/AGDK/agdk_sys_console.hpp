@@ -16,8 +16,10 @@ class AGDKSystemConsole : public core::SystemConsole::SystemConsoleImpl
     ~AGDKSystemConsole() override = default;
 
    public:
-    void redirect() const override;
-    void restore() const override;
+    void attachParent() override;
+    void detachParent() override;
+    void create() const override;
+    void destroy() const override;
 
     void print(const std::string& _message) const override;
     void printTrace(const std::string& _message) const override;
