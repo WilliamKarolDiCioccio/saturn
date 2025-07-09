@@ -7,6 +7,9 @@
 #include <array>
 #include <chrono>
 #include <unordered_map>
+#include <mutex>
+#include <atomic>
+#include <stacktrace>
 
 #include <fmt/format.h>
 
@@ -25,6 +28,9 @@ class Sink;
 template <typename SinkType>
 concept IsSink = std::derived_from<SinkType, Sink> && !std::is_abstract_v<SinkType>;
 
+/**
+ * @brief Base class for interfaces providing logging functionality.
+ */
 class Sink
 {
    public:
@@ -38,6 +44,9 @@ class Sink
     virtual void critical(const std::string& _message) const = 0;
 };
 
+/**
+ * @brief Default logging sink that outputs logs to the console.
+ */
 class MOSAIC_API DefaultSink final : public Sink
 {
    public:
@@ -61,29 +70,53 @@ enum class LogLevel
     critical = 5
 };
 
+/**
+ * @brief Lookup table for log level names.
+ */
 constexpr std::array<const char*, 6> c_levelNames = {
     "Trace", "Debug", "Info", "Warn", "Error", "Critical",
 };
 
+/**
+ * @brief Configuration for the LoggerManager.
+ *
+ * This struct allows customization of logging behavior, such as enabling/disabling log levels,
+ * showing thread IDs, timestamps, and stack traces, as well as setting the history size
+ * and base logs path.
+ */
 struct LoggerConfig
 {
-    bool showLevel;
-    bool showTimestamp;
-    bool showStackTrace;
+    std::atomic_bool showLevel;
+    std::atomic_bool showTid;
+    std::atomic_bool showTimestamp;
+    std::atomic_bool showStackTrace;
 
-    uint16_t historySize;
-    std::string baseLogsPath;
+    std::atomic_uint16_t historySize;
 
-    std::array<bool, 6> levelEnabled;
+    std::array<std::atomic_bool, 6> levelEnabled;
 
-    LoggerConfig()
-        : showLevel(true),
-          showTimestamp(true),
-          showStackTrace(false),
-          historySize(k_logHistorySize),
-          baseLogsPath(k_logsBasePath)
+    LoggerConfig(bool _showLevel = true, bool _showTid = false, bool _showTimestamp = true,
+                 bool _showStackTrace = false, uint16_t _historySize = k_logHistorySize)
+        : showLevel(_showLevel),
+          showTid(_showTid),
+          showTimestamp(_showTimestamp),
+          showStackTrace(_showStackTrace),
+          historySize(_historySize)
     {
-        levelEnabled.fill(true);
+        for (auto& e : levelEnabled) e.store(true);
+    }
+
+    LoggerConfig(const LoggerConfig& other)
+        : showLevel(other.showLevel.load()),
+          showTid(other.showTid.load()),
+          showTimestamp(other.showTimestamp.load()),
+          showStackTrace(other.showStackTrace.load()),
+          historySize(other.historySize.load())
+    {
+        for (size_t i = 0; i < levelEnabled.size(); ++i)
+        {
+            levelEnabled[i].store(other.levelEnabled[i].load());
+        }
     }
 };
 
@@ -93,7 +126,9 @@ class MOSAIC_API LoggerManager final
     static LoggerManager* s_instance;
 
     std::unordered_map<std::string, std::shared_ptr<Sink>> m_sinks;
-    std::vector<std::string> m_history;
+    std::mutex m_sinksMutex;
+    std::unordered_map<std::thread::id, std::vector<std::string>> m_history;
+    std::mutex m_historyMutex;
 
     LoggerConfig m_config;
 
@@ -109,6 +144,9 @@ class MOSAIC_API LoggerManager final
     void setShowLevel(bool _show) noexcept { m_config.showLevel = _show; }
     [[nodiscard]] bool isShowLevel() const noexcept { return m_config.showLevel; }
 
+    void setShowTid(bool _show) noexcept { m_config.showTid = _show; }
+    [[nodiscard]] bool isShowTid() const noexcept { return m_config.showTid; }
+
     void setShowTimestamp(bool _show) noexcept { m_config.showTimestamp = _show; }
     [[nodiscard]] bool isShowTimestamp() const noexcept { return m_config.showTimestamp; }
 
@@ -122,13 +160,6 @@ class MOSAIC_API LoggerManager final
     }
 
     [[nodiscard]] uint16_t getHistorySize() const noexcept { return m_config.historySize; }
-
-    void setBaseLogsPath(const std::string& _path) noexcept { m_config.baseLogsPath = _path; }
-
-    [[nodiscard]] const std::string& getBaseLogsPath() const noexcept
-    {
-        return m_config.baseLogsPath;
-    }
 
     void enableLevel(LogLevel _level, bool _enabled) noexcept
     {
@@ -146,20 +177,43 @@ class MOSAIC_API LoggerManager final
     bool addSink(const std::string& _name, SinkType&& _sink) noexcept
         requires IsSink<SinkType>
     {
+        if (m_sinks.find(_name) != m_sinks.end()) return false;
+
+        std::lock_guard<std::mutex> lock(m_sinksMutex);
+
         m_sinks.insert({_name, std::make_shared<SinkType>(std::forward<SinkType>(_sink))});
 
         return true;
     }
 
-    void removeSink(const std::string& _name) noexcept { m_sinks.erase(_name); }
+    void removeSink(const std::string& _name) noexcept
+    {
+        if (m_sinks.find(_name) == m_sinks.end()) return;
 
-    void clearSinks() noexcept { m_sinks.clear(); }
+        std::lock_guard<std::mutex> lock(m_sinksMutex);
+
+        m_sinks.erase(_name);
+    }
+
+    void clearSinks() noexcept
+    {
+        std::lock_guard<std::mutex> lock(m_sinksMutex);
+
+        m_sinks.clear();
+    }
 
     // History management
 
-    [[nodiscard]] const std::vector<std::string>& getHistory() const noexcept { return m_history; }
+    [[nodiscard]] const std::vector<std::string>& getHistory() const noexcept
+    {
+        auto tid = std::this_thread::get_id();
 
-    void clearHistory() noexcept { m_history.clear(); }
+        if (m_history.find(tid) == m_history.end()) return {};
+
+        return m_history.at(tid);
+    }
+
+    void clearHistory() noexcept { m_history[std::this_thread::get_id()].clear(); }
 
     // Logging methods
 
@@ -180,6 +234,17 @@ class MOSAIC_API LoggerManager final
                                                formattedMessage);
             }
 
+            auto tid = std::this_thread::get_id(); // Moved outside the scope for reuse
+
+            // Prepend thread ID if requested
+            if (m_config.showTid)
+            {
+                std::ostringstream oss;
+                oss << tid; // Trick to get a readable thread ID
+
+                formattedMessage = fmt::format("[{}] {}", oss.str(), formattedMessage);
+            }
+
             // Prepend timestamp if requested
             if (m_config.showTimestamp)
             {
@@ -196,8 +261,10 @@ class MOSAIC_API LoggerManager final
             // Append stack trace if requested (platform-dependent, stubbed here)
             if (m_config.showStackTrace)
             {
-                formattedMessage += "\n[stacktrace]\n";
-                formattedMessage += "  (stack trace not implemented yet)";
+                std::ostringstream oss;
+                oss << std::stacktrace::current(); // Trick to get a readable stack trace
+
+                formattedMessage += fmt::format("\n[Stack Trace]\n{}", oss.str());
             }
 
             for (const auto& [name, sink] : m_sinks)
@@ -227,9 +294,15 @@ class MOSAIC_API LoggerManager final
                 }
             }
 
-            if (m_history.size() >= m_config.historySize) clearHistory();
+            if (m_history.find(tid) == m_history.end())
+            {
+                std::lock_guard<std::mutex> lock(m_historyMutex);
+                m_history[tid] = std::vector<std::string>();
+            }
 
-            m_history.emplace_back(formattedMessage);
+            if (m_history.at(tid).size() >= m_config.historySize) clearHistory();
+
+            m_history.at(tid).emplace_back(formattedMessage);
         }
         catch (const std::exception& e)
         {
