@@ -34,6 +34,12 @@ On Windows, we recommend using Visual Studio 2022 over VS Code for better CMake 
 > [!NOTE]
 > Before building Mosaic, you'll need to set up a few tools and SDKs. The engine targets **Windows**, **Linux**, **Web** and **Android** but you can ignore requirements for the build configurations you're not interested in.
 
+> [!WARNING]
+> Development for the Web is currently **on hold** due to ongoing instability in the WebGPU API. The API is still under heavy development and changes frequently, which makes maintaining a stable web build impractical at this time. Web support will resume once the WebGPU specification and tooling become more stable.
+
+> [!WARNING]
+> Development for Android is currently **on hold** Due to significant technical challenges with Android's GameTextInput and IME (soft keyboard) implementation.
+
 #### ✅ Prerequisites
 
 - CMake 3.25 or later
@@ -57,9 +63,6 @@ We use **vcpkg in manifest mode** to manage most dependencies.
 3. If needed, set the environment variable `VCPKG_ROOT` to point to your vcpkg directory.
 
 #### 🌐 Setup for Web (Emscripten/WebGPU)
-
-> [!WARNING]
-> Development of all web-related features is currently **on hold** due to ongoing instability in the WebGPU API. The API is still under heavy development and changes frequently, which makes maintaining a stable web build impractical at this time. Web support will resume once the WebGPU specification and tooling become more stable.
 
 1. Install the **Emscripten SDK**:
 
