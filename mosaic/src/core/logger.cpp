@@ -4,12 +4,17 @@
 #include <ctime>
 #include <cassert>
 
-#include "mosaic/core/sys_console.hpp"
-
 namespace mosaic
 {
 namespace core
 {
+
+pieces::RefResult<Sink, std::string> DefaultSink::initialize()
+{
+    return pieces::OkRef<Sink, std::string>(*this);
+}
+
+void DefaultSink::shutdown() {}
 
 void DefaultSink::trace(const std::string& _message) const
 {
@@ -43,12 +48,7 @@ void DefaultSink::critical(const std::string& _message) const
 
 LoggerManager* LoggerManager::s_instance = nullptr;
 
-LoggerManager::LoggerManager(const LoggerConfig& _config) : m_config(_config)
-{
-    assert(!s_instance && "Logger instance already exists!");
-
-    s_instance = this;
-}
+LoggerManager::LoggerManager(const LoggerConfig& _config) : m_config(_config) {}
 
 bool LoggerManager::initialize(const LoggerConfig& _config) noexcept
 {

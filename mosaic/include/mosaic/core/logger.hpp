@@ -15,6 +15,8 @@
 
 #include <pieces/result.hpp>
 
+#include "mosaic/core/sys_console.hpp"
+
 namespace mosaic
 {
 namespace core
@@ -36,6 +38,9 @@ class Sink
    public:
     virtual ~Sink() = default;
 
+    virtual pieces::RefResult<Sink, std::string> initialize() = 0;
+    virtual void shutdown() = 0;
+
     virtual void trace(const std::string& _message) const = 0;
     virtual void debug(const std::string& _message) const = 0;
     virtual void info(const std::string& _message) const = 0;
@@ -51,6 +56,9 @@ class MOSAIC_API DefaultSink final : public Sink
 {
    public:
     ~DefaultSink() override = default;
+
+    pieces::RefResult<Sink, std::string> initialize() override;
+    void shutdown() override;
 
     void trace(const std::string& _message) const override;
     void debug(const std::string& _message) const override;
@@ -132,7 +140,7 @@ class MOSAIC_API LoggerManager final
 
     LoggerConfig m_config;
 
-   public:
+   private:
     LoggerManager(const LoggerConfig& _config);
 
    public:
@@ -181,7 +189,18 @@ class MOSAIC_API LoggerManager final
 
         std::lock_guard<std::mutex> lock(m_sinksMutex);
 
-        m_sinks.insert({_name, std::make_shared<SinkType>(std::forward<SinkType>(_sink))});
+        auto sink = std::make_shared<SinkType>(std::forward<SinkType>(_sink));
+
+        auto result = sink->initialize();
+
+        if (result.isErr())
+        {
+            SystemConsole::printError(
+                fmt::format("Failed to initialize sink '{}': {}", _name, result.error()));
+            return false;
+        }
+
+        m_sinks.insert({_name, sink});
 
         return true;
     }
@@ -191,6 +210,8 @@ class MOSAIC_API LoggerManager final
         if (m_sinks.find(_name) == m_sinks.end()) return;
 
         std::lock_guard<std::mutex> lock(m_sinksMutex);
+
+        m_sinks.at(_name)->shutdown();
 
         m_sinks.erase(_name);
     }
@@ -222,6 +243,8 @@ class MOSAIC_API LoggerManager final
     {
         try
         {
+            if (!s_instance) throw std::runtime_error("LoggerManager is not initialized");
+
             if (!m_config.levelEnabled[static_cast<int>(_level)]) return;
 
             // Format message with arguments
@@ -306,7 +329,7 @@ class MOSAIC_API LoggerManager final
         }
         catch (const std::exception& e)
         {
-            std::fprintf(stderr, "Logging failure: %s\n", e.what());
+            SystemConsole::printError(e.what());
         }
     }
 
@@ -316,7 +339,7 @@ class MOSAIC_API LoggerManager final
 } // namespace core
 } // namespace mosaic
 
-#ifdef MOSAIC_DEBUG_BUILD
+#if defined(MOSAIC_DEBUG_BUILD) || defined(MOSAIC_DEV_BUILD)
 #define MOSAIC_TRACE(msg, ...)                                                     \
     mosaic::core::LoggerManager::getInstance()->log(mosaic::core::LogLevel::trace, \
                                                     msg __VA_OPT__(, __VA_ARGS__))
