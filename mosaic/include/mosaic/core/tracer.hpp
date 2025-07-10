@@ -1,6 +1,9 @@
 #pragma once
 
+#include "mosaic/defines.hpp"
+
 #include <atomic>
+#include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <mutex>
@@ -8,12 +11,14 @@
 #include <stdexcept>
 #include <string>
 #include <thread>
-
-#include "mosaic/defines.hpp"
+#include <unordered_map>
+#include <vector>
 
 MOSAIC_DISABLE_ALL_WARNINGS
 #include <nlohmann/json.hpp>
 MOSAIC_POP_WARNINGS
+
+#include "logger.hpp"
 
 namespace mosaic
 {
@@ -22,50 +27,295 @@ namespace core
 
 enum class TraceCategory
 {
-    function,
-    scope,
+    function = 0,
+    scope = 1,
+    gpu = 2,
+    io = 3,
+    memory = 4,
+    render = 5,
+    network = 6,
+    custom = 7
+};
+
+enum class TracePhase
+{
+    complete = 0,         // 'X' - Complete events (duration events)
+    begin = 1,            // 'B' - Begin events
+    end = 2,              // 'E' - End events
+    instant = 3,          // 'i' - Instant events
+    counter = 4,          // 'C' - Counter events
+    metadata = 5,         // 'M' - Metadata events
+    sample = 6,           // 'P' - Sample events
+    object_created = 7,   // 'N' - Object created
+    object_snapshot = 8,  // 'O' - Object snapshot
+    object_destroyed = 9, // 'D' - Object destroyed
+    flow_begin = 10,      // 's' - Flow start
+    flow_step = 11,       // 't' - Flow step
+    flow_end = 12         // 'f' - Flow end
 };
 
 struct Trace
 {
     TraceCategory category;
+    TracePhase phase;
     std::string name;
-    size_t threadID;
-    int64_t start, end;
+    std::string args; // JSON string for additional arguments
+    size_t tid;
+    uint32_t pid;
+    int64_t timestamp;
+    int64_t duration;
+    uint64_t id; // For flow events and object tracking
+
+    Trace() = default;
+
+    Trace(TraceCategory _category, TracePhase _phase, const std::string& _name, size_t _tid,
+          uint32_t _pid, int64_t _timestamp, int64_t _duration = 0, uint64_t _id = 0,
+          const std::string& _args = "{}")
+        : category(_category),
+          phase(_phase),
+          name(_name),
+          args(_args),
+          tid(_tid),
+          pid(_pid),
+          timestamp(_timestamp),
+          duration(_duration),
+          id(_id) {};
+};
+
+/**
+ * @brief Lookup table for trace categories.
+ */
+constexpr std::array<const char*, 8> c_categoryNames = {
+    "function", "scope", "gpu", "io", "memory", "render", "network", "custom",
+};
+
+/**
+ * @brief Lookup table for trace phases.
+ */
+constexpr std::array<const char*, 13> c_phaseNames = {
+    "X", "B", "E", "i", "C", "M", "P", "N", "O", "D", "s", "t", "f",
+};
+
+/**
+ * @brief Configuration for the TracerManager.
+ *
+ * This struct holds the configuration options for the tracer, including
+ * whether tracing is enabled, auto-flush settings, flush intervals, maximum
+ * number of traces, maximum file size, and category-specific enable flags.
+ */
+struct TracerConfig
+{
+    std::atomic_bool enabled;
+    std::atomic_bool autoFlush;
+    std::atomic_uint32_t flushIntervalMs;
+    std::atomic_uint32_t maxTraces;
+    std::atomic_uint32_t maxFileSizeMb; // MB
+
+    std::array<std::atomic_bool, 8> categoryEnabled;
+
+    TracerConfig(bool _enabled = true, bool _autoFlush = true, uint32_t _flushIntervalMs = 1000,
+                 uint32_t _maxTraces = 10000, uint32_t _maxFileSizeMb = 100)
+        : enabled(_enabled),
+          autoFlush(_autoFlush),
+          flushIntervalMs(_flushIntervalMs),
+          maxTraces(_maxTraces),
+          maxFileSizeMb(_maxFileSizeMb)
+    {
+        for (auto& e : categoryEnabled) e.store(true);
+    }
+
+    TracerConfig(const TracerConfig& other)
+        : enabled(other.enabled.load()),
+          autoFlush(other.autoFlush.load()),
+          flushIntervalMs(other.flushIntervalMs.load()),
+          maxTraces(other.maxTraces.load()),
+          maxFileSizeMb(other.maxFileSizeMb.load())
+    {
+        for (size_t i = 0; i < categoryEnabled.size(); ++i)
+        {
+            categoryEnabled[i].store(other.categoryEnabled[i].load());
+        }
+    }
+};
+
+/**
+ * @brief RAII helper for automatic trace scoping.
+ */
+class MOSAIC_API ScopedTrace final
+{
+   private:
+    bool m_valid;
+
+   public:
+    ScopedTrace(const std::string& _name, TraceCategory _category = TraceCategory::scope) noexcept;
+    ~ScopedTrace() noexcept;
+
+    ScopedTrace(const ScopedTrace&) = delete;
+    ScopedTrace& operator=(const ScopedTrace&) = delete;
+    ScopedTrace(ScopedTrace&&) = delete;
+    ScopedTrace& operator=(ScopedTrace&&) = delete;
 };
 
 class MOSAIC_API TracerManager final
 {
    private:
-    static bool s_isInitialized;
+    static TracerManager* s_instance;
 
-    static std::array<std::string, 2> m_categories;
-    static nlohmann::json m_data;
-    static std::string m_tracesPath;
-    static std::stack<Trace> m_activeTraces;
-    static std::mutex m_mutex;
+    // Actual trace storage
+
+    std::unordered_map<std::thread::id, std::stack<Trace>> m_activeTraces;
+    mutable std::mutex m_tracesMutex;
+    std::vector<Trace> m_completedTraces;
+    mutable std::mutex m_completedMutex;
+
+    // Metadata for the trace session
+
+    nlohmann::json m_metadata;
+    std::string m_tracesPath;
+    std::string m_currentFile;
+    uint32_t m_fileCounter;
+
+    // Timing and ID management
+
+    std::chrono::steady_clock::time_point m_startTime;
+    std::chrono::steady_clock::time_point m_lastFlush;
+    uint64_t m_nextTraceId;
+
+    TracerConfig m_config;
 
    private:
-    TracerManager() = delete;
-
-    static void ensureDirectoryExists(const std::string& path);
+    TracerManager(const TracerConfig& _config);
 
    public:
-    static bool initialize(const std::string& _tracesDir) noexcept;
+    static bool initialize(const std::string& _tracesDir = "./traces",
+                           const TracerConfig& _config = TracerConfig()) noexcept;
     static void shutdown() noexcept;
-    static void beginTrace(const std::string& _name, TraceCategory _category) noexcept;
-    static void endTrace() noexcept;
 
-    static std::shared_ptr<TracerManager> get();
+    // Configurable options
+
+    void setEnabled(bool _enabled) noexcept { m_config.enabled = _enabled; }
+    [[nodiscard]] bool isEnabled() const noexcept { return m_config.enabled; }
+
+    void setAutoFlush(bool _autoFlush) noexcept { m_config.autoFlush = _autoFlush; }
+    [[nodiscard]] bool isAutoFlush() const noexcept { return m_config.autoFlush; }
+
+    void setflushIntervalMs(uint32_t _interval) noexcept { m_config.flushIntervalMs = _interval; }
+    [[nodiscard]] uint32_t getflushIntervalMs() const noexcept { return m_config.flushIntervalMs; }
+
+    void setMaxTraces(uint32_t _maxTraces) noexcept { m_config.maxTraces = _maxTraces; }
+    [[nodiscard]] uint32_t getMaxTraces() const noexcept { return m_config.maxTraces; }
+
+    void enableCategory(TraceCategory _category, bool _enabled) noexcept
+    {
+        m_config.categoryEnabled[static_cast<int>(_category)] = _enabled;
+    }
+
+    [[nodiscard]] bool isCategoryEnabled(TraceCategory _category) const noexcept
+    {
+        return m_config.categoryEnabled[static_cast<int>(_category)];
+    }
+
+    // Tracing methods
+
+    void beginTrace(const std::string& _name, TraceCategory _category = TraceCategory::function,
+                    const std::string& _args = "{}") noexcept;
+    void endTrace() noexcept;
+
+    void instantTrace(const std::string& _name, TraceCategory _category = TraceCategory::function,
+                      const std::string& _args = "{}") noexcept;
+
+    void counterTrace(const std::string& _name, double _value,
+                      TraceCategory _category = TraceCategory::function) noexcept;
+
+    void metadataTrace(const std::string& _name, const std::string& _value,
+                       TraceCategory _category = TraceCategory::function) noexcept;
+
+    void objectCreated(const std::string& _name, const std::string& _args = "{}",
+                       TraceCategory _category = TraceCategory::function) noexcept;
+    void objectSnapshot(const std::string& _name, const std::string& _args = "{}",
+                        TraceCategory _category = TraceCategory::function) noexcept;
+    void objectDestroyed(const std::string& _name, const std::string& _args = "{}",
+                         TraceCategory _category = TraceCategory::function) noexcept;
+
+    uint64_t beginFlowTrace(const std::string& _name,
+                            TraceCategory _category = TraceCategory::function) noexcept;
+    void stepFlowTrace(uint64_t _flowId, const std::string& _name) noexcept;
+    void endFlowTrace(uint64_t _flowId, const std::string& _name) noexcept;
+
+    // Manual flush control
+
+    void flush() noexcept;
+    void clear() noexcept;
+
+    // Statistics
+
+    [[nodiscard]] size_t getActiveTraceCount() const noexcept;
+    [[nodiscard]] size_t getCompletedTraceCount() const noexcept;
+    [[nodiscard]] double getTracingOverheadMs() const noexcept;
+
+    [[nodiscard]] static TracerManager* getInstance() noexcept { return s_instance; }
+
+   private:
+    void flushToFile() noexcept;
+    void rotateFile() noexcept;
+    std::string generateFileName() noexcept;
+    nlohmann::json traceToJson(const Trace& _trace) const noexcept;
+    int64_t getCurrentTimestamp() const noexcept;
 };
 
 } // namespace core
 } // namespace mosaic
 
-#ifdef _DEBUG
-#define MOSAIC_BEGIN_TRACE(name, category) mosaic::core::TracerManager::beginTrace(name, category)
-#define MOSAIC_END_TRACE() mosaic::core::TracerManager::endTrace()
+#if defined(MOSAIC_DEBUG_BUILD) || defined(MOSAIC_DEV_BUILD)
+
+#define MOSAIC_TRACE_FUNCTION() \
+    mosaic::core::ScopedTrace _trace(__FUNCTION__, mosaic::core::TraceCategory::function)
+
+#define MOSAIC_TRACE_SCOPE(name) \
+    mosaic::core::ScopedTrace _trace(name, mosaic::core::TraceCategory::scope)
+
+#define MOSAIC_TRACE_BEGIN(name, category) \
+    mosaic::core::TracerManager::getInstance()->beginTrace(name, category)
+
+#define MOSAIC_TRACE_END() mosaic::core::TracerManager::getInstance()->endTrace()
+
+#define MOSAIC_TRACE_INSTANT(name, category) \
+    mosaic::core::TracerManager::getInstance()->instantTrace(name, category)
+
+#define MOSAIC_TRACE_COUNTER(name, value) \
+    mosaic::core::TracerManager::getInstance()->counterTrace(name, value)
+
+#define MOSAIC_TRACE_METADATA(name, value) \
+    mosaic::core::TracerManager::getInstance()->metadataTrace(name, value)
+
+#define MOSAIC_TRACE_OBJECT_CREATED(name, args) \
+    mosaic::core::TracerManager::getInstance()->objectCreated(name, args)
+#define MOSAIC_TRACE_OBJECT_SNAPSHOT(name, args) \
+    mosaic::core::TracerManager::getInstance()->objectSnapshot(name, args)
+#define MOSAIC_TRACE_OBJECT_DESTROYED(name, args) \
+    mosaic::core::TracerManager::getInstance()->objectDestroyed(name, args)
+
+#define MOSAIC_TRACE_FLOW_BEGIN(name, category) \
+    mosaic::core::TracerManager::getInstance()->beginFlowTrace(name, category)
+#define MOSAIC_TRACE_FLOW_STEP(flowId, name) \
+    mosaic::core::TracerManager::getInstance()->stepFlowTrace(flowId, name)
+#define MOSAIC_TRACE_FLOW_END(flowId, name) \
+    mosaic::core::TracerManager::getInstance()->endFlowTrace(flowId, name)
+
 #else
-#define MOSAIC_BEGIN_TRACE(name, category) ((void)0)
-#define MOSAIC_END_TRACE() ((void)0)
+
+#define MOSAIC_TRACE_FUNCTION() ((void)0)
+#define MOSAIC_TRACE_SCOPE(name) ((void)0)
+#define MOSAIC_TRACE_BEGIN(name, category) ((void)0)
+#define MOSAIC_TRACE_END() ((void)0)
+#define MOSAIC_TRACE_INSTANT(name, category) ((void)0)
+#define MOSAIC_TRACE_COUNTER(name, value) ((void)0)
+#define MOSAIC_TRACE_METADATA(name, value) ((void)0)
+#define MOSAIC_TRACE_OBJECT_CREATED(name, args) ((void)0)
+#define MOSAIC_TRACE_OBJECT_SNAPSHOT(name, args) ((void)0)
+#define MOSAIC_TRACE_OBJECT_DESTROYED(name, args) ((void)0)
+#define MOSAIC_TRACE_FLOW_BEGIN(name, category) 0
+#define MOSAIC_TRACE_FLOW_STEP(flowId, name) ((void)0)
+#define MOSAIC_TRACE_FLOW_END(flowId, name) ((void)0)
+
 #endif
