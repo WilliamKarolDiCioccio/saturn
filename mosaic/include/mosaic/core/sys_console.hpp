@@ -9,6 +9,10 @@ namespace mosaic
 namespace core
 {
 
+/**
+ * @brief Provides abstraction for system console, such as printing messages and managing console
+ * state.
+ */
 class SystemConsole
 {
    public:

@@ -227,6 +227,10 @@ struct LocaleInfo
           firstDayOfWeek(Weekday::Monday) {};
 };
 
+/**
+ * @brief Provides system information, such as OS, CPU, memory, storage, locale, and monitors
+ * properties and metrics.
+ */
 class SystemInfo
 {
    public:

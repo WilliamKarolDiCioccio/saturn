@@ -36,6 +36,20 @@ template <typename AppType>
 concept IsApplication =
     std::derived_from<AppType, core::Application> && !std::is_abstract_v<AppType>;
 
+/**
+ * @brief Base class for applications in the Mosaic framework.
+ *
+ * This class provides the main application lifecycle management, including
+ * initialization, update, pause, resume, and shutdown methods. It also manages
+ * the application state and provides access to the engine's systems such as
+ * window, input, and rendering.
+ *
+ * @note The application must override the `on...` methods to provide specific
+ * functionality for initialization, update, pause, resume, and shutdown.
+ *
+ * @note The application must not be instantiated directly. Instead, it created automatically
+ * in the MOSAIC_ENTRY_POINT macro, which is the entry point for the application.
+ */
 class MOSAIC_API Application
 {
    private:

@@ -156,6 +156,9 @@ class MOSAIC_API ScopedTrace final
     ScopedTrace& operator=(ScopedTrace&&) = delete;
 };
 
+/**
+ * @brief Manages tracing functionality, including trace storage, metadata, and configuration.
+ */
 class MOSAIC_API TracerManager final
 {
    private:

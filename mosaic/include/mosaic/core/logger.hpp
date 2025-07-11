@@ -128,6 +128,9 @@ struct LoggerConfig
     }
 };
 
+/**
+ * @brief Manages logging functionality, including sink management, history, and configuration.
+ */
 class MOSAIC_API LoggerManager final
 {
    private:

@@ -9,6 +9,9 @@ namespace mosaic
 namespace core
 {
 
+/**
+ * @brief Provides abstraction for system UI interactions, such as dialogs and software keyboard.
+ */
 class SystemUI
 {
    public:
