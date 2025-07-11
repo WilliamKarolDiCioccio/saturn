@@ -21,16 +21,16 @@ namespace tsafe
  * @tparam T Type of elements in the queue.
  */
 template <typename T>
-class WorkStealingQueue
+class DoubleEndedQueue
 {
    private:
     mutable std::mutex m_mutex;
     std::deque<T> m_deque;
 
    public:
-    WorkStealingQueue() = default;
-    WorkStealingQueue(const WorkStealingQueue&) = delete;
-    WorkStealingQueue& operator=(const WorkStealingQueue&) = delete;
+    DoubleEndedQueue() = default;
+    DoubleEndedQueue(const DoubleEndedQueue&) = delete;
+    DoubleEndedQueue& operator=(const DoubleEndedQueue&) = delete;
 
     /**
      * @brief Push an element to the back of the queue.

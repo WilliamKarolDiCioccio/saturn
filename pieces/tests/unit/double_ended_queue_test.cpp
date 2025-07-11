@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <mutex>
 
-#include "pieces/tsafe/work_stealing_queue.hpp"
+#include "pieces/tsafe/double_ended_queue.hpp"
 
 using namespace pieces::tsafe;
 
@@ -14,9 +14,9 @@ using namespace pieces::tsafe;
 //                          Single-threaded tests
 /////////////////////////////////////////////////////////////////////////////
 
-TEST(WorkStealingQueueTest, PushPopSingleThread)
+TEST(DoubleEndedQueueTest, PushPopSingleThread)
 {
-    WorkStealingQueue<int> queue;
+    DoubleEndedQueue<int> queue;
     EXPECT_TRUE(queue.empty());
     EXPECT_EQ(queue.size(), 0u);
 
@@ -48,9 +48,9 @@ TEST(WorkStealingQueueTest, PushPopSingleThread)
     EXPECT_FALSE(queue.tryPop().isOk());
 }
 
-TEST(WorkStealingQueueTest, SingleThreadSteal)
+TEST(DoubleEndedQueueTest, SingleThreadSteal)
 {
-    WorkStealingQueue<int> queue;
+    DoubleEndedQueue<int> queue;
     EXPECT_TRUE(queue.empty());
 
     queue.push(10);
@@ -81,11 +81,11 @@ TEST(WorkStealingQueueTest, SingleThreadSteal)
 //                          Multi-threaded tests
 /////////////////////////////////////////////////////////////////////////////
 
-TEST(WorkStealingQueueTest, ConcurrentSteal)
+TEST(DoubleEndedQueueTest, ConcurrentSteal)
 {
     constexpr int kNumItems = 1000;
     constexpr int kNumThreads = 4;
-    WorkStealingQueue<int> queue;
+    DoubleEndedQueue<int> queue;
 
     // Fill the queue with 0..kNumItems-1
     for (int i = 0; i < kNumItems; ++i)
