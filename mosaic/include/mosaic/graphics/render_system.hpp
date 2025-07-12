@@ -5,7 +5,7 @@
 
 #include <pieces/result.hpp>
 
-#include "mosaic/defines.hpp"
+#include "mosaic/internal/defines.hpp"
 #include "mosaic/window/window.hpp"
 
 #include "render_context.hpp"

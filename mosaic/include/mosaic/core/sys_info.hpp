@@ -5,7 +5,7 @@
 
 #include <glm/vec2.hpp>
 
-#include "mosaic/defines.hpp"
+#include "mosaic/internal/defines.hpp"
 
 namespace mosaic
 {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "mosaic/defines.hpp"
+#include "mosaic/internal/defines.hpp"
 
 #include <memory>
 #include <string>

@@ -6,7 +6,7 @@
 
 #include <pieces/result.hpp>
 
-#include "mosaic/defines.hpp"
+#include "mosaic/internal/defines.hpp"
 
 #include "application.hpp"
 

@@ -10,7 +10,7 @@
 #include <string>
 #include <random>
 
-#include "mosaic/defines.hpp"
+#include "mosaic/internal/defines.hpp"
 
 namespace mosaic
 {
