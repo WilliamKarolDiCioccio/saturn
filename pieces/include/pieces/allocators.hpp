@@ -14,23 +14,63 @@ namespace pieces
 /**
  * @brief Concept for a generic allocator.
  *
- * This concept checks if the type `A` meets the requirements of an allocator,
- * including allocation, deallocation, construction, destruction, and capacity management.
+ * This concept checks if the type `A` meets the minimum requirements of an allocator, including
+ * allocation, deallocation, construction and destruction.
  */
 template <typename A>
 concept Allocator = requires(A a, size_t n) {
-    { a.allocate(n) } -> std::same_as<typename A::value_type*>;
+    { a.allocate(n) } -> std::same_as<typename A::ValueType*>;
     { a.deallocate(nullptr, n) };
-    {
-        a.construct(std::declval<typename A::value_type*>(), std::declval<typename A::value_type>())
-    };
-    { a.destroy(std::declval<typename A::value_type*>()) };
-    { a.reset() };
-    { a.capacity() } -> std::same_as<size_t>;
-    { a.used() } -> std::same_as<size_t>;
-    { a.available() } -> std::same_as<size_t>;
+    { a.construct(std::declval<typename A::ValueType*>(), std::declval<typename A::ValueType>()) };
+    { a.destroy(std::declval<typename A::ValueType*>()) };
     { a == a } -> std::same_as<bool>;
     { a != a } -> std::same_as<bool>;
+};
+
+/**
+ * @brief A simple wrapper around new and delete.
+ *
+ * @tparam T The type of objects to allocate memory for.
+ */
+template <typename T>
+class BaseAllocator final : public NonCopyable, NonMovable
+{
+   public:
+    using ValueType = T;
+
+   public:
+    BaseAllocator() = default;
+
+   public:
+    T* allocate(size_t _count)
+    {
+        if (_count == 0) return nullptr;
+
+        size_t bytesNeeded = _count * sizeof(T);
+        T* ptr = static_cast<T*>(::operator new(bytesNeeded));
+
+        if (!ptr) throw std::bad_alloc();
+
+        return ptr;
+    }
+
+    void deallocate(T* _ptr, size_t _count) noexcept
+    {
+        if (_ptr && _count > 0) ::operator delete(_ptr);
+    }
+
+    template <typename U, typename... Args>
+    void construct(U* _ptr, Args&&... _args)
+    {
+        if (!_ptr) throw std::invalid_argument("Pointer cannot be null.");
+        ::new (static_cast<void*>(_ptr)) U(std::forward<Args>(_args)...);
+    }
+
+    template <typename U>
+    void destroy(U* _ptr) noexcept
+    {
+        if (_ptr) _ptr->~U();
+    }
 };
 
 /**
@@ -45,6 +85,9 @@ concept Allocator = requires(A a, size_t n) {
 template <typename T>
 class LinearAllocator final : public NonCopyable
 {
+   public:
+    using ValueType = T;
+
    private:
     char* m_buffer = nullptr;
     size_t m_capacity = 0;
@@ -57,7 +100,7 @@ class LinearAllocator final : public NonCopyable
 
         size_t bytesNeeded = _capacity * sizeof(T);
 
-        m_buffer = new char[bytesNeeded];
+        m_buffer = ::new char[bytesNeeded];
 
         if (!m_buffer) throw std::bad_alloc();
     }
