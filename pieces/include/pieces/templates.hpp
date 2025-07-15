@@ -87,6 +87,26 @@ concept Copyable = std::copyable<T>;
 template <typename T>
 concept DefaultConstructible = std::default_initializable<T>;
 
+template <typename T>
+concept Destructible = std::is_destructible_v<T>;
+
+/**
+ * @brief Concept for a generic allocator.
+ *
+ * This concept checks if the type `A` meets the minimum requirements of an allocator, including
+ * allocation, deallocation, construction and destruction.
+ */
+template <typename A>
+concept Allocator = requires(A a, size_t n) {
+    { a.allocate(n) } -> std::same_as<typename A::ValueType *>;
+    { a.deallocate(nullptr, n) };
+    { a.construct(std::declval<typename A::ValueType *>(), std::declval<typename A::ValueType>()) };
+    { a.destroy(std::declval<typename A::ValueType *>()) };
+    { a.owns(nullptr) } -> std::same_as<bool>;
+    { a == a } -> std::same_as<bool>;
+    { a != a } -> std::same_as<bool>;
+};
+
 // Class templates for non-copyable and non-movable types
 
 class NonCopyable
