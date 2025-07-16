@@ -55,21 +55,21 @@ class ProxyAllocator final : public NonCopyable, NonMovable
         return ptr;
     }
 
-    void deallocate(T* _ptr, size_t _count) noexcept
+    void deallocate(T* _ptr, size_t _count)
     {
         if (_ptr) m_onDeallocate(static_cast<void*>(_ptr), _count);
         m_allocator.deallocate(static_cast<T*>(_ptr), _count);
     }
 
     template <typename U, typename... Args>
-    void construct(U* _ptr, Args&&... _args)
+    void construct(U* _ptr, Args&&... _args) noexcept(std::is_nothrow_constructible_v<U, Args...>)
     {
         if (_ptr) m_onConstruct(static_cast<void*>(_ptr), std::forward<Args>(_args)...);
         m_allocator.construct(_ptr, std::forward<Args>(_args)...);
     }
 
     template <typename U>
-    void destroy(U* _ptr) noexcept
+    void destroy(U* _ptr) noexcept(std::is_nothrow_destructible_v<U>)
     {
         if (_ptr) m_onDestroy(static_cast<void*>(_ptr));
         m_allocator.destroy(_ptr);
