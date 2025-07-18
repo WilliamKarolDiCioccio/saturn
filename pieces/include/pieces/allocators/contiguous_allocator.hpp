@@ -42,10 +42,7 @@ template <typename T, ContiguousAllocatorPolicy Policy = ContiguousAllocatorPoli
 class ContiguousAllocatorBase final : public NonCopyable
 {
    public:
-    using Byte = unsigned char;
-
-    static_assert(sizeof(Byte) == 1, "Byte type must be 1 byte in size.");
-
+    using Byte = uint8_t;
     using ValueType = T;
 
    private:
