@@ -46,6 +46,9 @@ class ContiguousAllocatorBase final : public NonCopyable
     using ValueType = T;
 
    private:
+    static constexpr size_t ALIGNOF_VALUE = alignof(ValueType);
+    static constexpr size_t SIZEOF_VALUE = sizeof(ValueType);
+
     // Expressed in bytes
     Byte* m_bufferBytes;
     size_t m_offsetInBytes;
@@ -67,15 +70,15 @@ class ContiguousAllocatorBase final : public NonCopyable
     {
         if (_capacity == 0) throw std::invalid_argument("Size must be greater than zero.");
 
-        size_t bytesNeeded = _capacity * sizeof(ValueType);
+        size_t bytesNeeded = _capacity * SIZEOF_VALUE;
 
         m_bufferBytes =
-            static_cast<Byte*>(::operator new(bytesNeeded, std::align_val_t{alignof(ValueType)}));
+            static_cast<Byte*>(::operator new(bytesNeeded, std::align_val_t{ALIGNOF_VALUE}));
     }
 
     ~ContiguousAllocatorBase()
     {
-        ::operator delete(m_bufferBytes, std::align_val_t{alignof(ValueType)});
+        ::operator delete(m_bufferBytes, std::align_val_t{ALIGNOF_VALUE});
     }
 
     ContiguousAllocatorBase(ContiguousAllocatorBase&& _other) noexcept
@@ -93,7 +96,7 @@ class ContiguousAllocatorBase final : public NonCopyable
     {
         if (this == &_other) return *this;
 
-        ::operator delete(m_bufferBytes, std::align_val_t{alignof(ValueType)});
+        ::operator delete(m_bufferBytes, std::align_val_t{ALIGNOF_VALUE});
 
         m_bufferBytes = _other.m_bufferBytes;
         m_offsetInBytes = _other.m_offsetInBytes;
@@ -132,14 +135,14 @@ class ContiguousAllocatorBase final : public NonCopyable
             }
         }
 
-        size_t bytesNeeded = _count * sizeof(T);
-        size_t capacityInBytes = m_capacity * sizeof(T);
+        size_t bytesNeeded = _count * SIZEOF_VALUE;
+        size_t capacityInBytes = m_capacity * SIZEOF_VALUE;
 
         size_t remainingBytes = capacityInBytes - m_offsetInBytes;
         void* rawPtr = m_bufferBytes + m_offsetInBytes;
         void* alignedPtr = rawPtr;
 
-        if (!std::align(alignof(T), bytesNeeded, alignedPtr, remainingBytes)) return nullptr;
+        if (!std::align(ALIGNOF_VALUE, bytesNeeded, alignedPtr, remainingBytes)) return nullptr;
 
         m_offsetInBytes = static_cast<Byte*>(alignedPtr) - m_bufferBytes + bytesNeeded;
         m_size += _count;
@@ -165,7 +168,7 @@ class ContiguousAllocatorBase final : public NonCopyable
         {
             if (!owns(_ptr) || _count == 0) return;
 
-            size_t bytesToFree = _count * sizeof(ValueType);
+            size_t bytesToFree = _count * SIZEOF_VALUE;
             Byte* expectedPtr = m_bufferBytes + m_offsetInBytes - bytesToFree;
 
             if (reinterpret_cast<Byte*>(_ptr) != expectedPtr)
