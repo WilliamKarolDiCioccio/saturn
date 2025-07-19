@@ -39,11 +39,7 @@ include("${CMAKE_SOURCE_DIR}/cmake/ConfigureForBuildType.cmake")
 
 configure_for_build_type(testbed)
 
-include("${CMAKE_SOURCE_DIR}/cmake/EnableSIMD.cmake")
-
-if(NOT EMSCRIPTEN AND NOT ANDROID)
-  enable_simd(testbed)
-endif()
+include("${CMAKE_SOURCE_DIR}/cmake/ConfigSIMD.cmake")
 
 # ----------------------------------------
 # Shader Compilation Setup

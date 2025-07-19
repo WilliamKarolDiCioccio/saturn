@@ -228,11 +228,7 @@ include("${CMAKE_SOURCE_DIR}/cmake/ConfigureForBuildType.cmake")
 
 configure_for_build_type(mosaic)
 
-include("${CMAKE_SOURCE_DIR}/cmake/EnableSIMD.cmake")
-
-if(NOT EMSCRIPTEN AND NOT ANDROID)
-  enable_simd(mosaic)
-endif()
+include("${CMAKE_SOURCE_DIR}/cmake/ConfigSIMD.cmake")
 
 # ----------------------------------------
 # Post-Build Step
