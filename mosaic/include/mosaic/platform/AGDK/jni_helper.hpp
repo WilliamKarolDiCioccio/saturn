@@ -10,7 +10,7 @@
 #include <thread>
 #include <atomic>
 
-#include <pieces/result.hpp>
+#include <pieces/core/result.hpp>
 
 #include "mosaic/core/logger.hpp"
 

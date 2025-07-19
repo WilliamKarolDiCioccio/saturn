@@ -1,6 +1,6 @@
 #pragma once
 
-#include <pieces/result.hpp>
+#include <pieces/core/result.hpp>
 
 #include "mosaic/window/window.hpp"
 

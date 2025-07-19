@@ -6,7 +6,7 @@
 #include <functional>
 #include <nlohmann/json.hpp>
 
-#include <pieces/result.hpp>
+#include <pieces/core/result.hpp>
 
 #include "input_context.hpp"
 

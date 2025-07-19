@@ -7,7 +7,7 @@
 #include <type_traits>
 
 #include "pieces/internal/error_codes.hpp"
-#include "pieces/result.hpp"
+#include "pieces/core/result.hpp"
 
 namespace pieces
 {

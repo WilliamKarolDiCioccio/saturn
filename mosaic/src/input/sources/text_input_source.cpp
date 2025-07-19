@@ -6,7 +6,7 @@
 #include "mosaic/platform/AGDK/agdk_text_input_source.hpp"
 #endif
 
-#include "mosaic/utils/unicode.hpp"
+#include <pieces/utils/string.hpp>
 
 using namespace std::chrono_literals;
 

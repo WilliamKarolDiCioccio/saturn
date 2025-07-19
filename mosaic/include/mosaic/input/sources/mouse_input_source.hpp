@@ -2,7 +2,7 @@
 
 #include "input_source.hpp"
 
-#include <pieces/circular_buffer.hpp>
+#include <pieces/containers/circular_buffer.hpp>
 
 namespace mosaic
 {

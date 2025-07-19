@@ -6,7 +6,7 @@
 #include <memory>
 #include <functional>
 
-#include "pieces/templates.hpp"
+#include "pieces/core/templates.hpp"
 
 namespace pieces
 {

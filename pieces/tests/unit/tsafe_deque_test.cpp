@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <mutex>
 
-#include "pieces/tsafe/double_ended_queue.hpp"
+#include <pieces/containers/tsafe/deque.hpp>
 
 using namespace pieces::tsafe;
 
@@ -12,9 +12,9 @@ using namespace pieces::tsafe;
 //                          Single-threaded tests
 /////////////////////////////////////////////////////////////////////////////
 
-TEST(DoubleEndedQueueTest, PushPopSingleThread)
+TEST(DequeTest, PushPopSingleThread)
 {
-    DoubleEndedQueue<int> queue;
+    Deque<int> queue;
     EXPECT_TRUE(queue.empty());
     EXPECT_EQ(queue.size(), 0u);
 
@@ -46,9 +46,9 @@ TEST(DoubleEndedQueueTest, PushPopSingleThread)
     EXPECT_FALSE(queue.tryPop().isOk());
 }
 
-TEST(DoubleEndedQueueTest, SingleThreadSteal)
+TEST(DequeTest, SingleThreadSteal)
 {
-    DoubleEndedQueue<int> queue;
+    Deque<int> queue;
     EXPECT_TRUE(queue.empty());
 
     queue.push(10);
@@ -79,11 +79,11 @@ TEST(DoubleEndedQueueTest, SingleThreadSteal)
 //                          Multi-threaded tests
 /////////////////////////////////////////////////////////////////////////////
 
-TEST(DoubleEndedQueueTest, ConcurrentSteal)
+TEST(DequeTest, ConcurrentSteal)
 {
     constexpr int kNumItems = 1000;
     constexpr int kNumThreads = 4;
-    DoubleEndedQueue<int> queue;
+    Deque<int> queue;
 
     // Fill the queue with 0..kNumItems-1
     for (int i = 0; i < kNumItems; ++i)

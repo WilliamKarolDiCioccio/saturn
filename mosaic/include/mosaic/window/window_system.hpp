@@ -4,7 +4,7 @@
 #include <memory>
 #include <unordered_map>
 
-#include <pieces/result.hpp>
+#include <pieces/core/result.hpp>
 
 #include "mosaic/core/logger.hpp"
 

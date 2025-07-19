@@ -6,7 +6,7 @@
 #include <glm/vec2.hpp>
 #include <glm/geometric.hpp>
 
-#include "mosaic/utils/enum.hpp"
+#include <pieces/utils/enum_flags.hpp>
 
 namespace mosaic
 {

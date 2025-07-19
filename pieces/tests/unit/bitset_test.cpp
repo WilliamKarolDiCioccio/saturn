@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "pieces/bitset.hpp"
+#include <pieces/containers/bitset.hpp>
 
 using namespace pieces;
 

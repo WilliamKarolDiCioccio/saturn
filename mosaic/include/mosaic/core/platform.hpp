@@ -4,7 +4,7 @@
 #include <memory>
 #include <vector>
 
-#include <pieces/result.hpp>
+#include <pieces/core/result.hpp>
 
 #include "mosaic/internal/defines.hpp"
 

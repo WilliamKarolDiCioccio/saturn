@@ -3,8 +3,8 @@
 #include <memory>
 #include <stdexcept>
 
-#include <pieces/result.hpp>
-#include <pieces/circular_buffer.hpp>
+#include <pieces/core/result.hpp>
+#include <pieces/containers/circular_buffer.hpp>
 
 #include "mosaic/core/logger.hpp"
 #include "mosaic/input/constants.hpp"

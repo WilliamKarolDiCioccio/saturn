@@ -5,7 +5,7 @@
 #include <stdexcept>
 #include <memory>
 
-#include "pieces/templates.hpp"
+#include "pieces/core/templates.hpp"
 
 namespace pieces
 {

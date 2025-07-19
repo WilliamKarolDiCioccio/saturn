@@ -5,7 +5,7 @@
 #include <functional>
 #include <vector>
 
-#include <pieces/result.hpp>
+#include <pieces/core/result.hpp>
 
 #include <glm/glm.hpp>
 

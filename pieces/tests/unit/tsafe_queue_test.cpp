@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <thread>
 
-#include "pieces/tsafe/queue.hpp"
+#include <pieces/containers/tsafe/queue.hpp>
 
 using namespace pieces::tsafe;
 

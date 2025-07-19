@@ -5,7 +5,7 @@
 #include <optional>
 
 #include "pieces/internal/error_codes.hpp"
-#include "pieces/result.hpp"
+#include "pieces/core/result.hpp"
 
 namespace pieces
 {
@@ -13,7 +13,7 @@ namespace tsafe
 {
 
 /**
- * @brief A thread-safe work-stealing queue implementation.
+ * @brief A thread-safe double-ended queue (deque) implementation.
  *
  * This class provides a thread-safe interface for inserting and removing
  * elements from a deque. It uses a mutex to ensure safe access from multiple threads.
@@ -21,16 +21,16 @@ namespace tsafe
  * @tparam T Type of elements in the queue.
  */
 template <typename T>
-class DoubleEndedQueue
+class Deque
 {
    private:
     mutable std::mutex m_mutex;
     std::deque<T> m_deque;
 
    public:
-    DoubleEndedQueue() = default;
-    DoubleEndedQueue(const DoubleEndedQueue&) = delete;
-    DoubleEndedQueue& operator=(const DoubleEndedQueue&) = delete;
+    Deque() = default;
+    Deque(const Deque&) = delete;
+    Deque& operator=(const Deque&) = delete;
 
     /**
      * @brief Push an element to the back of the queue.

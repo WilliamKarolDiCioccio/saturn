@@ -1,6 +1,9 @@
 #include <gtest/gtest.h>
 
-#include "pieces/allocators.hpp"
+#include <pieces/core/templates.hpp>
+#include <pieces/memory/base_allocator.hpp>
+#include <pieces/memory/proxy_allocator.hpp>
+#include <pieces/memory/contiguous_allocator.hpp>
 
 using namespace pieces;
 

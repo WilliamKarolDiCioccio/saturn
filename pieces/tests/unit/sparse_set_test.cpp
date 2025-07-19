@@ -4,7 +4,7 @@
 #include <numeric>
 #include <algorithm>
 
-#include "pieces/sparse_set.hpp"
+#include <pieces/containers/sparse_set.hpp>
 
 using namespace pieces;
 
