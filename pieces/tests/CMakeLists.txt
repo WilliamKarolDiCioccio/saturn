@@ -1,5 +1,6 @@
 set(TEST_SOURCES
     "unit/allocators_test.cpp"
+    "unit/bitset_test.cpp"
     "unit/coroutines_test.cpp"
     "unit/result_test.cpp"
     "unit/sparse_set_test.cpp"
