@@ -34,7 +34,7 @@ struct Instance
             VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME,
         };
 
-#ifdef _DEBUG
+#if defined(MOSAIC_DEBUG_BUILD) || defined(MOSAIC_DEV_BUILD)
         requiredExtensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
         requiredExtensions.emplace_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
 

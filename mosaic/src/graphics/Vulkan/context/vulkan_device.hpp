@@ -58,7 +58,7 @@ struct Device
 #endif
         };
 
-#ifdef _DEBUG
+#if defined(MOSAIC_DEBUG_BUILD) || defined(MOSAIC_DEV_BUILD)
         requiredLayers = {
             "VK_LAYER_KHRONOS_validation",
         };

@@ -199,7 +199,7 @@ void createInstance(Instance& _instance)
 
     void* debugCreateInfoPtr = nullptr;
 
-#ifdef _DEBUG
+#if defined(MOSAIC_DEBUG_BUILD) || defined(MOSAIC_DEV_BUILD)
     VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo = populateDebugMessengerCreateInfoEXT();
 
     debugCreateInfoPtr = &debugCreateInfo;
@@ -223,14 +223,14 @@ void createInstance(Instance& _instance)
 
     volkLoadInstance(_instance.instance);
 
-#ifdef _DEBUG
+#if defined(MOSAIC_DEBUG_BUILD) || defined(MOSAIC_DEV_BUILD)
     createDebugMessenger(_instance);
 #endif
 }
 
 void destroyInstance(Instance& _instance)
 {
-#ifdef _DEBUG
+#if defined(MOSAIC_DEBUG_BUILD) || defined(MOSAIC_DEV_BUILD)
     destroyDebugMessenger(_instance);
 #endif
 

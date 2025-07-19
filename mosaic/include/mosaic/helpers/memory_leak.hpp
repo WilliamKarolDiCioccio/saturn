@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef _DEBUG
+#if defined(MOSAIC_DEBUG_BUILD) || defined(MOSAIC_DEV_BUILD)
 #define _CRTDBG_MAP_ALLOC
 #include <cstdlib>
 #include <crtdbg.h>
@@ -11,7 +11,7 @@ namespace mosaic
 namespace utils
 {
 
-#ifdef _DEBUG
+#if defined(MOSAIC_DEBUG_BUILD) || defined(MOSAIC_DEV_BUILD)
 inline void enableMemoryLeakDetection()
 {
     int dbgFlags = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG);
@@ -28,7 +28,7 @@ inline void setAllocationBreakPoint(int allocationNumber) { _CrtSetBreakAlloc(al
 } // namespace utils
 } // namespace mosaic
 
-#ifdef _DEBUG
+#if defined(MOSAIC_DEBUG_BUILD) || defined(MOSAIC_DEV_BUILD)
 #define DEBUG_NEW new (_NORMAL_BLOCK, __FILE__, __LINE__)
 #define new DEBUG_NEW
 #endif

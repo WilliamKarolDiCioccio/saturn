@@ -68,7 +68,7 @@
 #endif
 
 // Debug break macros
-#ifdef _DEBUG
+#if defined(MOSAIC_DEBUG_BUILD) || defined(MOSAIC_DEV_BUILD)
 #if defined(MOSAIC_COMPILER_MSVC)
 #define MOSAIC_DEBUGBREAK __debugbreak()
 #elif defined(MOSAIC_COMPILER_GCC) || defined(MOSAIC_COMPILER_CLANG)
@@ -79,7 +79,7 @@
 #endif
 
 // Assert macros
-#ifdef _DEBUG
+#if defined(MOSAIC_DEBUG_BUILD) || defined(MOSAIC_DEV_BUILD)
 #define MOSAIC_ASSERT_IMPL(cond, file, func, line, msg) \
     do                                                  \
     {                                                   \
@@ -91,7 +91,7 @@
             int _assert_line = line;                    \
             const char* _assert_msg = msg;              \
             /* Optional: Call a logger or breakpoint */ \
-            DEBUG_BREAK();                              \
+            MOSAIC_DEBUGBREAK();                        \
             std::abort();                               \
         }                                               \
     } while (false)
