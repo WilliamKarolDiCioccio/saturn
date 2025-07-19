@@ -38,6 +38,12 @@ template <typename T>
 concept TriviallyCopyable = std::is_trivially_copyable_v<T>;
 
 template <typename T>
+concept TriviallyMovable = std::is_trivially_move_constructible_v<T>;
+
+template <typename T>
+concept TriviallyDestructible = std::is_trivially_destructible_v<T>;
+
+template <typename T>
 concept POD = std::is_standard_layout_v<T> && std::is_trivial_v<T>;
 
 // Pointer concepts

@@ -38,7 +38,7 @@ enum class ContiguousAllocatorPolicy : uint8_t
  * @tparam Policy The policy for the allocator (default is linear).
  */
 template <typename T, ContiguousAllocatorPolicy Policy = ContiguousAllocatorPolicy::linear>
-    requires std::is_trivially_destructible_v<T>
+    requires TriviallyDestructible<T>
 class ContiguousAllocatorBase final : public NonCopyable
 {
    public:
