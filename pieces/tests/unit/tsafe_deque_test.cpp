@@ -12,9 +12,9 @@ using namespace pieces::tsafe;
 //                          Single-threaded tests
 /////////////////////////////////////////////////////////////////////////////
 
-TEST(DequeTest, PushPopSingleThread)
+TEST(ThreadSafeDequeTest, PushPopSingleThread)
 {
-    Deque<int> queue;
+    ThreadSafeDeque<int> queue;
     EXPECT_TRUE(queue.empty());
     EXPECT_EQ(queue.size(), 0u);
 
@@ -46,9 +46,9 @@ TEST(DequeTest, PushPopSingleThread)
     EXPECT_FALSE(queue.tryPop().isOk());
 }
 
-TEST(DequeTest, SingleThreadSteal)
+TEST(ThreadSafeDequeTest, SingleThreadSteal)
 {
-    Deque<int> queue;
+    ThreadSafeDeque<int> queue;
     EXPECT_TRUE(queue.empty());
 
     queue.push(10);
@@ -79,11 +79,11 @@ TEST(DequeTest, SingleThreadSteal)
 //                          Multi-threaded tests
 /////////////////////////////////////////////////////////////////////////////
 
-TEST(DequeTest, ConcurrentSteal)
+TEST(ThreadSafeDequeTest, ConcurrentSteal)
 {
     constexpr int kNumItems = 1000;
     constexpr int kNumThreads = 4;
-    Deque<int> queue;
+    ThreadSafeDeque<int> queue;
 
     // Fill the queue with 0..kNumItems-1
     for (int i = 0; i < kNumItems; ++i)

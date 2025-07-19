@@ -92,7 +92,7 @@ class ContiguousAllocatorBase final : public NonCopyable
         _other.m_size = 0;
     }
 
-    ContiguousAllocatorBase& operator=(ContiguousAllocatorBase&& _other) noexcept
+    [[nodiscard]] ContiguousAllocatorBase& operator=(ContiguousAllocatorBase&& _other) noexcept
     {
         if (this == &_other) return *this;
 
@@ -242,16 +242,16 @@ class ContiguousAllocatorBase final : public NonCopyable
         return ptrOffsetInBytes < m_offsetInBytes;
     }
 
-    [[nodiscard]] inline Byte* getBuffer() const noexcept { return m_bufferBytes; }
+    [[nodiscard]] Byte* getBuffer() const noexcept { return m_bufferBytes; }
 
-    bool operator==(const ContiguousAllocatorBase& other) const noexcept
+    [[nodiscard]] bool operator==(const ContiguousAllocatorBase& other) const noexcept
     {
         return this == &other || m_bufferBytes == other.m_bufferBytes &&
                                      m_capacity == other.m_capacity &&
                                      m_offsetInBytes == other.m_offsetInBytes;
     }
 
-    bool operator!=(const ContiguousAllocatorBase& other) const noexcept
+    [[nodiscard]] bool operator!=(const ContiguousAllocatorBase& other) const noexcept
     {
         return !(*this == other);
     }

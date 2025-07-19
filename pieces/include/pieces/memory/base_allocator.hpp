@@ -20,13 +20,14 @@ template <typename T>
 class BaseAllocator final : public NonCopyable, NonMovable
 {
    public:
+    using Byte = uint8_t;
     using ValueType = T;
 
    public:
     BaseAllocator() = default;
 
    public:
-    T* allocate(size_t _count)
+    [[nodiscard]] T* allocate(size_t _count)
     {
         if (_count == 0) return nullptr;
 
@@ -54,7 +55,7 @@ class BaseAllocator final : public NonCopyable, NonMovable
         if (_ptr) _ptr->~U();
     }
 
-    bool owns(void* _ptr) const noexcept { return _ptr != nullptr; }
+    [[nodiscard]] bool owns(void* _ptr) const noexcept { return _ptr != nullptr; }
 
     bool operator==(const BaseAllocator& _other) const noexcept { return *this == _other; }
     bool operator!=(const BaseAllocator& _other) const noexcept { return !(*this == _other); };

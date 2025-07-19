@@ -73,7 +73,7 @@ class MOSAIC_API Timer
      * @brief Tick the timer. This function updates the last time to the current time
      * so that the delta time can be calculated correctly.
      */
-    static inline void tick() { s_lastTime = getCurrentTime(); }
+    static void tick() { s_lastTime = getCurrentTime(); }
 
    public:
     Timer() : m_running(true) { m_thread = std::thread(&Timer::runScheduledCallbacks, this); }

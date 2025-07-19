@@ -36,9 +36,10 @@ class ProxyAllocator final : public NonCopyable, NonMovable
     A* m_allocator;
 
    public:
-    ProxyAllocator(A* _allocator, const OnAllocateCallback& _onAllocate,
-                   const OnDeallocateCallback& _onDeallocate,
-                   const OnConstructCallback& _onConstruct, const OnDestroyCallback& _onDestroy)
+    explicit ProxyAllocator(A* _allocator, const OnAllocateCallback& _onAllocate,
+                            const OnDeallocateCallback& _onDeallocate,
+                            const OnConstructCallback& _onConstruct,
+                            const OnDestroyCallback& _onDestroy)
         : m_allocator(_allocator),
           m_onAllocate(_onAllocate),
           m_onDeallocate(_onDeallocate),

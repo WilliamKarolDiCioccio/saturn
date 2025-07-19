@@ -33,9 +33,8 @@ class ThreadSafeQueue
 
    public:
     ThreadSafeQueue() = default;
-    ThreadSafeQueue(const ThreadSafeQueue&) = delete;
-    ThreadSafeQueue& operator=(const ThreadSafeQueue&) = delete;
 
+   public:
     /**
      * @brief Push an element to the back of the queue.
      *
@@ -70,7 +69,7 @@ class ThreadSafeQueue
      *
      * @return T The popped value.
      */
-    T waitAndPop()
+    [[nodiscard]] T waitAndPop()
     {
         std::unique_lock<std::mutex> lock(m_mutex);
 
@@ -90,7 +89,7 @@ class ThreadSafeQueue
      *
      * @see ErrorCode for possible error codes.
      */
-    Result<T, ErrorCode> tryPop()
+    [[nodiscard]] Result<T, ErrorCode> tryPop()
     {
         std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -103,13 +102,13 @@ class ThreadSafeQueue
         return Ok<T, ErrorCode>(std::move(value));
     }
 
-    bool empty() const
+    [[nodiscard]] bool empty() const
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         return m_queue.empty();
     }
 
-    size_t size() const
+    [[nodiscard]] size_t size() const
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         return m_queue.size();

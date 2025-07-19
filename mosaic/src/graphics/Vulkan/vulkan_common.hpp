@@ -21,7 +21,7 @@ namespace graphics
 namespace vulkan
 {
 
-static inline void checkVkResult(VkResult _result)
+static void checkVkResult(VkResult _result)
 {
     auto resultStr = std::string(string_VkResult(_result));
 

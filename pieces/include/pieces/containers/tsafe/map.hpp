@@ -32,9 +32,8 @@ class ThreadSafeMap
 
    public:
     ThreadSafeMap() = default;
-    ThreadSafeMap(const ThreadSafeMap&) = delete;
-    ThreadSafeMap& operator=(const ThreadSafeMap&) = delete;
 
+   public:
     /**
      * @brief Insert a key-value pair into the map.
      *
@@ -134,7 +133,7 @@ class ThreadSafeMap
      * @return Result<V, ErrorCode> The value associated with the key, or an error code if the key
      * is not found.
      */
-    Result<V, ErrorCode> get(const K& _key) const
+    [[nodiscard]] Result<V, ErrorCode> get(const K& _key) const
     {
         std::shared_lock<std::shared_mutex> lock(m_mutex);
 
@@ -155,7 +154,7 @@ class ThreadSafeMap
      * @return true if the key is found in the map
      * @return false if the key is not found in the map
      */
-    bool contains(const K& _key) const
+    [[nodiscard]] bool contains(const K& _key) const
     {
         std::shared_lock<std::shared_mutex> lock(m_mutex);
         return m_map.find(_key) != m_map.end();
@@ -168,19 +167,19 @@ class ThreadSafeMap
      * @return true if the key was found and removed
      * @return false if the key was not found in the map
      */
-    bool erase(const K& _key)
+    [[nodiscard]] bool erase(const K& _key)
     {
         std::unique_lock<std::shared_mutex> lock(m_mutex);
         return m_map.erase(_key) > 0;
     }
 
-    bool empty() const
+    [[nodiscard]] bool empty() const
     {
         std::shared_lock<std::shared_mutex> lock(m_mutex);
         return m_map.empty();
     }
 
-    size_t size() const
+    [[nodiscard]] size_t size() const
     {
         std::shared_lock<std::shared_mutex> lock(m_mutex);
         return m_map.size();

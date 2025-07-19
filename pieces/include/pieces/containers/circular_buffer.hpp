@@ -25,30 +25,23 @@ namespace pieces
  */
 template <typename T, size_t Size>
     requires std::is_default_constructible_v<T> && (Size > 1)
-class CircularBuffer
+class CircularBuffer final
 {
    private:
     std::array<T, Size> m_data;
     std::size_t m_size = 0;
     std::size_t m_start = 0;
 
-    // Helper function to convert logical index to physical index
+    // Helper function to convert logical index to physical index.
     std::size_t getPhysicalIndex(std::size_t _logicalIndex) const
     {
         return (m_start + _logicalIndex) % Size;
     }
 
    public:
-    /**
-     * @brief Constructs a CircularBuffer with the specified capacity.
-     *
-     * You won't be able to change capacity after the queue is created.
-     *
-     * @param _capacity The maximum number of elements the queue can hold.
-     * @throws std::invalid_argument if _capacity is 0.
-     */
     CircularBuffer() = default;
 
+   public:
     /**
      * @brief Adds an element to the front of the queue.
      *
@@ -58,13 +51,11 @@ class CircularBuffer
     {
         if (m_size == Size)
         {
-            // Buffer is full, overwrite the oldest element
             m_start = (m_start + Size - 1) % Size;
             m_data[m_start] = _value;
         }
         else
         {
-            // Buffer not full, add to front
             m_start = (m_start + Size - 1) % Size;
             m_data[m_start] = _value;
             ++m_size;
@@ -80,13 +71,11 @@ class CircularBuffer
     {
         if (m_size == Size)
         {
-            // Buffer is full, overwrite the oldest element
             m_start = (m_start + Size - 1) % Size;
             m_data[m_start] = std::move(_value);
         }
         else
         {
-            // Buffer not full, add to front
             m_start = (m_start + Size - 1) % Size;
             m_data[m_start] = std::move(_value);
             ++m_size;
@@ -102,13 +91,11 @@ class CircularBuffer
     {
         if (m_size == Size)
         {
-            // Buffer is full, overwrite the oldest element
             m_start = (m_start + Size - 1) % Size;
             m_data[m_start] = _value;
         }
         else
         {
-            // Buffer not full, add to front
             m_start = (m_start + Size - 1) % Size;
             m_data[m_start] = _value;
             ++m_size;
@@ -124,13 +111,11 @@ class CircularBuffer
     {
         if (m_size == Size)
         {
-            // Buffer is full, overwrite the oldest element
             m_start = (m_start + Size - 1) % Size;
             m_data[m_start] = std::move(_value);
         }
         else
         {
-            // Buffer not full, add to front
             m_start = (m_start + Size - 1) % Size;
             m_data[m_start] = std::move(_value);
             ++m_size;

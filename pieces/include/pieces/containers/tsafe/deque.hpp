@@ -21,17 +21,16 @@ namespace tsafe
  * @tparam T Type of elements in the queue.
  */
 template <typename T>
-class Deque
+class ThreadSafeDeque
 {
    private:
     mutable std::mutex m_mutex;
     std::deque<T> m_deque;
 
    public:
-    Deque() = default;
-    Deque(const Deque&) = delete;
-    Deque& operator=(const Deque&) = delete;
+    ThreadSafeDeque() = default;
 
+   public:
     /**
      * @brief Push an element to the back of the queue.
      *
@@ -61,7 +60,7 @@ class Deque
      *
      * @see ErrorCode for possible error codes.
      */
-    Result<T, ErrorCode> tryPop()
+    [[nodiscard]] Result<T, ErrorCode> tryPop()
     {
         std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -81,7 +80,7 @@ class Deque
      *
      * @see ErrorCode for possible error codes.
      */
-    Result<T, ErrorCode> trySteal()
+    [[nodiscard]] Result<T, ErrorCode> trySteal()
     {
         std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -94,13 +93,13 @@ class Deque
         return Ok<T, ErrorCode>(std::move(result));
     }
 
-    bool empty() const
+    [[nodiscard]] bool empty() const
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         return m_deque.empty();
     }
 
-    size_t size() const
+    [[nodiscard]] size_t size() const
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         return m_deque.size();

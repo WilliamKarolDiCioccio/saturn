@@ -8,36 +8,36 @@
 namespace pieces
 {
 
-// Primary template
 template <typename T, template <typename...> class Template>
 struct is_specialization_of : std::false_type
 {
 };
 
-// Partial specialization that matches when T is a specialization of Template
 template <template <typename...> class Template, typename... Args>
 struct is_specialization_of<Template<Args...>, Template> : std::true_type
 {
 };
 
-// Helper variable template (C++14 and later)
 template <typename T, template <typename...> class Template>
-inline constexpr bool is_specialization_of_v = is_specialization_of<T, Template>::value;
+constexpr bool is_specialization_of_v = is_specialization_of<T, Template>::value;
 
-/** A helper struct to unwrap reference wrappers */
+// A helper struct to unwrap reference wrappers.
 template <typename T>
 struct UnwrapRef
 {
-    static T& get(T& _value) { return _value; }
-    static T const& get(T const& v) { return v; }
+    [[nodiscard]] static T& get(T& _value) { return _value; }
+    [[nodiscard]] static T const& get(T const& v) { return v; }
 };
 
-/** A specialization of UnwrapRef for std::reference_wrapper (SFINAE) */
+// A specialization of UnwrapRef for std::reference_wrapper.
 template <typename T>
 struct UnwrapRef<std::reference_wrapper<T>>
 {
-    static T& get(std::reference_wrapper<T>& _value) { return _value.get(); }
-    static T const& get(std::reference_wrapper<T> const& _value) { return _value.get(); }
+    [[nodiscard]] static T& get(std::reference_wrapper<T>& _value) { return _value.get(); }
+    [[nodiscard]] static T const& get(std::reference_wrapper<T> const& _value)
+    {
+        return _value.get();
+    }
 };
 
 /**
@@ -50,7 +50,7 @@ struct UnwrapRef<std::reference_wrapper<T>>
  * @tparam E The type for the error value.
  */
 template <typename T, typename E>
-class Result
+class Result final
 {
    public:
     using SuccessType = T;
@@ -70,6 +70,13 @@ class Result
     bool m_isError;
 
    private:
+    /**
+     * @brief Construct a new Result as a success or error.
+     *
+     * @tparam N The index of the variant to construct.
+     * @tparam Args The types of the constructor arguments.
+     * @param args The constructor arguments.
+     */
     template <size_t N, typename... Args>
     explicit Result(std::in_place_index_t<N>, Args&&... args)
     {
@@ -90,10 +97,10 @@ class Result
     }
 
    public:
-    /** Constructs a success result */
+    // Constructs a success result.
     static Result Ok(T value) { return Result(std::in_place_index<0>, std::move(value)); }
 
-    /** Constructs an error result */
+    // Constructs an error result.
     static Result Err(E error) { return Result(std::in_place_index<1>, std::move(error)); }
 
     ~Result()
@@ -108,22 +115,22 @@ class Result
         }
     }
 
-    /** Checks if the result is a success */
-    inline bool isOk() const { return m_isError == false; }
+    // Checks if the result is a success.
+    [[nodiscard]] bool isOk() const { return m_isError == false; }
 
-    /** Checks if the result is an error */
-    inline bool isErr() const { return !isOk(); }
+    // Checks if the result is an error.
+    [[nodiscard]] bool isErr() const { return !isOk(); }
 
-    /** Gets the success value, throwing if it is an error */
-    auto unwrap() -> decltype(UnwrapRef<T>::get(m_data.success))
+    // Gets the success value, throwing if it is an error.
+    [[nodiscard]] auto unwrap() -> decltype(UnwrapRef<T>::get(m_data.success))
     {
         if (isErr()) throw std::runtime_error("Attempted to access success from an error result");
 
         return UnwrapRef<T>::get(m_data.success);
     }
 
-    /** Gets the error value, throwing if it is a success */
-    auto error() -> decltype(UnwrapRef<E>::get(m_data.error))
+    // Gets the error value, throwing if it is a success.
+    [[nodiscard]] auto error() -> decltype(UnwrapRef<E>::get(m_data.error))
     {
         if (isOk()) throw std::runtime_error("Attempted to access error from a success result");
 
@@ -142,7 +149,7 @@ class Result
         requires std::is_invocable_v<F, T> &&
                  is_specialization_of_v<std::invoke_result_t<F, T>, Result> &&
                  std::is_same_v<typename std::invoke_result_t<F, T>::ErrorType, E>
-    auto andThen(F&& f) -> std::invoke_result_t<F, T>
+    [[nodiscard]] auto andThen(F&& f) -> std::invoke_result_t<F, T>
     {
         using Return = std::invoke_result_t<F, T>;
 
@@ -168,7 +175,7 @@ class Result
         requires std::is_invocable_v<F, E> &&
                  is_specialization_of_v<std::invoke_result_t<F, E>, Result> &&
                  std::is_same_v<typename std::invoke_result_t<F, E>::SuccessType, T>
-    auto orElse(F&& f) -> std::invoke_result_t<F, E>
+    [[nodiscard]] auto orElse(F&& f) -> std::invoke_result_t<F, E>
     {
         using Return = std::invoke_result_t<F, E>;
 
@@ -183,34 +190,34 @@ class Result
     }
 };
 
-/** A Result constructor for success values */
+// A Result constructor for success values.
 template <typename U, typename E>
-Result<U, E> Ok(U&& _u)
+[[nodiscard]] Result<U, E> Ok(U&& _u)
 {
     return Result<U, E>::Ok(std::forward<U>(_u));
 }
 
-/** A Result constructor for error values */
+// A Result constructor for error values.
 template <typename U, typename E>
-Result<U, E> Err(E&& _e)
+[[nodiscard]] Result<U, E> Err(E&& _e)
 {
     return Result<U, E>::Err(std::forward<E>(_e));
 }
 
-/** A specialization of Result for reference types */
+// A specialization of Result for reference types.
 template <typename U, typename E>
 using RefResult = Result<std::reference_wrapper<U>, E>;
 
-/** A RefResult constructor for success values */
+// A RefResult constructor for success values.
 template <typename U, typename E>
-RefResult<U, E> OkRef(U& _u)
+[[nodiscard]] RefResult<U, E> OkRef(U& _u)
 {
     return RefResult<U, E>::Ok(std::ref(_u));
 }
 
-/** A RefResult constructor for error values */
+// A RefResult constructor for error values.
 template <typename U, typename E>
-RefResult<U, E> ErrRef(E&& _e)
+[[nodiscard]] RefResult<U, E> ErrRef(E&& _e)
 {
     return RefResult<U, E>::Err(_e);
 }

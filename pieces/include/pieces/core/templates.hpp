@@ -111,7 +111,6 @@ concept Allocator = requires(A a, size_t n) {
     { a.construct(std::declval<typename A::ValueType *>(), std::declval<typename A::ValueType>()) };
     { a.destroy(std::declval<typename A::ValueType *>()) };
     { a.owns(nullptr) } -> std::same_as<bool>;
-    { a.getBuffer() } -> std::same_as<typename A::Byte *>;
     { a == a } -> std::same_as<bool>;
     { a != a } -> std::same_as<bool>;
 };

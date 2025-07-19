@@ -30,7 +30,7 @@ namespace pieces
  */
 template <typename K, typename T, size_t PageSize = 64, bool AggressiveReclaim = false>
     requires(std::is_integral_v<K> && std::is_unsigned_v<K> && PageSize > 0)
-class SparseSet
+class SparseSet final
 {
    private:
     // Type alias for the sparse set itself to avoid long type names.
@@ -99,7 +99,7 @@ class SparseSet
      */
     template <typename U>
         requires std::is_same_v<std::decay_t<U>, T>
-    bool tryInsert(K _key, U&& _value)
+    [[nodiscard]] bool tryInsert(K _key, U&& _value)
     {
         Page& page = ensurePageExists(_key);
         auto offset = getPageOffset(_key);
@@ -220,10 +220,10 @@ class SparseSet
     }
 
     // Returns the number of keys in the sparse set (gets the dense keys size).
-    size_t size() const noexcept { return m_denseKeys.size(); }
+    [[nodiscard]] size_t size() const noexcept { return m_denseKeys.size(); }
 
     // Wether the sparse set is empty or not (cheking the dense keys size).
-    bool empty() const noexcept { return m_denseKeys.empty(); }
+    [[nodiscard]] bool empty() const noexcept { return m_denseKeys.empty(); }
 
     // Removes all keys and values from the sparse set.
     void clear() noexcept
@@ -341,13 +341,13 @@ class SparseSet
 
    private:
     // Get the corresponding page for the given key.
-    inline size_t getPageIndex(K _key) const { return _key / PageSize; }
+    [[nodiscard]] size_t getPageIndex(K _key) const { return _key / PageSize; }
 
     // Get the offset within the page for the given key.
-    inline size_t getPageOffset(K _key) const { return _key % PageSize; }
+    [[nodiscard]] size_t getPageOffset(K _key) const { return _key % PageSize; }
 
     // Create or get the page for the given key.
-    Page& ensurePageExists(size_t _size)
+    [[nodiscard]] Page& ensurePageExists(size_t _size)
     {
         const size_t pageIdx = getPageIndex(_size);
 
@@ -365,7 +365,7 @@ class SparseSet
 
     // Constness abstracted get function to avoid code duplication.
     template <typename Self>
-    static auto getImpl(Self& _self, K _key) noexcept
+    [[nodiscard]] static auto getImpl(Self& _self, K _key) noexcept
         -> RefResult<std::conditional_t<std::is_const_v<Self>, const T, T>, ErrorCode>
     {
         const size_t pageIdx = _self.getPageIndex(_key);

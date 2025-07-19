@@ -17,19 +17,21 @@ namespace pieces
  * NOTE: There is no guarantee that the map will be evaluated at compile time. You should use it in
  * a context where compile-time evaluation is possible.
  *
- *
  * @tparam K The type of the key.
  * @tparam V The type of the value.
  * @tparam Size The number of key-value pairs in the map.
  */
 template <typename K, typename V, size_t Size>
-struct ConstexprMap final
+class ConstexprMap final
 {
+   private:
     using Pair = std::pair<K, V>;
     std::array<Pair, Size> data;
 
-    constexpr ConstexprMap(const std::array<Pair, N>& arr) : data(arr) {}
+   public:
+    explicit constexpr ConstexprMap(const std::array<Pair, Size>& arr) : data(arr) {}
 
+   public:
     /**
      * @brief Returns a reference to the value associated with the given key.
      *

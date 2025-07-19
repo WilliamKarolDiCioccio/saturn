@@ -222,9 +222,8 @@ class Task<void>
  * coroutine.
  */
 template <typename Ready, typename Suspend, typename Resume>
-class LambdaAwaitable
+struct LambdaAwaitable
 {
-   public:
     Ready m_ready;
     Suspend m_suspend;
     Resume m_resume;

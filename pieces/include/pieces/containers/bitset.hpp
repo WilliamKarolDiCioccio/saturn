@@ -35,7 +35,7 @@ class BitSet final
     size_t m_wordCount = 0;
 
    public:
-    explicit BitSet(size_t _size)
+    inline explicit BitSet(size_t _size)
         : m_size(_size), m_wordCount((_size + BITS_PER_WORD - 1) / BITS_PER_WORD)
     {
         if (_size == 0) throw std::invalid_argument("Size must be greater than zero.");
@@ -43,9 +43,9 @@ class BitSet final
         m_words = new Word[m_wordCount]();
     }
 
-    ~BitSet() { delete[] m_words; }
+    inline ~BitSet() { delete[] m_words; }
 
-    BitSet(const BitSet& _other) : m_size(_other.m_size), m_wordCount(_other.m_wordCount)
+    inline BitSet(const BitSet& _other) : m_size(_other.m_size), m_wordCount(_other.m_wordCount)
     {
         if (m_wordCount < 0) return;
 
@@ -53,7 +53,7 @@ class BitSet final
         std::memcpy(m_words, _other.m_words, m_wordCount * sizeof(Word));
     }
 
-    BitSet& operator=(const BitSet& _other)
+    [[nodiscard]] inline BitSet& operator=(const BitSet& _other)
     {
         if (this == &_other) return *this;
 
@@ -75,7 +75,7 @@ class BitSet final
         return *this;
     }
 
-    BitSet(BitSet&& _other) noexcept
+    inline BitSet(BitSet&& _other) noexcept
         : m_words(_other.m_words), m_size(_other.m_size), m_wordCount(_other.m_wordCount)
     {
         _other.m_words = nullptr;
@@ -83,7 +83,7 @@ class BitSet final
         _other.m_wordCount = 0;
     }
 
-    BitSet& operator=(BitSet&& _other) noexcept
+    [[nodiscard]] inline BitSet& operator=(BitSet&& _other) noexcept
     {
         if (this == &_other) return *this;
 
