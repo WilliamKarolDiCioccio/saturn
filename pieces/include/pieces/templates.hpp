@@ -104,11 +104,14 @@ concept Destructible = std::is_destructible_v<T>;
  */
 template <typename A>
 concept Allocator = requires(A a, size_t n) {
+    typename A::Byte;
+    typename A::ValueType;
     { a.allocate(n) } -> std::same_as<typename A::ValueType *>;
     { a.deallocate(nullptr, n) };
     { a.construct(std::declval<typename A::ValueType *>(), std::declval<typename A::ValueType>()) };
     { a.destroy(std::declval<typename A::ValueType *>()) };
     { a.owns(nullptr) } -> std::same_as<bool>;
+    { a.getBuffer() } -> std::same_as<typename A::Byte *>;
     { a == a } -> std::same_as<bool>;
     { a != a } -> std::same_as<bool>;
 };

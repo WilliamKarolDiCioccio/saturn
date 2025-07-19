@@ -119,7 +119,7 @@ class ContiguousAllocatorBase final : public NonCopyable
      *
      * @throws std::bad_alloc from the new operator if allocation fails.
      */
-    ValueType* allocate(size_t _count)
+    [[nodiscard]] ValueType* allocate(size_t _count)
     {
         if (_count == 0) return nullptr;
 
@@ -215,7 +215,6 @@ class ContiguousAllocatorBase final : public NonCopyable
         if (owns(_ptr)) _ptr->~U();
     }
 
-    // Resets the allocator, clearing all allocated memory and resetting the size.
     void reset()
     {
         m_size = 0;
@@ -231,7 +230,6 @@ class ContiguousAllocatorBase final : public NonCopyable
     // Returns the number of T slots available for allocation.
     [[nodiscard]] size_t available() const noexcept { return m_capacity - m_size; }
 
-    // Checks if the allocator owns the given pointer.
     [[nodiscard]] bool owns(void* _ptr) const noexcept
     {
         if (!_ptr) return false;
@@ -244,8 +242,7 @@ class ContiguousAllocatorBase final : public NonCopyable
         return ptrOffsetInBytes < m_offsetInBytes;
     }
 
-    // Returns the raw buffer pointer.
-    [[nodiscard]] inline Byte* buffer() const noexcept { return m_bufferBytes; }
+    [[nodiscard]] inline Byte* getBuffer() const noexcept { return m_bufferBytes; }
 
     bool operator==(const ContiguousAllocatorBase& other) const noexcept
     {

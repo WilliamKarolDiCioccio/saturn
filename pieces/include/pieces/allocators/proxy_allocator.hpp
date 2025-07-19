@@ -19,6 +19,7 @@ template <typename T, typename A = BaseAllocator<T>>
 class ProxyAllocator final : public NonCopyable, NonMovable
 {
    public:
+    using Byte = A::Byte;
     using ValueType = A::ValueType;
 
    private:
@@ -48,7 +49,7 @@ class ProxyAllocator final : public NonCopyable, NonMovable
     }
 
    public:
-    T* allocate(size_t _count)
+    [[nodiscard]] T* allocate(size_t _count)
     {
         T* ptr = m_allocator.allocate(_count);
         if (ptr) m_onAllocate(ptr, _count);
@@ -75,7 +76,10 @@ class ProxyAllocator final : public NonCopyable, NonMovable
         m_allocator.destroy(_ptr);
     }
 
-    bool owns(void* _ptr) const noexcept { return m_allocator.owns(_ptr); }
+    [[nodiscard]] bool owns(void* _ptr) const noexcept { return m_allocator.owns(_ptr); }
+
+    // Not instrumentable but required by the Allocator concept.
+    [[nodiscard]] Byte* getBuffer() const noexcept { return m_allocator.getBuffer(); }
 };
 
 } // namespace pieces
