@@ -1,11 +1,8 @@
-#pragma once
-
 #include <gtest/gtest.h>
 
 #include "pieces/allocators.hpp"
 
-namespace pieces
-{
+using namespace pieces;
 
 class LinearAllocatorTest : public ::testing::Test
 {
@@ -160,5 +157,3 @@ TEST_F(CircularAllocatorTest, AllocateTooLargeAlwaysNullptr)
 {
     EXPECT_EQ(circAlloc.allocate(CircularAllocatorTest::kCapacity + 1), nullptr);
 }
-
-} // namespace pieces

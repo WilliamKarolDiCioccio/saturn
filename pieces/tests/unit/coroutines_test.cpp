@@ -1,5 +1,3 @@
-#pragma once
-
 #include <gtest/gtest.h>
 #include <variant>
 #include <functional>
@@ -10,10 +8,10 @@
 using namespace pieces;
 
 // A simple coroutine that returns an int via Task<int>
-Task<int> return_five() { co_return 5; }
+Task<int> returnFive() { co_return 5; }
 
 // A coroutine that throws an exception
-Task<int> throw_error()
+Task<int> throwError()
 {
     throw std::runtime_error("oops");
     co_return 0; // unreachable
@@ -157,17 +155,17 @@ struct ManualRunner
 
 TEST(TaskTest, ReturnValue)
 {
-    Task<int> t = return_five();
+    Task<int> t = returnFive();
     ManualRunner runner = [&]() -> ManualRunner { co_return 0; }();
-    int result = runner.run(return_five());
+    int result = runner.run(returnFive());
 
     EXPECT_EQ(result, 5);
 }
 
 TEST(TaskTest, ExceptionPropagates)
 {
-    Task<int> t = throw_error();
+    Task<int> t = throwError();
     ManualRunner runner = [&]() -> ManualRunner { co_return 0; }();
 
-    EXPECT_THROW(runner.run(throw_error()), std::runtime_error);
+    EXPECT_THROW(runner.run(throwError()), std::runtime_error);
 }
