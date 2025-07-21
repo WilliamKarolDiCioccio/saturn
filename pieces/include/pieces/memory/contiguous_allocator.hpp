@@ -12,8 +12,6 @@ namespace pieces
 
 /**
  * @brief An enum class to define the policy for contiguous allocators.
- *
- * @tparam T The type of objects to allocate memory for.
  */
 enum class ContiguousAllocatorPolicy : uint8_t
 {
@@ -36,9 +34,12 @@ enum class ContiguousAllocatorPolicy : uint8_t
  *
  * @tparam T The type of objects to allocate memory for.
  * @tparam Policy The policy for the allocator (default is linear).
+ *
+ * @note This allocator operates in base T for size, alignment, and all related operations.
+ * @note Due to the performance-critical nature of this allocator, it does not support
+ * non-trivially-destructible types.
  */
 template <typename T, ContiguousAllocatorPolicy Policy = ContiguousAllocatorPolicy::linear>
-    requires TriviallyDestructible<T>
 class ContiguousAllocatorBase final : public NonCopyable
 {
    public:
@@ -59,7 +60,7 @@ class ContiguousAllocatorBase final : public NonCopyable
 
    public:
     /**
-     * @brief Constructs a ContiguousAllocatorBase with a given capacity.
+     * @brief Constructs a ContiguousAllocatorBase with a given capacity in T objects.
      *
      * @param _capacity The number of T objects the allocator can hold.
      *
@@ -164,10 +165,10 @@ class ContiguousAllocatorBase final : public NonCopyable
                     [[maybe_unused]] size_t _count) noexcept(Policy !=
                                                              ContiguousAllocatorPolicy::stack)
     {
+        if (!owns(_ptr) || _count == 0) return;
+
         if constexpr (Policy == ContiguousAllocatorPolicy::stack)
         {
-            if (!owns(_ptr) || _count == 0) return;
-
             size_t bytesToFree = _count * SIZEOF_VALUE;
             Byte* expectedPtr = m_bufferBytes + m_offsetInBytes - bytesToFree;
 
@@ -183,36 +184,37 @@ class ContiguousAllocatorBase final : public NonCopyable
     }
 
     /**
-     * @brief Constructs an object of type U at the given pointer.
+     * @brief Constructs an object of type T at the given pointer.
      *
-     * @tparam U The type of the object to construct.
+     * @tparam Args Types of arguments to forward to the constructor of T.
      * @param _ptr Pointer to the object to construct.
      * @param _args Arguments to forward to the constructor.
      * @return void
      *
-     * @throws noexcept If the constructor of U is nothrow constructible.
+     * @throws noexcept If the constructor of T is nothrow constructible.
      */
-    template <typename U, typename... Args>
-    void construct(U* _ptr, Args&&... _args) noexcept(std::is_nothrow_constructible_v<U, Args...>)
+    template <typename... Args>
+    void construct(T* _ptr, Args&&... _args) noexcept(std::is_nothrow_constructible_v<T, Args...>)
     {
         if (!owns(_ptr)) return;
 
-        ::new (static_cast<void*>(_ptr)) U(std::forward<Args>(_args)...);
+        ::new (static_cast<void*>(_ptr)) T(std::forward<Args>(_args)...);
     }
 
     /**
-     * @brief Destroys an object of type U at the given pointer.
+     * @brief Destroys an object of type T at the given pointer.
      *
-     * @tparam U The type of the object to destroy.
      * @param _ptr Pointer to the object to destroy.
      * @return void
      *
-     * @throws noexcept If the destructor of U is nothrow destructible.
+     * @throws noexcept If the destructor of T is nothrow destructible.
      */
-    template <typename U>
-    void destroy(U* _ptr) noexcept(std::is_nothrow_destructible_v<U>)
+    void destroy(T* _ptr) noexcept(std::is_nothrow_destructible_v<T>)
     {
-        if (owns(_ptr)) _ptr->~U();
+        if constexpr (!TriviallyDestructible<T>)
+        {
+            if (_ptr) _ptr->~T();
+        }
     }
 
     void reset()
@@ -221,24 +223,21 @@ class ContiguousAllocatorBase final : public NonCopyable
         m_offsetInBytes = 0;
     }
 
-    // Returns the total capacity of the allocator in T slots.
     [[nodiscard]] size_t capacity() const noexcept { return m_capacity; }
 
-    // Returns the number of T slots used in the allocator.
     [[nodiscard]] size_t used() const noexcept { return m_size; }
 
-    // Returns the number of T slots available for allocation.
     [[nodiscard]] size_t available() const noexcept { return m_capacity - m_size; }
 
     [[nodiscard]] bool owns(void* _ptr) const noexcept
     {
         if (!_ptr) return false;
 
-        Byte* charPtr = reinterpret_cast<Byte*>(_ptr);
+        Byte* bytePtr = reinterpret_cast<Byte*>(_ptr);
 
-        if (charPtr < m_bufferBytes) return false;
+        if (bytePtr < m_bufferBytes) return false;
 
-        size_t ptrOffsetInBytes = charPtr - m_bufferBytes;
+        size_t ptrOffsetInBytes = bytePtr - m_bufferBytes;
         return ptrOffsetInBytes < m_offsetInBytes;
     }
 
@@ -246,9 +245,9 @@ class ContiguousAllocatorBase final : public NonCopyable
 
     [[nodiscard]] bool operator==(const ContiguousAllocatorBase& other) const noexcept
     {
-        return this == &other || m_bufferBytes == other.m_bufferBytes &&
-                                     m_capacity == other.m_capacity &&
-                                     m_offsetInBytes == other.m_offsetInBytes;
+        return this == &other ||
+               (m_bufferBytes == other.m_bufferBytes && m_capacity == other.m_capacity &&
+                m_offsetInBytes == other.m_offsetInBytes);
     }
 
     [[nodiscard]] bool operator!=(const ContiguousAllocatorBase& other) const noexcept
@@ -258,21 +257,19 @@ class ContiguousAllocatorBase final : public NonCopyable
 };
 
 /**
- * @brief A linear allocator that allocates memory in a contiguous block without deallocation.
+ * @brief Type alias for a contiguous allocator with linear allocation policy.
  */
 template <typename T>
 using LinearAllocator = ContiguousAllocatorBase<T, ContiguousAllocatorPolicy::linear>;
 
 /**
- * @brief A stack allocator that allocates memory in a stack-like manner, allowing deallocation
- * only in reverse order.
+ * @brief Type alias for a stack allocator that allocates memory in a stack-like manner.
  */
 template <typename T>
 using StackAllocator = ContiguousAllocatorBase<T, ContiguousAllocatorPolicy::stack>;
 
 /**
- * @brief A circular allocator that allocates memory in a circular buffer manner, allowing
- * wrap-around when the buffer is full.
+ * @brief Type alias for a circular allocator that allocates memory in a circular buffer manner.
  */
 template <typename T>
 using CircularAllocator = ContiguousAllocatorBase<T, ContiguousAllocatorPolicy::circular>;

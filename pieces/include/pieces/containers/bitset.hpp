@@ -100,6 +100,23 @@ class BitSet final
         return *this;
     }
 
+    [[nodiscard]] bool operator==(const BitSet& _other) const noexcept
+    {
+        if (m_size != _other.m_size) return false;
+
+        for (size_t i = 0; i < m_wordCount; ++i)
+        {
+            if (m_words[i] != _other.m_words[i]) return false;
+        }
+
+        return true;
+    }
+
+    [[nodiscard]] bool operator!=(const BitSet& _other) const noexcept
+    {
+        return !(*this == _other);
+    }
+
    public:
     inline void setBit(size_t _index) noexcept
     {

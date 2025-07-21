@@ -16,7 +16,6 @@ namespace pieces
  * @tparam T The type of objects to allocate memory for.
  */
 template <typename T>
-    requires std::is_trivially_destructible_v<T>
 class BaseAllocator final : public NonCopyable, NonMovable
 {
    public:
@@ -43,16 +42,20 @@ class BaseAllocator final : public NonCopyable, NonMovable
     }
 
     template <typename U, typename... Args>
-    void construct(U* _ptr, Args&&... _args)
+    void construct(T* _ptr, Args&&... _args)
     {
         if (!owns(_ptr)) throw std::invalid_argument("Pointer cannot be null.");
-        ::new (static_cast<void*>(_ptr)) U(std::forward<Args>(_args)...);
+
+        ::new (static_cast<void*>(_ptr)) T(std::forward<Args>(_args)...);
     }
 
     template <typename U>
     void destroy(U* _ptr) noexcept
     {
-        if (_ptr) _ptr->~U();
+        if constexpr (!TriviallyDestructible<U>)
+        {
+            if (_ptr) _ptr->~U();
+        }
     }
 
     [[nodiscard]] bool owns(void* _ptr) const noexcept { return _ptr != nullptr; }
