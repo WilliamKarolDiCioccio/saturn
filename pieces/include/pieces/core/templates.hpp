@@ -99,11 +99,10 @@ concept Destructible = std::is_destructible_v<T>;
 /**
  * @brief Concept for a generic allocator.
  *
- * This concept checks if the type `A` meets the minimum requirements of an allocator, including
- * allocation, deallocation, construction and destruction.
+ * This concept checks if the type `A` meets the minimum requirements of an allocator.
  */
 template <typename A>
-concept Allocator = requires(A a, size_t n) {
+concept Allocator = Movable<A> && requires(A a, size_t n) {
     typename A::Byte;
     typename A::ValueType;
     { a.allocate(n) } -> std::same_as<typename A::ValueType *>;
@@ -111,6 +110,9 @@ concept Allocator = requires(A a, size_t n) {
     { a.construct(std::declval<typename A::ValueType *>(), std::declval<typename A::ValueType>()) };
     { a.destroy(std::declval<typename A::ValueType *>()) };
     { a.owns(nullptr) } -> std::same_as<bool>;
+    { a.capacity() } -> std::same_as<size_t>;
+    { a.used() } -> std::same_as<size_t>;
+    { a.available() } -> std::same_as<size_t>;
     { a == a } -> std::same_as<bool>;
     { a != a } -> std::same_as<bool>;
 };

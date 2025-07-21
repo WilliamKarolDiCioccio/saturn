@@ -4,6 +4,7 @@
 #include <pieces/memory/base_allocator.hpp>
 #include <pieces/memory/proxy_allocator.hpp>
 #include <pieces/memory/contiguous_allocator.hpp>
+#include <pieces/memory/pool_allocator.hpp>
 
 using namespace pieces;
 
@@ -159,4 +160,85 @@ TEST_F(CircularAllocatorTest, AllocateZeroReturnsNullptr)
 TEST_F(CircularAllocatorTest, AllocateTooLargeAlwaysNullptr)
 {
     EXPECT_EQ(circAlloc.allocate(CircularAllocatorTest::kCapacity + 1), nullptr);
+}
+
+class AutomaticIdxPoolAllocatorTest : public ::testing::Test
+{
+   protected:
+    static constexpr size_t kCapacity = 128;
+    AutomaticIndexingPoolAllocator<int> poolAlloc{kCapacity};
+};
+
+TEST_F(AutomaticIdxPoolAllocatorTest, DeallocateRandomOrderWorks)
+{
+    int* ptr1 = poolAlloc.allocate(5);
+    int* ptr2 = poolAlloc.allocate(3);
+
+    poolAlloc.deallocate(ptr2, 3);
+    poolAlloc.deallocate(ptr1, 5);
+
+    EXPECT_EQ(poolAlloc.used(), 0);
+}
+
+TEST_F(AutomaticIdxPoolAllocatorTest, AllocateCountFailsIfNotEnoughContiguousSlots)
+{
+    int* ptr1 = poolAlloc.allocate(kCapacity - 2);
+
+    EXPECT_EQ(poolAlloc.allocate(4), nullptr);
+}
+
+class ManualIdxPoolAllocatorTest : public ::testing::Test
+{
+   protected:
+    static constexpr size_t kCapacity = 128;
+    ManualIndexingPoolAllocator<int> poolAlloc{kCapacity};
+};
+
+TEST_F(ManualIdxPoolAllocatorTest, AllocateAtIndexWorks)
+{
+    int* ptr1 = poolAlloc.allocateAt(0, 10);
+    int* ptr2 = poolAlloc.allocateAt(9, 1);
+
+    EXPECT_NE(ptr1, nullptr);
+    EXPECT_EQ(ptr2, nullptr);
+
+    poolAlloc.deallocateAt(0, 10);
+
+    EXPECT_EQ(poolAlloc.used(), 0);
+}
+
+TEST_F(ManualIdxPoolAllocatorTest, AllocateAtIndexFailsIfIndexOutOfBounds)
+{
+    EXPECT_THROW(poolAlloc.allocateAt(130, 10), std::runtime_error);
+}
+
+TEST_F(ManualIdxPoolAllocatorTest, AllocateAtIndexFailsIfNotEnoughtContiguousSlots)
+{
+    int* ptr1 = poolAlloc.allocateAt(5, 10);
+    int* ptr2 = poolAlloc.allocateAt(0, 10);
+
+    EXPECT_NE(ptr1, nullptr);
+    EXPECT_EQ(ptr2, nullptr);
+
+    poolAlloc.deallocateAt(5, 10);
+}
+
+TEST_F(ManualIdxPoolAllocatorTest, DeallocateAndAllocateAtIndexCorrectlySetBitmasks)
+{
+    int* ptr1 = poolAlloc.allocateAt(5, 10);
+    int* ptr2 = poolAlloc.allocateAt(20, 40);
+
+    EXPECT_NE(ptr1, nullptr);
+    EXPECT_NE(ptr2, nullptr);
+
+    EXPECT_TRUE(poolAlloc.owns(ptr1));
+    EXPECT_TRUE(poolAlloc.owns(ptr2));
+
+    poolAlloc.deallocateAt(5, 10);
+    poolAlloc.deallocateAt(20, 40);
+
+    EXPECT_FALSE(poolAlloc.owns(ptr1));
+    EXPECT_FALSE(poolAlloc.owns(ptr2));
+
+    EXPECT_EQ(poolAlloc.used(), 0);
 }
