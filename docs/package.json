@@ -10,8 +10,27 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/starlight": "^0.35.0",
+    "@astrojs/react": "^4.3.0",
+    "@astrojs/sitemap": "^3.4.1",
+    "@astrojs/starlight-tailwind": "^4.0.1",
+    "@fontsource/geist-mono": "^5.2.6",
+    "@fontsource/geist-sans": "^5.2.5",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
     "astro": "^5.6.1",
-    "sharp": "^0.34.2"
+    "astro-icon": "^1.1.5",
+    "plantuml-encoder": "^1.4.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "sharp": "^0.34.2",
+    "starlight-kbd": "^0.2.0",
+    "starlight-scroll-to-top": "^0.1.1",
+    "starlight-theme-black": "^0.6.0"
+  },
+  "devDependencies": {
+    "@astrojs/starlight": "^0.35.1",
+    "@tailwindcss/vite": "^4.1.11",
+    "@types/node": "^24.0.15",
+    "vite": "^7.0.5"
   }
 }

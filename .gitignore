@@ -76,3 +76,6 @@ vcpkg_installed/
 .externalNativeBuild
 .cxx
 local.properties
+
+# build output
+/dist
