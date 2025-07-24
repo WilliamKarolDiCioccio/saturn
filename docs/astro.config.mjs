@@ -19,6 +19,7 @@ const websiteUrl = "https://williamkaroldicioccio.github.io/mosaic_docs/";
 
 // https://astro.build/config
 export default defineConfig({
+  base: "/mosaic_docs/",
   site: websiteUrl,
   integrations: [
     starlight({
