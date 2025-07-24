@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: https://williamkaroldicioccio.github.io/mosaic_docs/
+      url: https://williamkaroldicioccio.github.io/mosaic/
     steps:
       - name: Deploy to GitHub Pages
         id: deployment

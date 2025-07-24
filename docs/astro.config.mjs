@@ -15,11 +15,11 @@ import starlightScrollToTop from "starlight-scroll-to-top";
 
 import sitemap from "@astrojs/sitemap";
 
-const websiteUrl = "https://williamkaroldicioccio.github.io/mosaic_docs/";
+const websiteUrl = "https://williamkaroldicioccio.github.io/mosaic/";
 
 // https://astro.build/config
 export default defineConfig({
-  base: "/mosaic_docs/",
+  base: "/mosaic/",
   site: websiteUrl,
   integrations: [
     starlight({
