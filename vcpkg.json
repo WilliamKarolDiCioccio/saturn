@@ -2,18 +2,18 @@
   "name": "mosaic",
   "version": "1.0.0",
   "dependencies": [
-    "fmt",
-    "color-console",
-    "glm",
-    "gtest",
-    "nlohmann-json",
-    "stb",
     "benchmark",
-    "utfcpp",
+    "color-console",
+    "fmt",
     {
       "name": "glfw3",
       "platform": "!android"
     },
+    "glm",
+    "gtest",
+    "nlohmann-json",
+    "stb",
+    "utfcpp",
     {
       "name": "volk",
       "platform": "!emscripten"
@@ -29,6 +29,7 @@
     {
       "name": "vulkan-utility-libraries",
       "platform": "!emscripten"
-    }
+    },
+    "tree-sitter"
   ]
 }
