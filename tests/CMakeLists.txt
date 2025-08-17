@@ -13,4 +13,4 @@ add_custom_command(TARGET cross_project_tests POST_BUILD
 
 include ("${CMAKE_SOURCE_DIR}/cmake/ConfigureForBuildType.cmake")
 
-configure_for_build_type(mosaic)
+configure_for_build_type(cross_project_tests)

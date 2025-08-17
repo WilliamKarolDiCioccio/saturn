@@ -18,4 +18,4 @@ add_test(NAME pieces_tests COMMAND test_pieces)
 
 include("${CMAKE_SOURCE_DIR}/cmake/ConfigureForBuildType.cmake")
 
-configure_for_build_type(mosaic)
+configure_for_build_type(pieces_tests)
