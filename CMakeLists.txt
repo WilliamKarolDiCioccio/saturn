@@ -88,6 +88,8 @@ endif()
 # ---------------------------
 add_subdirectory("pieces")
 add_subdirectory("mosaic")
+add_subdirectory("codex/lib")
+add_subdirectory("codex/cli")
 
 # ---------------------------
 # Applications & Tests
