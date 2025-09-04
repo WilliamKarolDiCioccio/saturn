@@ -2,7 +2,7 @@
 
 #include <unordered_map>
 
-#include "pieces/sparse_set.hpp"
+#include <pieces/containers/sparse_set.hpp>
 
 using namespace pieces;
 
