@@ -257,6 +257,10 @@ class BitSet final
 
     [[nodiscard]] inline size_t count() const noexcept { return popcount(); }
 
+    [[nodiscard]] inline const Word* data() const noexcept { return m_words; }
+
+    [[nodiscard]] inline size_t wordCount() const noexcept { return m_wordCount; }
+
     [[nodiscard]] inline BitSet operator&(const BitSet& _other) const
     {
         if (m_size != _other.m_size)
