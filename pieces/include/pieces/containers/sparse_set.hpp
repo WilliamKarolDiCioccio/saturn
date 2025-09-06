@@ -186,11 +186,9 @@ class SparseSet final
     [[nodiscard]] bool contains(K _key) const noexcept
     {
         size_t pageIdx = getPageIndex(_key);
-
         if (pageIdx >= m_pages.size() || !m_pages[pageIdx]) return false;
 
         const Page& page = *m_pages[pageIdx];
-
         return page.present.test(getPageOffset(_key));
     }
 
@@ -225,7 +223,7 @@ class SparseSet final
     // Wether the sparse set is empty or not (cheking the dense keys size).
     [[nodiscard]] bool empty() const noexcept { return m_denseKeys.empty(); }
 
-    // Removes all keys and values from the sparse set.
+    // Unindexes all keys and values from the sparse set.
     void clear() noexcept
     {
         m_denseKeys.clear();
@@ -233,7 +231,7 @@ class SparseSet final
         m_pages.clear();
     }
 
-    // Removes all keys and values from the sparse set and releases memory.
+    // Removes unindexed keys and values from the sparse set to release memory.
     void shrinkToFit() noexcept
     {
         m_denseKeys.shrink_to_fit();
@@ -256,6 +254,7 @@ class SparseSet final
     {
         if constexpr (AggressiveReclaim) return;
 
+        // Reserve pages for keys
         if (_maxKey > m_pages.size() * PageSize)
         {
             const size_t availablePages = m_pages.size();
@@ -271,6 +270,7 @@ class SparseSet final
             }
         }
 
+        // Reserve space for dense arrays
         if (_count > m_denseKeys.capacity() || _count > m_data.capacity())
         {
             m_denseKeys.reserve(_count);
@@ -338,6 +338,43 @@ class SparseSet final
     const std::vector<K>& keys() const noexcept { return m_denseKeys; }
     std::vector<T>& values() noexcept { return m_data; }
     const std::vector<T>& values() const noexcept { return m_data; }
+
+   public:
+    /**
+     * @brief Iterator for iterating over key-value pairs in the SparseSet.
+     */
+    struct Iterator
+    {
+        size_t index;
+        const SparseSet* sparseSet;
+
+        Iterator(size_t _idx, const SparseSet* _set) : index(_idx), sparseSet(_set) {}
+
+        struct KeyValuePair
+        {
+            K key;
+            const T& value;
+        };
+
+        KeyValuePair operator*() const
+        {
+            return {sparseSet->m_denseKeys[index], sparseSet->m_data[index]};
+        }
+
+        Iterator& operator++()
+        {
+            ++index;
+            return *this;
+        }
+
+        bool operator!=(const Iterator& _other) const { return index != _other.index; }
+    };
+
+    Iterator begin() { return Iterator(0, this); }
+    Iterator end() { return Iterator(size(), this); }
+
+    Iterator begin() const { return Iterator(0, this); }
+    Iterator end() const { return Iterator(size(), this); }
 
    private:
     // Get the corresponding page for the given key.
