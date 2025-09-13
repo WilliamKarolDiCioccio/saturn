@@ -1,4 +1,6 @@
-set(TEST_SOURCES)
+set(TEST_SOURCES
+  "unit/typeless_vector_test.cpp"
+  "unit/typeless_sparse_set_test.cpp")
 
 add_executable(mosaic_tests ${TEST_SOURCES} "main.cpp")
 
