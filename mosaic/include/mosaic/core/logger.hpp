@@ -2,6 +2,7 @@
 
 #include "mosaic/internal/defines.hpp"
 
+#include <time.h>
 #include <memory>
 #include <string>
 #include <array>
@@ -275,11 +276,13 @@ class MOSAIC_API LoggerManager final
             if (m_config.showTimestamp)
             {
                 auto now = std::chrono::system_clock::now();
-                std::time_t now_c = std::chrono::system_clock::to_time_t(now);
-                std::tm* now_tm = std::localtime(&now_c);
+                const std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+                std::tm now_tm;
+
+                localtime_s(&now_tm, &now_c);
 
                 char timeBuffer[100];
-                std::strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", now_tm);
+                std::strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", &now_tm);
 
                 formattedMessage = fmt::format("[{}] {}", timeBuffer, formattedMessage);
             }
