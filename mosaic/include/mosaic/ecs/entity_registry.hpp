@@ -231,8 +231,7 @@ class EntityRegistry final
         ComponentSignature newSig = oldSig;
         (newSig.setBit(m_componentRegistry->getID<Ts>()), ...);
 
-        size_t newStride = oldStride + getStrideSizeInBytes<Ts...>();
-
+        size_t newStride = calculateStrideFromSignature(m_componentRegistry, newSig);
         Archetype* newArch = getOrCreateArchetype(newSig, newStride);
 
         if (oldArch == newArch) return;
@@ -279,8 +278,7 @@ class EntityRegistry final
         ComponentSignature newSig = oldSig;
         (newSig.clearBit(m_componentRegistry->getID<Ts>()), ...);
 
-        size_t newStride = oldStride - getStrideSizeInBytes<Ts...>();
-
+        size_t newStride = calculateStrideFromSignature(m_componentRegistry, newSig);
         Archetype* newArch = getOrCreateArchetype(newSig, newStride);
 
         if (oldArch == newArch) return;
