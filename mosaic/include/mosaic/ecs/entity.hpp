@@ -10,7 +10,7 @@ using EntityGen = uint32_t;
 
 struct EntityMeta
 {
-    EntityID eid;
+    EntityID id;
     EntityGen gen;
 };
 

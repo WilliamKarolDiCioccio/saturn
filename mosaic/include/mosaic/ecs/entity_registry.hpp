@@ -25,7 +25,7 @@ class EntityRegistry final
     class EntityAllocator
     {
        public:
-        EntityMeta getID()
+        [[nodiscard]] EntityMeta getID()
         {
             if (!m_freeList.empty())
             {
@@ -53,6 +53,8 @@ class EntityRegistry final
             m_generations.clear();
         }
 
+        [[nodiscard]] EntityGen getGenForID(EntityID _eid) const { return m_generations[_eid]; }
+
        private:
         EntityID m_next = 0;
         std::vector<EntityID> m_freeList;
@@ -74,11 +76,10 @@ class EntityRegistry final
             : m_archetype(_archetype), m_componentRegistry(_com) {};
 
        public:
-        void forEach(std::function<void(EntityMeta, Ts&...)> _func)
+        template <typename Func>
+        void forEach(Func&& _func)
         {
-            auto sig = m_archetype->signature();
-            auto componentOffsets =
-                getComponentOffsetsInBytesFromSignature(m_componentRegistry, sig);
+            auto componentOffsets = m_archetype->componentOffsets();
 
             Byte* base = m_archetype->data();
             size_t stride = m_archetype->stride();
@@ -110,18 +111,14 @@ class EntityRegistry final
             std::unordered_map<ComponentID, size_t> m_componentOffsets;
 
            public:
-            Iterator(const ComponentRegistry* _componentRegistry, Byte* _base, size_t _stride,
-                     size_t _index, size_t _count)
+            Iterator(const ComponentRegistry* _componentRegistry, Archetype* _archetype,
+                     size_t _index)
                 : m_componentRegistry(_componentRegistry),
-                  m_base(_base),
-                  m_stride(_stride),
+                  m_base(_archetype->data()),
+                  m_stride(_archetype->stride()),
                   m_index(_index),
-                  m_count(_count)
-            {
-                auto sig = getSignatureFromTypes<Ts...>(m_componentRegistry);
-                m_componentOffsets =
-                    getComponentOffsetsInBytesFromSignature(m_componentRegistry, sig);
-            };
+                  m_count(_archetype->size()),
+                  m_componentOffsets(_archetype->componentOffsets()) {};
 
             struct EntityMetaComponentTuplePair
             {
@@ -146,17 +143,9 @@ class EntityRegistry final
             void operator++() { ++m_index; }
         };
 
-        Iterator begin()
-        {
-            return Iterator(m_componentRegistry, m_archetype->data(), m_archetype->stride(), 0,
-                            m_archetype->size());
-        }
+        Iterator begin() { return Iterator(m_componentRegistry, m_archetype, 0); }
 
-        Iterator end()
-        {
-            return Iterator(m_componentRegistry, m_archetype->data(), m_archetype->stride(),
-                            m_archetype->size(), m_archetype->size());
-        }
+        Iterator end() { return Iterator(m_componentRegistry, m_archetype, m_archetype->size()); }
     };
 
     std::unordered_map<ComponentSignature, std::unique_ptr<Archetype>> m_archetypes;
@@ -170,7 +159,7 @@ class EntityRegistry final
 
    public:
     template <typename... Ts>
-    EntityID createEntity()
+    EntityMeta createEntity()
     {
         if (!areComponentsRegistered<Ts...>(m_componentRegistry))
         {
@@ -192,10 +181,10 @@ class EntityRegistry final
 
         ((new (rowPtr + componentOffsets[m_componentRegistry->getID<Ts>()]) Ts()), ...);
 
-        arch->insert(meta.eid, rowPtr);
-        m_entityToArchetype[meta.eid] = arch;
+        arch->insert(meta.id, rowPtr);
+        m_entityToArchetype[meta.id] = arch;
 
-        return meta.eid;
+        return meta;
     }
 
     void destroyEntity(EntityID _eid)
@@ -242,10 +231,8 @@ class EntityRegistry final
         EntityMeta meta = *reinterpret_cast<EntityMeta*>(oldArch->get(_eid));
         new (newRowPtr) EntityMeta{meta};
 
-        auto oldComponentOffsets =
-            getComponentOffsetsInBytesFromSignature(m_componentRegistry, oldSig);
-        auto newComponentOffsets =
-            getComponentOffsetsInBytesFromSignature(m_componentRegistry, newSig);
+        auto oldComponentOffsets = oldArch->componentOffsets();
+        auto newComponentOffsets = newArch->componentOffsets();
 
         for (const auto& [compID, offset] : oldComponentOffsets)
         {
@@ -256,9 +243,9 @@ class EntityRegistry final
 
         ((new (newRowPtr + newComponentOffsets[m_componentRegistry->getID<Ts>()]) Ts()), ...);
 
-        newArch->insert(meta.eid, newRowPtr);
-        oldArch->remove(meta.eid);
-        m_entityToArchetype[meta.eid] = newArch;
+        newArch->insert(meta.id, newRowPtr);
+        oldArch->remove(meta.id);
+        m_entityToArchetype[meta.id] = newArch;
     }
 
     template <typename... Ts>
@@ -289,10 +276,8 @@ class EntityRegistry final
         EntityMeta meta = *reinterpret_cast<EntityMeta*>(oldArch->get(_eid));
         new (newRowPtr) EntityMeta{meta};
 
-        auto oldComponentOffsets =
-            getComponentOffsetsInBytesFromSignature(m_componentRegistry, oldSig);
-        auto newComponentOffsets =
-            getComponentOffsetsInBytesFromSignature(m_componentRegistry, newSig);
+        auto oldComponentOffsets = oldArch->componentOffsets();
+        auto newComponentOffsets = newArch->componentOffsets();
 
         for (const auto& [compID, offset] : oldComponentOffsets)
         {
@@ -303,9 +288,9 @@ class EntityRegistry final
                         compSize);
         }
 
-        newArch->insert(meta.eid, newRowPtr);
-        oldArch->remove(meta.eid);
-        m_entityToArchetype[meta.eid] = newArch;
+        newArch->insert(meta.id, newRowPtr);
+        oldArch->remove(meta.id);
+        m_entityToArchetype[meta.id] = newArch;
     }
 
     void clear()
@@ -315,24 +300,8 @@ class EntityRegistry final
         m_archetypes.clear();
     }
 
-    size_t entityCount() const { return m_entityToArchetype.size(); }
-
-    size_t archetypeCount() const { return m_archetypes.size(); }
-
-    size_t totalMemoryUsageInBytes() const
-    {
-        size_t total = 0;
-
-        for (const auto& [sig, arch] : m_archetypes)
-        {
-            total += arch->memoryUsageInBytes();
-        }
-
-        return total;
-    }
-
     template <typename... Ts>
-    std::optional<EntityView<Ts...>> view()
+    [[nodiscard]] std::optional<EntityView<Ts...>> view()
     {
         if (!areComponentsRegistered<Ts...>(m_componentRegistry))
         {
@@ -346,6 +315,39 @@ class EntityRegistry final
         return EntityView<Ts...>(m_archetypes.at(sig).get(), m_componentRegistry);
     }
 
+    [[nodiscard]] size_t entityCount() const { return m_entityToArchetype.size(); }
+
+    [[nodiscard]] size_t archetypeCount() const { return m_archetypes.size(); }
+
+    [[nodiscard]] const Archetype* getArchetypeForEntity(EntityID _eid) const
+    {
+        if (m_entityToArchetype.find(_eid) == m_entityToArchetype.end()) return nullptr;
+
+        return m_entityToArchetype.at(_eid);
+    }
+
+    [[nodiscard]] bool isEntityValid(EntityMeta _meta) const
+    {
+        if (m_entityToArchetype.find(_meta.id) == m_entityToArchetype.end()) return false;
+
+        auto rowPtr = m_entityToArchetype.at(_meta.id)->get(_meta.id);
+        auto entityMeta = reinterpret_cast<EntityMeta*>(rowPtr);
+
+        return entityMeta->gen == _meta.gen == m_entityAllocator.getGenForID(_meta.id);
+    }
+
+    [[nodiscard]] size_t totalMemoryUsageInBytes() const
+    {
+        size_t total = 0;
+
+        for (const auto& [sig, arch] : m_archetypes)
+        {
+            total += arch->memoryUsageInBytes();
+        }
+
+        return total;
+    }
+
    private:
     Archetype* getOrCreateArchetype(ComponentSignature _signature, size_t _stride)
     {
@@ -354,7 +356,11 @@ class EntityRegistry final
             return m_archetypes[_signature].get();
         }
 
-        m_archetypes[_signature] = std::make_unique<Archetype>(_signature, _stride);
+        auto componentOffsets =
+            getComponentOffsetsInBytesFromSignature(m_componentRegistry, _signature);
+
+        m_archetypes[_signature] =
+            std::make_unique<Archetype>(_signature, _stride, componentOffsets);
 
         return m_archetypes.at(_signature).get();
     }

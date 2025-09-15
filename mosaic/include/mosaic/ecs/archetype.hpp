@@ -18,10 +18,12 @@ class Archetype final
 
     ComponentSignature m_signature;
     TypelessSparseSet<64, false> m_storage;
+    std::unordered_map<ComponentID, size_t> m_componentOffsets;
 
    public:
-    Archetype(ComponentSignature _signature, size_t _stride)
-        : m_signature(_signature), m_storage(_stride) {};
+    Archetype(ComponentSignature _signature, size_t _stride,
+              std::unordered_map<ComponentID, size_t> _componentOffsets)
+        : m_signature(_signature), m_storage(_stride), m_componentOffsets(_componentOffsets) {};
 
    public:
     void insert(EntityID _eid, const char* _data) { m_storage.insert(_eid, _data); }
@@ -33,6 +35,12 @@ class Archetype final
     [[nodiscard]] inline const ComponentSignature& signature() const noexcept
     {
         return m_signature;
+    }
+
+    [[nodiscard]] inline const std::unordered_map<ComponentID, size_t>& componentOffsets()
+        const noexcept
+    {
+        return m_componentOffsets;
     }
 
     [[nodiscard]] inline size_t stride() const noexcept { return m_storage.stride(); }
