@@ -20,6 +20,11 @@ struct ComponentMeta
     size_t alignment;
 };
 
+template <typename T>
+concept Component = std::is_trivially_copyable_v<T> && std::is_trivially_destructible_v<T> &&
+                    !std::is_pointer_v<T> && !std::is_reference_v<T> && !std::is_const_v<T> &&
+                    !std::is_volatile_v<T> && std::is_standard_layout_v<T>;
+
 } // namespace ecs
 } // namespace mosaic
 

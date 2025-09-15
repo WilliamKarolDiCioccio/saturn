@@ -61,7 +61,7 @@ class EntityRegistry final
         std::vector<EntityGen> m_generations;
     };
 
-    template <typename... Ts>
+    template <Component... Ts>
     class EntityView
     {
        private:
@@ -158,7 +158,7 @@ class EntityRegistry final
         : m_componentRegistry(_componentRegistry) {};
 
    public:
-    template <typename... Ts>
+    template <Component... Ts>
     EntityMeta createEntity()
     {
         if (!areComponentsRegistered<Ts...>(m_componentRegistry))
@@ -203,7 +203,7 @@ class EntityRegistry final
         for (EntityID eid : _eids) destroyEntity(eid);
     }
 
-    template <typename... Ts>
+    template <Component... Ts>
     void addComponents(EntityID _eid)
     {
         if (!areComponentsRegistered<Ts...>(m_componentRegistry))
@@ -248,7 +248,7 @@ class EntityRegistry final
         m_entityToArchetype[meta.id] = newArch;
     }
 
-    template <typename... Ts>
+    template <Component... Ts>
     void removeComponents(EntityID _eid)
     {
         if (!areComponentsRegistered<Ts...>(m_componentRegistry))
@@ -300,7 +300,7 @@ class EntityRegistry final
         m_archetypes.clear();
     }
 
-    template <typename... Ts>
+    template <Component... Ts>
     [[nodiscard]] std::optional<EntityView<Ts...>> view()
     {
         if (!areComponentsRegistered<Ts...>(m_componentRegistry))
