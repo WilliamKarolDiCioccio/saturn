@@ -5,6 +5,8 @@
 #include <cassert>
 #include <stdexcept>
 
+#include <pieces/memory/contiguous_allocator.hpp>
+
 namespace pieces
 {
 
@@ -30,55 +32,57 @@ class BitSet final
     // Shift amount to divide by BITS_PER_WORD (log2(64) = 6).
     static constexpr size_t WORD_SHIFT = 6;
 
-    Word* m_words = nullptr;
     size_t m_size = 0;
     size_t m_wordCount = 0;
+    ContiguousAllocatorBase<Word> m_allocator;
 
    public:
     inline explicit BitSet(size_t _size)
-        : m_size(_size), m_wordCount((_size + BITS_PER_WORD - 1) / BITS_PER_WORD)
+        : m_size(_size),
+          m_wordCount((_size + BITS_PER_WORD - 1) / BITS_PER_WORD),
+          m_allocator(m_wordCount * sizeof(Word))
     {
         if (_size == 0) throw std::invalid_argument("Size must be greater than zero.");
-
-        m_words = new Word[m_wordCount]();
     }
 
-    inline ~BitSet() { delete[] m_words; }
-
-    inline BitSet(const BitSet& _other) : m_size(_other.m_size), m_wordCount(_other.m_wordCount)
+    inline BitSet(const BitSet& _other)
+        : m_size(_other.m_size),
+          m_wordCount(_other.m_wordCount),
+          m_allocator(_other.m_wordCount * sizeof(Word))
     {
-        if (m_wordCount < 0) return;
-
-        m_words = new Word[m_wordCount];
-        std::memcpy(m_words, _other.m_words, m_wordCount * sizeof(Word));
+        if (m_wordCount > 0)
+        {
+            std::memcpy(m_allocator.getBuffer(), _other.m_allocator.getBuffer(),
+                        m_wordCount * sizeof(Word));
+        }
     }
 
     [[nodiscard]] inline BitSet& operator=(const BitSet& _other)
     {
         if (this == &_other) return *this;
 
-        delete[] m_words;
-
         m_size = _other.m_size;
         m_wordCount = _other.m_wordCount;
 
         if (m_wordCount > 0)
         {
-            m_words = new Word[m_wordCount];
-            std::memcpy(m_words, _other.m_words, m_wordCount * sizeof(Word));
+            m_allocator = ContiguousAllocatorBase<Word>(m_wordCount * sizeof(Word));
+            std::memcpy(m_allocator.getBuffer(), _other.m_allocator.getBuffer(),
+                        m_wordCount * sizeof(Word));
         }
         else
         {
-            m_words = nullptr;
+            m_allocator = ContiguousAllocatorBase<Word>(sizeof(Word));
         }
 
         return *this;
     }
 
     inline BitSet(BitSet&& _other) noexcept
-        : m_words(_other.m_words), m_size(_other.m_size), m_wordCount(_other.m_wordCount)
+        : m_allocator(std::move(_other.m_allocator)),
+          m_size(_other.m_size),
+          m_wordCount(_other.m_wordCount)
     {
-        _other.m_words = nullptr;
         _other.m_size = 0;
         _other.m_wordCount = 0;
     }
@@ -87,13 +91,10 @@ class BitSet final
     {
         if (this == &_other) return *this;
 
-        delete[] m_words;
-
-        m_words = _other.m_words;
+        m_allocator = std::move(_other.m_allocator);
         m_size = _other.m_size;
         m_wordCount = _other.m_wordCount;
 
-        _other.m_words = nullptr;
         _other.m_size = 0;
         _other.m_wordCount = 0;
 
@@ -104,9 +105,12 @@ class BitSet final
     {
         if (m_size != _other.m_size) return false;
 
+        Word* words = reinterpret_cast<Word*>(m_allocator.getBuffer());
+        Word* otherWords = reinterpret_cast<Word*>(_other.m_allocator.getBuffer());
+
         for (size_t i = 0; i < m_wordCount; ++i)
         {
-            if (m_words[i] != _other.m_words[i]) return false;
+            if (words[i] != otherWords[i]) return false;
         }
 
         return true;
@@ -117,13 +121,21 @@ class BitSet final
         return !(*this == _other);
     }
 
+   private:
+    inline Word* getWords() noexcept { return reinterpret_cast<Word*>(m_allocator.getBuffer()); }
+
+    inline const Word* getWords() const noexcept
+    {
+        return reinterpret_cast<const Word*>(m_allocator.getBuffer());
+    }
+
    public:
     inline void setBit(size_t _index) noexcept
     {
         assert(_index < m_size && "Index out of bounds");
         const size_t wordIndex = _index >> WORD_SHIFT;
         const size_t bitIndex = _index & WORD_MASK;
-        m_words[wordIndex] |= (Word(1) << bitIndex);
+        getWords()[wordIndex] |= (Word(1) << bitIndex);
     }
 
     inline void clearBit(size_t _index) noexcept
@@ -131,7 +143,7 @@ class BitSet final
         assert(_index < m_size && "Index out of bounds");
         const size_t wordIndex = _index >> WORD_SHIFT;
         const size_t bitIndex = _index & WORD_MASK;
-        m_words[wordIndex] &= ~(Word(1) << bitIndex);
+        getWords()[wordIndex] &= ~(Word(1) << bitIndex);
     }
 
     [[nodiscard]] inline bool testBit(size_t _index) const noexcept
@@ -139,7 +151,7 @@ class BitSet final
         assert(_index < m_size && "Index out of bounds");
         const size_t wordIndex = _index >> WORD_SHIFT;
         const size_t bitIndex = _index & WORD_MASK;
-        return (m_words[wordIndex] & (Word(1) << bitIndex)) != 0;
+        return (getWords()[wordIndex] & (Word(1) << bitIndex)) != 0;
     }
 
     inline void flipBit(size_t _index) noexcept
@@ -147,14 +159,16 @@ class BitSet final
         assert(_index < m_size && "Index out of bounds");
         const size_t wordIndex = _index >> WORD_SHIFT;
         const size_t bitIndex = _index & WORD_MASK;
-        m_words[wordIndex] ^= (Word(1) << bitIndex);
+        getWords()[wordIndex] ^= (Word(1) << bitIndex);
     }
 
     [[nodiscard]] inline size_t findFirstSet() const noexcept
     {
+        const Word* words = getWords();
+
         for (size_t i = 0; i < m_wordCount; ++i)
         {
-            if (m_words[i] != 0) return i * BITS_PER_WORD + std::countr_zero(m_words[i]);
+            if (words[i] != 0) return i * BITS_PER_WORD + std::countr_zero(words[i]);
         }
 
         return m_size;
@@ -164,10 +178,11 @@ class BitSet final
     {
         if (_startIndex >= m_size) return m_size;
 
+        const Word* words = getWords();
         const size_t startWord = _startIndex >> WORD_SHIFT;
         const size_t startBit = _startIndex & WORD_MASK;
 
-        Word firstWord = m_words[startWord];
+        Word firstWord = words[startWord];
         // Mask out bits before startBit
         if (startBit > 0) firstWord &= ~((Word(1) << startBit) - 1);
 
@@ -180,9 +195,9 @@ class BitSet final
         // Check remaining words
         for (size_t i = startWord + 1; i < m_wordCount; ++i)
         {
-            if (m_words[i] != 0)
+            if (words[i] != 0)
             {
-                const size_t result = i * BITS_PER_WORD + std::countr_zero(m_words[i]);
+                const size_t result = i * BITS_PER_WORD + std::countr_zero(words[i]);
                 return result < m_size ? result : m_size;
             }
         }
@@ -192,11 +207,13 @@ class BitSet final
 
     [[nodiscard]] inline size_t findFirstClear() const noexcept
     {
+        const Word* words = getWords();
+
         for (size_t i = 0; i < m_wordCount; ++i)
         {
-            if (m_words[i] != ~Word(0))
+            if (words[i] != ~Word(0))
             {
-                const size_t result = i * BITS_PER_WORD + std::countr_one(m_words[i]);
+                const size_t result = i * BITS_PER_WORD + std::countr_one(words[i]);
                 return result < m_size ? result : m_size;
             }
         }
@@ -206,10 +223,12 @@ class BitSet final
 
     [[nodiscard]] inline size_t popcount() const noexcept
     {
+        const Word* words = getWords();
         size_t count = 0;
+
         for (size_t i = 0; i < m_wordCount; ++i)
         {
-            count += std::popcount(m_words[i]);
+            count += std::popcount(words[i]);
         }
 
         // Handle potential padding bits in the last word
@@ -217,8 +236,8 @@ class BitSet final
         {
             const size_t paddingBits = BITS_PER_WORD - (m_size % BITS_PER_WORD);
             const Word lastWordMask = ~Word(0) >> paddingBits;
-            const size_t lastWordPopcount = std::popcount(m_words[m_wordCount - 1] & lastWordMask);
-            count = count - std::popcount(m_words[m_wordCount - 1]) + lastWordPopcount;
+            const size_t lastWordPopcount = std::popcount(words[m_wordCount - 1] & lastWordMask);
+            count = count - std::popcount(words[m_wordCount - 1]) + lastWordPopcount;
         }
 
         return count;
@@ -226,26 +245,31 @@ class BitSet final
 
     inline void setAll() noexcept
     {
-        std::memset(m_words, 0xFF, m_wordCount * sizeof(Word));
+        std::memset(m_allocator.getBuffer(), 0xFF, m_wordCount * sizeof(Word));
 
         // Clear padding bits in the last word
         if (m_size % BITS_PER_WORD != 0)
         {
             const size_t paddingBits = BITS_PER_WORD - (m_size % BITS_PER_WORD);
             const Word mask = ~Word(0) >> paddingBits;
-            m_words[m_wordCount - 1] &= mask;
+            getWords()[m_wordCount - 1] &= mask;
         }
     }
 
-    inline void clearAll() noexcept { std::memset(m_words, 0, m_wordCount * sizeof(Word)); }
+    inline void clearAll() noexcept
+    {
+        std::memset(m_allocator.getBuffer(), 0, m_wordCount * sizeof(Word));
+    }
 
     [[nodiscard]] inline size_t size() const noexcept { return m_size; }
 
     [[nodiscard]] inline bool empty() const noexcept
     {
+        const Word* words = getWords();
+
         for (size_t i = 0; i < m_wordCount; ++i)
         {
-            if (m_words[i] != 0) return false;
+            if (words[i] != 0) return false;
         }
 
         return true;
@@ -257,7 +281,7 @@ class BitSet final
 
     [[nodiscard]] inline size_t count() const noexcept { return popcount(); }
 
-    [[nodiscard]] inline const Word* data() const noexcept { return m_words; }
+    [[nodiscard]] inline const Word* data() const noexcept { return getWords(); }
 
     [[nodiscard]] inline size_t wordCount() const noexcept { return m_wordCount; }
 
@@ -269,7 +293,11 @@ class BitSet final
         }
 
         BitSet result(m_size);
-        for (size_t i = 0; i < m_wordCount; ++i) result.m_words[i] = m_words[i] & _other.m_words[i];
+        Word* resultWords = result.getWords();
+        const Word* words = getWords();
+        const Word* otherWords = _other.getWords();
+
+        for (size_t i = 0; i < m_wordCount; ++i) resultWords[i] = words[i] & otherWords[i];
 
         return result;
     }
@@ -282,7 +310,11 @@ class BitSet final
         }
 
         BitSet result(m_size);
-        for (size_t i = 0; i < m_wordCount; ++i) result.m_words[i] = m_words[i] | _other.m_words[i];
+        Word* resultWords = result.getWords();
+        const Word* words = getWords();
+        const Word* otherWords = _other.getWords();
+
+        for (size_t i = 0; i < m_wordCount; ++i) resultWords[i] = words[i] | otherWords[i];
 
         return result;
     }
@@ -295,7 +327,11 @@ class BitSet final
         }
 
         BitSet result(m_size);
-        for (size_t i = 0; i < m_wordCount; ++i) result.m_words[i] = m_words[i] ^ _other.m_words[i];
+        Word* resultWords = result.getWords();
+        const Word* words = getWords();
+        const Word* otherWords = _other.getWords();
+
+        for (size_t i = 0; i < m_wordCount; ++i) resultWords[i] = words[i] ^ otherWords[i];
 
         return result;
     }
@@ -307,7 +343,10 @@ class BitSet final
             throw std::invalid_argument("BitSet sizes must match for bitwise operations");
         }
 
-        for (size_t i = 0; i < m_wordCount; ++i) m_words[i] &= _other.m_words[i];
+        Word* words = getWords();
+        const Word* otherWords = _other.getWords();
+
+        for (size_t i = 0; i < m_wordCount; ++i) words[i] &= otherWords[i];
 
         return *this;
     }
@@ -319,7 +358,10 @@ class BitSet final
             throw std::invalid_argument("BitSet sizes must match for bitwise operations");
         }
 
-        for (size_t i = 0; i < m_wordCount; ++i) m_words[i] |= _other.m_words[i];
+        Word* words = getWords();
+        const Word* otherWords = _other.getWords();
+
+        for (size_t i = 0; i < m_wordCount; ++i) words[i] |= otherWords[i];
 
         return *this;
     }
@@ -331,7 +373,10 @@ class BitSet final
             throw std::invalid_argument("BitSet sizes must match for bitwise operations");
         }
 
-        for (size_t i = 0; i < m_wordCount; ++i) m_words[i] ^= _other.m_words[i];
+        Word* words = getWords();
+        const Word* otherWords = _other.getWords();
+
+        for (size_t i = 0; i < m_wordCount; ++i) words[i] ^= otherWords[i];
 
         return *this;
     }
