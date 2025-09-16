@@ -1,4 +1,5 @@
 set(TEST_SOURCES
+  "unit/ecs_test.cpp"
   "unit/typeless_vector_test.cpp"
   "unit/typeless_sparse_set_test.cpp")
 
