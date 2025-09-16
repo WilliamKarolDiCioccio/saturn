@@ -22,6 +22,8 @@ namespace ecs
 class EntityRegistry final
 {
    private:
+    using Byte = uint8_t;
+
     class EntityAllocator
     {
        public:
@@ -67,35 +69,38 @@ class EntityRegistry final
        private:
         using Byte = uint8_t;
 
-       private:
-        Archetype* m_archetype;
+        std::vector<Archetype*> m_archetypes;
         const ComponentRegistry* m_componentRegistry;
 
        public:
-        EntityView(Archetype* _archetype, const ComponentRegistry* _com)
-            : m_archetype(_archetype), m_componentRegistry(_com) {};
+        EntityView(const std::vector<Archetype*>& _archetypes, const ComponentRegistry* _com)
+            : m_archetypes(std::move(_archetypes)), m_componentRegistry(_com) {};
 
        public:
         template <typename Func>
+            requires std::is_invocable_r_v<void, Func, EntityMeta, Ts&...>
         void forEach(Func&& _func)
         {
-            auto componentOffsets = m_archetype->componentOffsets();
-
-            Byte* base = m_archetype->data();
-            size_t stride = m_archetype->stride();
-            size_t count = m_archetype->size();
-
-            for (size_t row = 0; row < count; ++row)
+            for (auto* archetype : m_archetypes)
             {
-                Byte* rowPtr = base + row * stride;
+                auto componentOffsets = archetype->componentOffsets();
 
-                EntityMeta meta = *reinterpret_cast<EntityMeta*>(rowPtr);
+                Byte* base = archetype->data();
+                size_t stride = archetype->stride();
+                size_t count = archetype->size();
 
-                auto tuple = std::forward_as_tuple(
-                    meta, (*reinterpret_cast<Ts*>(
-                              rowPtr + componentOffsets[m_componentRegistry->getID<Ts>()]))...);
+                for (size_t row = 0; row < count; ++row)
+                {
+                    Byte* rowPtr = base + row * stride;
 
-                std::apply(_func, tuple);
+                    EntityMeta meta = *reinterpret_cast<EntityMeta*>(rowPtr);
+
+                    auto tuple = std::forward_as_tuple(
+                        meta, (*reinterpret_cast<Ts*>(
+                                  rowPtr + componentOffsets[m_componentRegistry->getID<Ts>()]))...);
+
+                    std::apply(_func, tuple);
+                }
             }
         }
 
@@ -103,22 +108,48 @@ class EntityRegistry final
         struct Iterator
         {
            private:
-            Byte* m_base;
-            size_t m_stride;
-            size_t m_index;
-            size_t m_count;
             const ComponentRegistry* m_componentRegistry;
+            std::vector<Archetype*> m_archetypes;
+            size_t m_archetypeIndex;
+            size_t m_rowIndex;
+
+            // Cached
+            Byte* m_base = nullptr;
+            size_t m_stride = 0;
+            size_t m_count = 0;
             std::unordered_map<ComponentID, size_t> m_componentOffsets;
 
+            void loadArchetype(size_t index)
+            {
+                if (index >= m_archetypes.size()) return;
+                Archetype* arch = m_archetypes[index];
+                m_base = arch->data();
+                m_stride = arch->stride();
+                m_count = arch->size();
+                m_componentOffsets = arch->componentOffsets();
+            }
+
+            void advanceToValid()
+            {
+                while (m_archetypeIndex < m_archetypes.size() && m_rowIndex >= m_count)
+                {
+                    ++m_archetypeIndex;
+                    m_rowIndex = 0;
+                    if (m_archetypeIndex < m_archetypes.size()) loadArchetype(m_archetypeIndex);
+                }
+            }
+
            public:
-            Iterator(const ComponentRegistry* _componentRegistry, Archetype* _archetype,
-                     size_t _index)
-                : m_componentRegistry(_componentRegistry),
-                  m_base(_archetype->data()),
-                  m_stride(_archetype->stride()),
-                  m_index(_index),
-                  m_count(_archetype->size()),
-                  m_componentOffsets(_archetype->componentOffsets()) {};
+            Iterator(const ComponentRegistry* _com, std::vector<Archetype*> _archetypes,
+                     size_t archetypeIndex, size_t rowIndex)
+                : m_componentRegistry(_com),
+                  m_archetypes(std::move(_archetypes)),
+                  m_archetypeIndex(archetypeIndex),
+                  m_rowIndex(rowIndex)
+            {
+                if (m_archetypeIndex < m_archetypes.size()) loadArchetype(m_archetypeIndex);
+                advanceToValid();
+            }
 
             struct EntityMetaComponentTuplePair
             {
@@ -128,8 +159,7 @@ class EntityRegistry final
 
             EntityMetaComponentTuplePair operator*() const
             {
-                Byte* rowPtr = m_base + m_index * m_stride;
-
+                Byte* rowPtr = m_base + m_rowIndex * m_stride;
                 EntityID eid = *reinterpret_cast<EntityID*>(rowPtr);
 
                 auto comps = std::forward_as_tuple((*reinterpret_cast<Ts*>(
@@ -138,14 +168,24 @@ class EntityRegistry final
                 return {EntityMeta{eid, 0u}, comps};
             }
 
-            bool operator!=(const Iterator& _other) const { return m_index != _other.m_index; }
+            bool operator!=(const Iterator& _other) const
+            {
+                return m_archetypeIndex != _other.m_archetypeIndex ||
+                       m_rowIndex != _other.m_rowIndex;
+            }
 
-            void operator++() { ++m_index; }
+            void operator++()
+            {
+                ++m_rowIndex;
+                advanceToValid();
+            }
         };
 
-        Iterator begin() { return Iterator(m_componentRegistry, m_archetype, 0); }
-
-        Iterator end() { return Iterator(m_componentRegistry, m_archetype, m_archetype->size()); }
+        Iterator begin() { return Iterator(m_componentRegistry, m_archetypes, 0, 0); }
+        Iterator end()
+        {
+            return Iterator(m_componentRegistry, m_archetypes, m_archetypes.size(), 0);
+        }
     };
 
     std::unordered_map<ComponentSignature, std::unique_ptr<Archetype>> m_archetypes;
@@ -215,7 +255,6 @@ class EntityRegistry final
 
         Archetype* oldArch = m_entityToArchetype.at(_eid);
         ComponentSignature oldSig = oldArch->signature();
-        size_t oldStride = oldArch->stride();
 
         ComponentSignature newSig = oldSig;
         (newSig.setBit(m_componentRegistry->getID<Ts>()), ...);
@@ -301,7 +340,7 @@ class EntityRegistry final
     }
 
     template <Component... Ts>
-    [[nodiscard]] std::optional<EntityView<Ts...>> view()
+    [[nodiscard]] std::optional<EntityView<Ts...>> viewSet()
     {
         if (!areComponentsRegistered<Ts...>(m_componentRegistry))
         {
@@ -312,7 +351,28 @@ class EntityRegistry final
 
         if (m_archetypes.find(sig) == m_archetypes.end()) return std::nullopt;
 
-        return EntityView<Ts...>(m_archetypes.at(sig).get(), m_componentRegistry);
+        return EntityView<Ts...>({m_archetypes.at(sig).get()}, m_componentRegistry);
+    }
+
+    template <Component... Ts>
+    [[nodiscard]] std::optional<EntityView<Ts...>> viewSubset()
+    {
+        if (!areComponentsRegistered<Ts...>(m_componentRegistry))
+        {
+            throw std::runtime_error("One or more components are not registered.");
+        }
+
+        std::vector<Archetype*> matchingArches;
+        ComponentSignature sig = getSignatureFromTypes<Ts...>(m_componentRegistry);
+
+        for (const auto& [archSig, arch] : m_archetypes)
+        {
+            if ((archSig & sig) == sig) matchingArches.push_back(arch.get());
+        }
+
+        if (matchingArches.empty()) return std::nullopt;
+
+        return EntityView<Ts...>(matchingArches, m_componentRegistry);
     }
 
     [[nodiscard]] size_t entityCount() const { return m_entityToArchetype.size(); }
