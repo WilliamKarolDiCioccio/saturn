@@ -288,7 +288,7 @@ class SparseSet final
      * @param _other The other sparse set to intersect with.
      * @return SelfType A new sparse set containing the intersection of the two sets.
      */
-    [[nodiscard]] SelfType intersection(const SelfType& _other)
+    [[nodiscard]] SelfType getIntersection(const SelfType& _other)
     {
         SelfType intersectionSet;
 
@@ -311,8 +311,8 @@ class SparseSet final
     }
 
     /**
-     * @brief Merges two sparse sets, returning a new sparse set containing all keys and values from
-     * both sets.
+     * @brief Computes the union of two sparse sets, returning a new sparse set containing all keys
+     * and values from both sets.
      *
      * Time complexity: O(n + m), where n is the size of the current set and m is the size of the
      * other set.
@@ -320,19 +320,135 @@ class SparseSet final
      * @param _other The other sparse set to merge with.
      * @return SelfType A new sparse set containing the merged keys and values.
      */
-    [[nodiscard]] SelfType merge(const SelfType& _other)
+    [[nodiscard]] SelfType getUnion(const SelfType& _other)
     {
-        SelfType mergeSet;
+        SelfType unionSet;
 
-        if constexpr (AggressiveReclaim)
+        if constexpr (AggressiveReclaim) unionSet.reserve(size() + _other.size());
+
+        for (const auto& key : m_denseKeys) unionSet.insert(key, m_data[key]);
+        for (const auto& key : _other.m_denseKeys) unionSet.insert(key, _other.m_data[key]);
+
+        return unionSet;
+    }
+
+    /**
+     * @brief Computes the difference of two sparse sets, returning a new sparse set containing keys
+     * that are in this set but not in the other set.
+     *
+     * Time complexity: O(n), where n is the size of the current set.
+     *
+     * @param _other The other sparse set to compute the difference with.
+     * @return SelfType A new sparse set containing the difference of the two sets.
+     */
+    [[nodiscard]] SelfType getDifference(const SelfType& _other) const
+    {
+        SelfType differenceSet;
+
+        for (const auto& key : m_denseKeys)
         {
-            mergeSet.reserve(size() + _other.size());
+            if (!_other.contains(key))
+            {
+                auto result = get(key);
+                if (result.isOk()) differenceSet.insert(key, result.getValue());
+            }
         }
 
-        for (const auto& key : m_denseKeys) mergeSet.insert(key, m_data[key]);
-        for (const auto& key : _other.m_denseKeys) mergeSet.insert(key, _other.m_data[key]);
+        return differenceSet;
+    }
 
-        return mergeSet;
+    /**
+     * @brief Computes the symmetric difference (XOR) of two sparse sets, returning a new sparse set
+     * containing keys that are in either set but not in both.
+     *
+     * Time complexity: O(n + m), where n is the size of the current set and m is the size of the
+     * other set.
+     *
+     * @param _other The other sparse set to compute the symmetric difference with.
+     * @return SelfType A new sparse set containing the symmetric difference of the two sets.
+     */
+    [[nodiscard]] SelfType getSymmetricDifference(const SelfType& _other) const
+    {
+        SelfType symmetricDifferenceSet;
+
+        for (const auto& key : m_denseKeys)
+        {
+            if (!_other.contains(key))
+            {
+                auto result = get(key);
+                if (result.isOk()) symmetricDifferenceSet.insert(key, result.getValue());
+            }
+        }
+
+        for (const auto& key : _other.m_denseKeys)
+        {
+            if (!contains(key))
+            {
+                auto result = _other.get(key);
+                if (result.isOk()) symmetricDifferenceSet.insert(key, result.getValue());
+            }
+        }
+
+        return symmetricDifferenceSet;
+    }
+
+    /**
+     * @brief Checks if this set is a superset of another set.
+     */
+    [[nodiscard]] bool isSupersetOf(const SelfType& other) const noexcept
+    {
+        if (other.size() > size()) return false;
+
+        for (const auto& key : other.m_denseKeys)
+        {
+            if (!contains(key)) return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @brief Checks if this set is a proper superset of another set.
+     */
+    [[nodiscard]] bool isProperSupersetOf(const SelfType& other) const noexcept
+    {
+        return size() > other.size() && isSupersetOf(other);
+    }
+
+    /**
+     * @brief Checks if this set is a subset of another set.
+     */
+    [[nodiscard]] bool isSubsetOf(const SelfType& other) const noexcept
+    {
+        if (size() > other.size()) return false;
+
+        for (const auto& key : m_denseKeys)
+        {
+            if (!other.contains(key)) return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @brief Checks if this set is a proper subset of another set.
+     */
+    [[nodiscard]] bool isProperSubsetOf(const SelfType& other) const noexcept
+    {
+        return size() < other.size() && isSubsetOf(other);
+    }
+
+    /**
+     * @brief Checks if this set has no elements in common with another set.
+     */
+    [[nodiscard]] bool isDisjointWith(const SelfType& other) const noexcept
+    {
+        for (const auto& key : m_denseKeys)
+        {
+            if (other.contains(key)) return false;
+        }
+
+        return true;
     }
 
     const std::vector<K>& keys() const noexcept { return m_denseKeys; }
