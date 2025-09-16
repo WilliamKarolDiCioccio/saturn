@@ -19,11 +19,29 @@ namespace mosaic
 namespace ecs
 {
 
+/**
+ * @brief The 'EntityRegistry' class manages the lifecycle of entities and their associated
+ components within an ECS architecture.
+ *
+ * It provides functionality to create, destroy, and modify entities, as well as to query
+ * entities based on their components.
+ *
+ * This is a purely archetypal implementation, meaning that entities are grouped by their component
+ * signatures into archetypes and tightly packed together in tuples of components alongside their
+ * metadata. This design reflects common access patterns in ECS systems, optimizing for cache
+ * locality and iteration performance. Also, the purely type-unaware design means that the
+ * EntityRegistry does not need to be templated on component types, allowing for a more flexible
+ * and dynamic system such as runtime component registration from scripts or plugins.
+ */
 class EntityRegistry final
 {
    private:
     using Byte = uint8_t;
 
+    /**
+     * @brief The 'EntityAllocator' is a helper class responsible for managing the allocation and
+     * deallocation of entity IDs and keeping track of their generation counts.
+     */
     class EntityAllocator
     {
        public:
@@ -63,6 +81,12 @@ class EntityRegistry final
         std::vector<EntityGen> m_generations;
     };
 
+    /**
+     * @brief The 'EntityView' class provides a non-owning view over a set of entities that share
+     * a specific set of components even if they are stored in different archetypes.
+     *
+     * @tparam Ts The component types that define the view.
+     */
     template <Component... Ts>
     class EntityView
     {
@@ -73,10 +97,24 @@ class EntityRegistry final
         const ComponentRegistry* m_componentRegistry;
 
        public:
+        /**
+         * @brief Constructs an EntityView with the given archetypes and component registry
+         * (inherited from the EntityRegistry).
+         *
+         * @param _archetypes The list of archetypes containing the entities to be viewed.
+         * @param _com The component registry for component type information.
+         */
         EntityView(const std::vector<Archetype*>& _archetypes, const ComponentRegistry* _com)
             : m_archetypes(std::move(_archetypes)), m_componentRegistry(_com) {};
 
        public:
+        /**
+         * @brief Applies the provided function to each entity and its components in the view.
+         *
+         * @tparam Func The type of the function to be applied.
+         * @param _func The function to apply to each entity and its components. It should accept
+         * an EntityMeta and references to the components of types Ts...
+         */
         template <typename Func>
             requires std::is_invocable_r_v<void, Func, EntityMeta, Ts&...>
         void forEach(Func&& _func)
@@ -105,6 +143,9 @@ class EntityRegistry final
         }
 
        public:
+        /**
+         * @brief An iterator for traversing entities and their components in the view.
+         */
         struct Iterator
         {
            private:
@@ -113,12 +154,13 @@ class EntityRegistry final
             size_t m_archetypeIndex;
             size_t m_rowIndex;
 
-            // Cached
+            // Cached values for the current archetype
             Byte* m_base = nullptr;
             size_t m_stride = 0;
             size_t m_count = 0;
             std::unordered_map<ComponentID, size_t> m_componentOffsets;
 
+            // Load the archetype at the given index and update cached values
             void loadArchetype(size_t index)
             {
                 if (index >= m_archetypes.size()) return;
@@ -129,6 +171,7 @@ class EntityRegistry final
                 m_componentOffsets = arch->componentOffsets();
             }
 
+            // Advance to the next valid archetype with rows, if necessary
             void advanceToValid()
             {
                 while (m_archetypeIndex < m_archetypes.size() && m_rowIndex >= m_count)
@@ -194,10 +237,22 @@ class EntityRegistry final
     EntityAllocator m_entityAllocator;
 
    public:
+    /**
+     * @brief Constructs an EntityRegistry with the given component registry.
+     *
+     * @param _componentRegistry The component registry for component type information.
+     */
     EntityRegistry(const ComponentRegistry* _componentRegistry)
         : m_componentRegistry(_componentRegistry) {};
 
    public:
+    /**
+     * @brief Creates a new entity with the specified components.
+     *
+     * @tparam Ts The component types to be added to the new entity.
+     * @return The metadata of the newly created entity.
+     * @throws std::runtime_error if one or more components are not registered.
+     */
     template <Component... Ts>
     EntityMeta createEntity()
     {
@@ -227,6 +282,12 @@ class EntityRegistry final
         return meta;
     }
 
+    /**
+     * @brief Destroys the entity with the specified ID, removing it from its archetype and freeing
+     * its ID.
+     *
+     * @param _eid The ID of the entity to be destroyed.
+     */
     void destroyEntity(EntityID _eid)
     {
         if (m_entityToArchetype.find(_eid) == m_entityToArchetype.end()) return;
@@ -238,11 +299,26 @@ class EntityRegistry final
         m_entityAllocator.freeID(_eid);
     }
 
+    /**
+     * @brief Destroys multiple entities.
+     *
+     * @param _eids A vector of entity IDs to be destroyed.
+     */
     void destroyEntities(const std::vector<EntityID>& _eids)
     {
         for (EntityID eid : _eids) destroyEntity(eid);
     }
 
+    /**
+     * @brief Adds the specified components to the entity with the given ID.
+     *
+     * If the entity already has some of the specified components, they will not be duplicated.
+     * The entity will be moved to a new archetype that matches its updated component signature.
+     *
+     * @tparam Ts The component types to be added to the entity.
+     * @param _eid The ID of the entity to which components will be added.
+     * @throws std::runtime_error if one or more components are not registered.
+     */
     template <Component... Ts>
     void addComponents(EntityID _eid)
     {
@@ -287,6 +363,16 @@ class EntityRegistry final
         m_entityToArchetype[meta.id] = newArch;
     }
 
+    /**
+     * @brief Removes the specified components from the entity with the given ID.
+     *
+     * If the entity does not have some of the specified components, they will be ignored.
+     * The entity will be moved to a new archetype that matches its updated component signature.
+     *
+     * @tparam Ts The component types to be removed from the entity.
+     * @param _eid The ID of the entity from which components will be removed.
+     * @throws std::runtime_error if one or more components are not registered.
+     */
     template <Component... Ts>
     void removeComponents(EntityID _eid)
     {
@@ -332,6 +418,9 @@ class EntityRegistry final
         m_entityToArchetype[meta.id] = newArch;
     }
 
+    /**
+     * @brief Clears all entities and archetypes from the registry, resetting the entity allocator.
+     */
     void clear()
     {
         m_entityAllocator.reset();
@@ -339,6 +428,15 @@ class EntityRegistry final
         m_archetypes.clear();
     }
 
+    /**
+     * @brief Retrieves a view of entities that have exactly the specified set of components (strict
+     * archetype match).
+     *
+     * @tparam Ts The component types that define the view.
+     * @return std::optional<EntityView<Ts...>> containing the view, or std::nullopt if no
+     * archetype has the exact set of requested components.
+     * @throws std::runtime_error if one or more components are not registered.
+     */
     template <Component... Ts>
     [[nodiscard]] std::optional<EntityView<Ts...>> viewSet()
     {
@@ -354,6 +452,15 @@ class EntityRegistry final
         return EntityView<Ts...>({m_archetypes.at(sig).get()}, m_componentRegistry);
     }
 
+    /**
+     * @brief Retrieves a view of entities that have at least the specified set of components
+     * (looser archetype match).
+     *
+     * @tparam Ts The component types that define the view.
+     * @return std::optional<EntityView<Ts...>> containing the view, or std::nullopt if no
+     * archetypes have a superset of the requested components.
+     * @throws std::runtime_error if one or more components are not registered.
+     */
     template <Component... Ts>
     [[nodiscard]] std::optional<EntityView<Ts...>> viewSubset()
     {
@@ -375,10 +482,12 @@ class EntityRegistry final
         return EntityView<Ts...>(matchingArches, m_componentRegistry);
     }
 
-    [[nodiscard]] size_t entityCount() const { return m_entityToArchetype.size(); }
-
-    [[nodiscard]] size_t archetypeCount() const { return m_archetypes.size(); }
-
+    /**
+     * @brief Retrieves the archetype that contains the entity with the specified ID.
+     *
+     * @param _eid The ID of the entity whose archetype is to be retrieved.
+     * @return Archetype* or nullptr if the entity does not exist.
+     */
     [[nodiscard]] Archetype* getArchetypeForEntity(EntityID _eid) const
     {
         if (m_entityToArchetype.find(_eid) == m_entityToArchetype.end()) return nullptr;
@@ -386,6 +495,17 @@ class EntityRegistry final
         return m_entityToArchetype.at(_eid);
     }
 
+    /**
+     * @brief Retrieves the components of the entity with the specified ID as a tuple of references.
+     *
+     * If the entity does not have all the specified components, std::nullopt is returned.
+     *
+     * @tparam Ts The component types to be retrieved.
+     * @param _eid The ID of the entity whose components are to be retrieved.
+     * @return std::optional<std::tuple<Ts&...>> containing references to the components, or
+     * std::nullopt if the entity does not have all specified components.
+     * @throws std::runtime_error if one or more components are not registered.
+     */
     template <Component... Ts>
     [[nodiscard]] std::optional<std::tuple<Ts&...>> getComponents(EntityID _eid)
     {
@@ -413,6 +533,13 @@ class EntityRegistry final
         };
     }
 
+    /**
+     * @brief Checks if the entity with the specified metadata is valid (exists and generation
+     * matches).
+     *
+     * @param _meta The metadata of the entity to be checked.
+     * @return true if the entity is valid, false otherwise.
+     */
     [[nodiscard]] bool isEntityValid(EntityMeta _meta) const
     {
         if (m_entityToArchetype.find(_meta.id) == m_entityToArchetype.end()) return false;
@@ -423,6 +550,13 @@ class EntityRegistry final
         return entityMeta->gen == _meta.gen == m_entityAllocator.getGenForID(_meta.id);
     }
 
+    // Returns the total number of entities in the registry.
+    [[nodiscard]] size_t entityCount() const { return m_entityToArchetype.size(); }
+
+    // Returns the total number of archetypes in the registry.
+    [[nodiscard]] size_t archetypeCount() const { return m_archetypes.size(); }
+
+    // Returns the total memory usage of all archetypes in bytes.
     [[nodiscard]] size_t totalMemoryUsageInBytes() const
     {
         size_t total = 0;
@@ -436,6 +570,7 @@ class EntityRegistry final
     }
 
    private:
+    // Retrieves an existing archetype by signature or creates a new one if it doesn't exist.
     Archetype* getOrCreateArchetype(ComponentSignature _signature, size_t _stride)
     {
         if (m_archetypes.find(_signature) != m_archetypes.end())
