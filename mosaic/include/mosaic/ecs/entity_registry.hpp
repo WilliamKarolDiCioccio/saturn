@@ -319,11 +319,38 @@ class EntityRegistry final
 
     [[nodiscard]] size_t archetypeCount() const { return m_archetypes.size(); }
 
-    [[nodiscard]] const Archetype* getArchetypeForEntity(EntityID _eid) const
+    [[nodiscard]] Archetype* getArchetypeForEntity(EntityID _eid) const
     {
         if (m_entityToArchetype.find(_eid) == m_entityToArchetype.end()) return nullptr;
 
         return m_entityToArchetype.at(_eid);
+    }
+
+    template <Component... Ts>
+    [[nodiscard]] std::optional<std::tuple<Ts&...>> getComponents(EntityID _eid)
+    {
+        if (!areComponentsRegistered<Ts...>(m_componentRegistry))
+        {
+            throw std::runtime_error("One or more components are not registered.");
+        }
+
+        auto arch = getArchetypeForEntity(_eid);
+
+        if (!arch) return std::nullopt;
+
+        ComponentSignature archSig = arch->signature();
+        ComponentSignature querySig = getSignatureFromTypes<Ts...>(m_componentRegistry);
+
+        if ((archSig & querySig) != querySig) return std::nullopt;
+
+        Byte* rowPtr = arch->get(_eid);
+        auto componentOffsets = arch->componentOffsets();
+
+        return std::optional<std::tuple<Ts&...>>{
+            std::in_place,
+            (*reinterpret_cast<Ts*>(rowPtr +
+                                    componentOffsets[m_componentRegistry->getID<Ts>()]))...,
+        };
     }
 
     [[nodiscard]] bool isEntityValid(EntityMeta _meta) const
