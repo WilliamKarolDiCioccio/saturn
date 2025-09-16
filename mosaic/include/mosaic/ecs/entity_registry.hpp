@@ -207,7 +207,7 @@ class EntityRegistry final
         }
 
         auto sig = getSignatureFromTypes<Ts...>(m_componentRegistry);
-        constexpr auto stride = getStrideSizeInBytes<Ts...>();
+        constexpr auto stride = calculateStrideFromSignature(m_componentRegistry, sig);
 
         EntityMeta meta = m_entityAllocator.getID();
         Archetype* arch = getOrCreateArchetype(sig, stride);

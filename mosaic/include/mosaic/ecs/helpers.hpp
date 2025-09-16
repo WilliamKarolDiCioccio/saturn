@@ -30,12 +30,6 @@ template <typename... Ts>
     return sig;
 }
 
-template <typename... Ts>
-[[nodiscard]] inline constexpr size_t getStrideSizeInBytes()
-{
-    return sizeof(EntityMeta) + (sizeof(Ts) + ...);
-}
-
 [[nodiscard]] inline size_t calculateStrideFromSignature(const ComponentRegistry* _registry,
                                                          const ComponentSignature& sig)
 {
