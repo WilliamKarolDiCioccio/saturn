@@ -67,6 +67,8 @@ class PoolAllocator final : public NonCopyable
 
         m_bufferBytes =
             static_cast<Byte*>(::operator new(bytesNeeded, std::align_val_t{alignof(ValueType)}));
+
+        std::memset(m_bufferBytes, 0, bytesNeeded);
     }
 
     ~PoolAllocator() { ::operator delete(m_bufferBytes, std::align_val_t{alignof(ValueType)}); }

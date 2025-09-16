@@ -75,6 +75,8 @@ class ContiguousAllocatorBase final : public NonCopyable
 
         m_bufferBytes =
             static_cast<Byte*>(::operator new(bytesNeeded, std::align_val_t{ALIGNOF_VALUE}));
+
+        std::memset(m_bufferBytes, 0, bytesNeeded);
     }
 
     ~ContiguousAllocatorBase()
