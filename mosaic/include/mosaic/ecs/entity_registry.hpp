@@ -262,15 +262,15 @@ class EntityRegistry final
         }
 
         auto sig = getSignatureFromTypes<Ts...>(m_componentRegistry);
-        constexpr auto stride = calculateStrideFromSignature(m_componentRegistry, sig);
+        auto stride = calculateStrideFromSignature(m_componentRegistry, sig);
 
         EntityMeta meta = m_entityAllocator.getID();
         Archetype* arch = getOrCreateArchetype(sig, stride);
 
         auto componentOffsets = getComponentOffsetsInBytesFromSignature(m_componentRegistry, sig);
 
-        std::array<char, stride> row{};
-        char* rowPtr = row.data();
+        std::vector<Byte> row(stride);
+        Byte* rowPtr = row.data();
 
         new (rowPtr) EntityMeta{meta};
 
@@ -340,8 +340,8 @@ class EntityRegistry final
 
         if (oldArch == newArch) return;
 
-        std::vector<char> newRow(newStride);
-        char* newRowPtr = newRow.data();
+        std::vector<Byte> newRow(newStride);
+        Byte* newRowPtr = newRow.data();
 
         EntityMeta meta = *reinterpret_cast<EntityMeta*>(oldArch->get(_eid));
         new (newRowPtr) EntityMeta{meta};
@@ -395,8 +395,8 @@ class EntityRegistry final
 
         if (oldArch == newArch) return;
 
-        std::vector<char> newRow(newStride);
-        char* newRowPtr = newRow.data();
+        std::vector<Byte> newRow(newStride);
+        Byte* newRowPtr = newRow.data();
 
         EntityMeta meta = *reinterpret_cast<EntityMeta*>(oldArch->get(_eid));
         new (newRowPtr) EntityMeta{meta};
