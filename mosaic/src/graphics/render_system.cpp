@@ -15,6 +15,8 @@ namespace mosaic
 namespace graphics
 {
 
+RenderSystem* RenderSystem::g_instance = nullptr;
+
 pieces::Result<RenderContext*, std::string> RenderSystem::createContext(
     const window::Window* _window)
 {

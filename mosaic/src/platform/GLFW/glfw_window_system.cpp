@@ -7,14 +7,14 @@ namespace platform
 namespace glfw
 {
 
-pieces::RefResult<window::WindowSystem, std::string> GLFWWindowSystem::initialize()
+pieces::RefResult<core::System, std::string> GLFWWindowSystem::initialize()
 {
     if (!glfwInit())
     {
-        return pieces::ErrRef<window::WindowSystem, std::string>("Failed to initialize GLFW");
+        return pieces::ErrRef<core::System, std::string>("Failed to initialize GLFW");
     }
 
-    return pieces::OkRef<window::WindowSystem, std::string>(*this);
+    return pieces::OkRef<core::System, std::string>(*this);
 }
 
 void GLFWWindowSystem::shutdown()
@@ -24,7 +24,12 @@ void GLFWWindowSystem::shutdown()
     glfwTerminate();
 }
 
-void GLFWWindowSystem::update() const { glfwPollEvents(); }
+pieces::RefResult<core::System, std::string> GLFWWindowSystem::update() 
+{
+    glfwPollEvents();
+
+    return pieces::OkRef<core::System, std::string>(*this);
+}
 
 } // namespace glfw
 } // namespace platform

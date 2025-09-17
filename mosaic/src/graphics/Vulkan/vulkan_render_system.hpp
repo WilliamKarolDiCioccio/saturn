@@ -23,7 +23,7 @@ class VulkanRenderSystem : public RenderSystem
     ~VulkanRenderSystem() override = default;
 
    public:
-    pieces::RefResult<RenderSystem, std::string> initialize(const window::Window* _window) override;
+    pieces::RefResult<core::System, std::string> initialize() override;
     void shutdown() override;
 
     inline Instance* getInstance() { return &m_instance; }

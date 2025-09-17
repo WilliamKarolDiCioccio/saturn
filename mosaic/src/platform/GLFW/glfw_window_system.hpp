@@ -17,10 +17,10 @@ class GLFWWindowSystem : public window::WindowSystem
     ~GLFWWindowSystem() override = default;
 
    public:
-    pieces::RefResult<window::WindowSystem, std::string> initialize() override;
+    pieces::RefResult<core::System, std::string> initialize() override;
     void shutdown() override;
 
-    void update() const override;
+    pieces::RefResult<core::System, std::string> update()  override;
 };
 
 } // namespace glfw

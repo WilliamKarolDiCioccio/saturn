@@ -51,7 +51,7 @@ pieces::RefResult<Application, std::string> Application::initialize()
         return pieces::ErrRef<Application, std::string>(std::move(inputCtxRegResult.error()));
     }
 
-    m_renderSystem->initialize(wndCreateResult.unwrap());
+    m_renderSystem->initialize();
 
     auto rndrCtxCreateRes = m_renderSystem->createContext(wndCreateResult.unwrap());
 
@@ -87,7 +87,7 @@ pieces::RefResult<Application, std::string> Application::update()
 
     m_windowSystem->update();
 
-    m_inputSystem->poll();
+    m_inputSystem->update();
 
     try
     {
@@ -100,7 +100,7 @@ pieces::RefResult<Application, std::string> Application::update()
             std::string("Application input polling error: ") + e.what());
     }
 
-    m_renderSystem->render();
+    m_renderSystem->update();
 
     try
     {

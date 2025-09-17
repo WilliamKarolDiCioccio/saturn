@@ -7,10 +7,9 @@ namespace graphics
 namespace webgpu
 {
 
-pieces::RefResult<RenderSystem, std::string> WebGPURenderSystem::initialize(
-    const window::Window* _window)
+pieces::RefResult<core::System, std::string> WebGPURenderSystem::initialize()
 {
-    return pieces::OkRef<RenderSystem, std::string>(*this);
+    return pieces::OkRef<core::System, std::string>(*this);
 }
 
 void WebGPURenderSystem::shutdown() { destroyAllContexts(); }

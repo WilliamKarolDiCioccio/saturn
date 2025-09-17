@@ -1,5 +1,7 @@
 #include "vulkan_render_system.hpp"
 
+#include "mosaic/window/window_system.hpp"
+
 namespace mosaic
 {
 namespace graphics
@@ -7,19 +9,34 @@ namespace graphics
 namespace vulkan
 {
 
-pieces::RefResult<RenderSystem, std::string> VulkanRenderSystem::initialize(
-    const window::Window* _window)
+pieces::RefResult<core::System, std::string> VulkanRenderSystem::initialize()
 {
     createInstance(m_instance);
 
+    auto windowSystem = window::WindowSystem::getGlobalWindowSystem();
+
+    if (!windowSystem)
+    {
+        return pieces::ErrRef<core::System, std::string>(
+            "Window system is not initialized. Cannot create Vulkan render system.");
+    }
+
+    auto window = windowSystem->getWindow("MainWindow");
+
+    if (!window)
+    {
+        return pieces::ErrRef<core::System, std::string>(
+            "Main window does not exist. Cannot create Vulkan render system.");
+    }
+
     Surface dummySurface;
-    createSurface(dummySurface, m_instance, _window->getNativeHandle());
+    createSurface(dummySurface, m_instance, window->getNativeHandle());
 
     createDevice(m_device, m_instance, dummySurface);
 
     destroySurface(dummySurface, m_instance);
 
-    return pieces::OkRef<RenderSystem, std::string>(*this);
+    return pieces::OkRef<core::System, std::string>(*this);
 }
 
 void VulkanRenderSystem::shutdown()

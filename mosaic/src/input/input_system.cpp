@@ -5,9 +5,11 @@ namespace mosaic
 namespace input
 {
 
-pieces::RefResult<InputSystem, std::string> InputSystem::initialize()
+InputSystem* InputSystem::g_instance = nullptr;
+
+pieces::RefResult<core::System, std::string> InputSystem::initialize()
 {
-    return pieces::OkRef<InputSystem, std::string>(*this);
+    return pieces::OkRef<core::System, std::string>(*this);
 }
 
 void InputSystem::shutdown() { unregisterAllWindows(); }

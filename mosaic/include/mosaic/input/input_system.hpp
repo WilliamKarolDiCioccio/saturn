@@ -8,6 +8,8 @@
 
 #include <pieces/core/result.hpp>
 
+#include "mosaic/core/system.hpp"
+
 #include "input_context.hpp"
 
 namespace mosaic
@@ -36,13 +38,21 @@ namespace input
  * @see Window
  * @see https://www.glfw.org/documentation.html
  */
-class MOSAIC_API InputSystem
+class MOSAIC_API InputSystem final : public core::EngineSystem
 {
    public:
+    static InputSystem* g_instance;
+
     std::unordered_map<const window::Window*, std::unique_ptr<InputContext>> m_contexts;
 
    public:
-    InputSystem() = default;
+    InputSystem() : EngineSystem(core::EngineSystemType::input)
+    {
+        assert(!g_instance && "InputSystem already exists!");
+        g_instance = this;
+    };
+
+    ~InputSystem() override { g_instance = nullptr; }
 
     InputSystem(const InputSystem&) = delete;
     InputSystem& operator=(const InputSystem&) = delete;
@@ -50,7 +60,7 @@ class MOSAIC_API InputSystem
     InputSystem& operator=(InputSystem&&) = default;
 
    public:
-    pieces::RefResult<InputSystem, std::string> initialize();
+    pieces::RefResult<System, std::string> initialize() override;
     void shutdown();
 
     pieces::Result<InputContext*, std::string> registerWindow(window::Window* _window);
@@ -58,10 +68,7 @@ class MOSAIC_API InputSystem
 
     inline void unregisterAllWindows()
     {
-        for (auto& [window, context] : m_contexts)
-        {
-            context->shutdown();
-        }
+        for (auto& [window, context] : m_contexts) context->shutdown();
 
         m_contexts.clear();
     }
@@ -71,22 +78,25 @@ class MOSAIC_API InputSystem
      *
      * This should be invocated after window system update in the main loop of the application.
      */
-    inline void poll() const
+    inline pieces::RefResult<System, std::string> update() override
     {
-        for (auto& [window, context] : m_contexts)
-        {
-            context->update();
-        }
+        for (auto& [window, context] : m_contexts) context->update();
+
+        return pieces::OkRef<System, std::string>(*this);
     }
 
     inline InputContext* getContext(const window::Window* _window) const
     {
-        if (m_contexts.find(_window) != m_contexts.end())
-        {
-            return m_contexts.at(_window).get();
-        }
+        if (m_contexts.find(_window) != m_contexts.end()) return m_contexts.at(_window).get();
 
         return nullptr;
+    }
+
+    [[nodiscard]] static InputSystem* getGlobalInputSystem()
+    {
+        if (!g_instance) MOSAIC_ERROR("InputSystem has not been created yet!");
+
+        return g_instance;
     }
 };
 

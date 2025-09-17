@@ -11,6 +11,8 @@ namespace mosaic
 namespace window
 {
 
+WindowSystem* WindowSystem::g_instance = nullptr;
+
 std::unique_ptr<WindowSystem> WindowSystem::create()
 {
 #if defined(MOSAIC_PLATFORM_DESKTOP) || defined(MOSAIC_PLATFORM_WEB)
