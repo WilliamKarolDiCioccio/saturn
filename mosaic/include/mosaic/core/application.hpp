@@ -89,11 +89,12 @@ class MOSAIC_API Application
     [[nodiscard]] bool isResumed() const { return m_state == ApplicationState::resumed; }
 
    protected:
-    virtual std::optional<std::string> onInitialize() = 0;
-    virtual std::optional<std::string> onUpdate() = 0;
+    virtual void onInitialize() = 0;
+    virtual void onUpdate() = 0;
     virtual void onPause() = 0;
     virtual void onResume() = 0;
     virtual void onShutdown() = 0;
+    virtual void onPollInputs() = 0;
 };
 
 } // namespace core

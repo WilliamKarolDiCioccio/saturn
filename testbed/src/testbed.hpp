@@ -16,11 +16,12 @@ class TestbedApplication : public mosaic::core::Application
     TestbedApplication() : Application("Testbed") {}
 
    private:
-    std::optional<std::string> onInitialize() override;
-    std::optional<std::string> onUpdate() override;
+    void onInitialize() override;
+    void onUpdate() override;
     void onPause() override;
     void onResume() override;
     void onShutdown() override;
+    void onPollInputs() override;
 };
 
 } // namespace testbed

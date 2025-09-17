@@ -60,11 +60,15 @@ pieces::RefResult<Application, std::string> Application::initialize()
         return pieces::ErrRef<Application, std::string>(std::move(inputCtxRegResult.error()));
     }
 
-    auto userInitResult = onInitialize();
-
-    if (userInitResult.has_value())
+    try
     {
-        return pieces::ErrRef<Application, std::string>(std::move(userInitResult.value()));
+        onInitialize();
+    }
+    catch (const std::exception& e)
+    {
+        MOSAIC_ERROR("Application initialization error: {}", e.what());
+        return pieces::ErrRef<Application, std::string>(
+            std::string("Application initialization error: ") + e.what());
     }
 
     m_state = ApplicationState::initialized;
@@ -82,14 +86,31 @@ pieces::RefResult<Application, std::string> Application::update()
     core::Timer::tick();
 
     m_windowSystem->update();
+
     m_inputSystem->poll();
+
+    try
+    {
+        onPollInputs();
+    }
+    catch (const std::exception& e)
+    {
+        MOSAIC_ERROR("Application shutdown error: {}", e.what());
+        return pieces::ErrRef<Application, std::string>(
+            std::string("Application input polling error: ") + e.what());
+    }
+
     m_renderSystem->render();
 
-    auto result = onUpdate();
-
-    if (result.has_value())
+    try
     {
-        return pieces::ErrRef<Application, std::string>(std::move(result.value()));
+        onUpdate();
+    }
+    catch (const std::exception& e)
+    {
+        MOSAIC_ERROR("Application shutdown error: {}", e.what());
+        return pieces::ErrRef<Application, std::string>(std::string("Application update error: ") +
+                                                        e.what());
     }
 
     return pieces::OkRef<Application, std::string>(*this);
@@ -99,7 +120,14 @@ void Application::pause()
 {
     if (m_state == ApplicationState::resumed)
     {
-        onPause();
+        try
+        {
+            onPause();
+        }
+        catch (const std::exception& e)
+        {
+            MOSAIC_ERROR("Application pause error: {}", e.what());
+        }
 
         m_state = ApplicationState::paused;
     }
@@ -109,7 +137,14 @@ void Application::resume()
 {
     if (m_state == ApplicationState::initialized || m_state == ApplicationState::paused)
     {
-        onResume();
+        try
+        {
+            onResume();
+        }
+        catch (const std::exception& e)
+        {
+            MOSAIC_ERROR("Application resume error: {}", e.what());
+        }
 
         m_state = ApplicationState::resumed;
     }
@@ -119,7 +154,14 @@ void Application::shutdown()
 {
     if (m_state != ApplicationState::shutdown)
     {
-        onShutdown();
+        try
+        {
+            onShutdown();
+        }
+        catch (const std::exception& e)
+        {
+            MOSAIC_ERROR("Application shutdown error: {}", e.what());
+        }
 
         m_renderSystem->shutdown();
         m_inputSystem->shutdown();

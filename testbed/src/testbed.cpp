@@ -2,12 +2,14 @@
 
 #include <chrono>
 
+#include <mosaic/ecs/entity_registry.hpp>
+
 using namespace std::chrono_literals;
 
 namespace testbed
 {
 
-std::optional<std::string> TestbedApplication::onInitialize()
+void TestbedApplication::onInitialize()
 {
     auto window = m_windowSystem->getWindow("MainWindow");
 
@@ -119,11 +121,23 @@ std::optional<std::string> TestbedApplication::onInitialize()
 #endif
 
     MOSAIC_INFO("Testbed initialized.");
-
-    return std::nullopt;
 }
 
-std::optional<std::string> TestbedApplication::onUpdate()
+void TestbedApplication::onUpdate() {}
+
+void TestbedApplication::onPause() { MOSAIC_INFO("Testbed paused."); }
+
+void TestbedApplication::onResume() { MOSAIC_INFO("Testbed resumed."); }
+
+void TestbedApplication::onShutdown()
+{
+    m_renderSystem->destroyAllContexts();
+    m_inputSystem->unregisterAllWindows();
+
+    MOSAIC_INFO("Testbed shutdown.");
+}
+
+void TestbedApplication::onPollInputs()
 {
     auto window = m_windowSystem->getWindow("MainWindow");
 
@@ -137,9 +151,7 @@ std::optional<std::string> TestbedApplication::onUpdate()
 
     if (window->shouldClose() || inputContext->isActionTriggered("closeApp"))
     {
-        requestExit();
-
-        return std::nullopt;
+        return requestExit();
     }
 
 #ifndef MOSAIC_PLATFORM_ANDROID
@@ -152,20 +164,6 @@ std::optional<std::string> TestbedApplication::onUpdate()
         if (srcPollCount == event.metadata.pollCount) MOSAIC_INFO(event.text);
     }
 #endif
-
-    return std::nullopt;
-}
-
-void TestbedApplication::onPause() { MOSAIC_INFO("Testbed paused."); }
-
-void TestbedApplication::onResume() { MOSAIC_INFO("Testbed resumed."); }
-
-void TestbedApplication::onShutdown()
-{
-    m_renderSystem->destroyAllContexts();
-    m_inputSystem->unregisterAllWindows();
-
-    MOSAIC_INFO("Testbed shutdown.");
 }
 
 } // namespace testbed
