@@ -98,6 +98,7 @@ add_subdirectory("testbed")
 
 if(NOT ANDROID)
   add_subdirectory("mosaic/tests")
+  add_subdirectory("mosaic/bench")
   add_subdirectory("pieces/tests")
   add_subdirectory("pieces/bench")
   add_subdirectory("tests")
