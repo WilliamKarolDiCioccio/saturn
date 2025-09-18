@@ -11,11 +11,11 @@ namespace testbed
 
 void TestbedApplication::onInitialize()
 {
-    auto window = m_windowSystem->getWindow("MainWindow");
+    auto window = getWindowSystem()->getWindow("MainWindow");
 
     window->setResizeable(true);
 
-    auto inputContext = m_inputSystem->getContext(window);
+    auto inputContext = getInputSystem()->getContext(window);
 
 #ifndef MOSAIC_PLATFORM_ANDROID
     inputContext->updateVirtualKeyboardKeys({
@@ -131,17 +131,18 @@ void TestbedApplication::onResume() { MOSAIC_INFO("Testbed resumed."); }
 
 void TestbedApplication::onShutdown()
 {
-    m_renderSystem->destroyAllContexts();
-    m_inputSystem->unregisterAllWindows();
+    getRenderSystem()->destroyAllContexts();
+    getInputSystem()->unregisterAllWindows();
+    getWindowSystem()->destroyAllWindows();
 
     MOSAIC_INFO("Testbed shutdown.");
 }
 
 void TestbedApplication::onPollInputs()
 {
-    auto window = m_windowSystem->getWindow("MainWindow");
+    auto window = getWindowSystem()->getWindow("MainWindow");
 
-    auto inputContext = m_inputSystem->getContext(window);
+    auto inputContext = getInputSystem()->getContext(window);
 
     if (inputContext->isActionTriggered("moveLeft")) MOSAIC_INFO("Moving left.");
     if (inputContext->isActionTriggered("moveRight")) MOSAIC_INFO("Moving right.");
