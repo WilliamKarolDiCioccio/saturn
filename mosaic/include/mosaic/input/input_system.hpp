@@ -43,16 +43,13 @@ class MOSAIC_API InputSystem final : public core::EngineSystem
    public:
     static InputSystem* g_instance;
 
-    std::unordered_map<const window::Window*, std::unique_ptr<InputContext>> m_contexts;
+    struct Impl;
+
+    Impl* m_impl;
 
    public:
-    InputSystem() : EngineSystem(core::EngineSystemType::input)
-    {
-        assert(!g_instance && "InputSystem already exists!");
-        g_instance = this;
-    };
-
-    ~InputSystem() override { g_instance = nullptr; }
+    InputSystem();
+    ~InputSystem() override;
 
     InputSystem(const InputSystem&) = delete;
     InputSystem& operator=(const InputSystem&) = delete;
@@ -66,33 +63,18 @@ class MOSAIC_API InputSystem final : public core::EngineSystem
     pieces::Result<InputContext*, std::string> registerWindow(window::Window* _window);
     void unregisterWindow(window::Window* _window);
 
-    inline void unregisterAllWindows()
-    {
-        for (auto& [window, context] : m_contexts) context->shutdown();
-
-        m_contexts.clear();
-    }
+    void unregisterAllWindows();
 
     /**
      * @brief Updates all registered input contexts.
      *
      * This should be invocated after window system update in the main loop of the application.
      */
-    inline pieces::RefResult<System, std::string> update() override
-    {
-        for (auto& [window, context] : m_contexts) context->update();
+    pieces::RefResult<System, std::string> update() override;
 
-        return pieces::OkRef<System, std::string>(*this);
-    }
+    InputContext* getContext(const window::Window* _window) const;
 
-    inline InputContext* getContext(const window::Window* _window) const
-    {
-        if (m_contexts.find(_window) != m_contexts.end()) return m_contexts.at(_window).get();
-
-        return nullptr;
-    }
-
-    [[nodiscard]] static InputSystem* getGlobalInputSystem()
+    [[nodiscard]] static inline InputSystem* getGlobalInstance()
     {
         if (!g_instance) MOSAIC_ERROR("InputSystem has not been created yet!");
 

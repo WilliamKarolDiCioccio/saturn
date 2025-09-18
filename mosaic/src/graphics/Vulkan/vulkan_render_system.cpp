@@ -13,7 +13,7 @@ pieces::RefResult<core::System, std::string> VulkanRenderSystem::initialize()
 {
     createInstance(m_instance);
 
-    auto windowSystem = window::WindowSystem::getGlobalWindowSystem();
+    auto windowSystem = window::WindowSystem::getGlobalInstance();
 
     if (!windowSystem)
     {

@@ -36,7 +36,8 @@ int runApp(const std::vector<std::string>& _cmdLineArgs, Args&&... _appConstucto
     core::SystemConsole::create();
 
     core::LoggerManager::initialize();
-    core::LoggerManager::getInstance()->addSink<core::DefaultSink>("default", core::DefaultSink());
+    core::LoggerManager::getGlobalInstance()->addSink<core::DefaultSink>("default",
+                                                                         core::DefaultSink());
 
     core::TracerManager::initialize();
 

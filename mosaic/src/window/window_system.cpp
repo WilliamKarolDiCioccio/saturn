@@ -11,7 +11,26 @@ namespace mosaic
 namespace window
 {
 
+struct WindowSystem::Impl
+{
+    std::unordered_map<std::string, std::unique_ptr<Window>> windows;
+
+    Impl() = default;
+};
+
 WindowSystem* WindowSystem::g_instance = nullptr;
+
+WindowSystem::WindowSystem() : EngineSystem(core::EngineSystemType::window), m_impl(new Impl())
+{
+    assert(!g_instance && "WindowSystem already exists!");
+    g_instance = this;
+};
+
+WindowSystem ::~WindowSystem()
+{
+    g_instance = nullptr;
+    delete m_impl;
+}
 
 std::unique_ptr<WindowSystem> WindowSystem::create()
 {
@@ -25,38 +44,60 @@ std::unique_ptr<WindowSystem> WindowSystem::create()
 pieces::Result<Window*, std::string> WindowSystem::createWindow(const std::string& _windowId,
                                                                 const WindowProperties& _properties)
 {
-    if (m_windows.find(_windowId) != m_windows.end())
+    auto& windows = m_impl->windows;
+
+    if (windows.find(_windowId) != windows.end())
     {
         MOSAIC_WARN("InputSystem: Window already registered");
 
-        return pieces::Ok<Window*, std::string>(m_windows.at(_windowId).get());
+        return pieces::Ok<Window*, std::string>(windows.at(_windowId).get());
     }
 
-    m_windows[_windowId] = Window::create();
+    windows[_windowId] = Window::create();
 
-    auto result = m_windows.at(_windowId)->initialize(_properties);
+    auto result = windows.at(_windowId)->initialize(_properties);
 
     if (result.isErr())
     {
-        m_windows.erase(_windowId);
+        windows.erase(_windowId);
 
         return pieces::Err<Window*, std::string>(std::move(result.error()));
     }
 
-    return pieces::Ok<Window*, std::string>(m_windows.at(_windowId).get());
+    return pieces::Ok<Window*, std::string>(windows.at(_windowId).get());
 }
 
 void WindowSystem::destroyWindow(const std::string& _windowId)
 {
-    auto it = m_windows.find(_windowId);
+    auto& windows = m_impl->windows;
 
-    if (it != m_windows.end())
+    auto it = windows.find(_windowId);
+
+    if (it != windows.end())
     {
         it->second->shutdown();
 
-        m_windows.erase(it);
+        windows.erase(it);
     }
 }
+
+inline void WindowSystem::destroyAllWindows()
+{
+    for (auto& [window, context] : m_impl->windows) context->shutdown();
+
+    m_impl->windows.clear();
+}
+
+[[nodiscard]] inline Window* WindowSystem::getWindow(const std::string& _windowId) const
+{
+    auto& windows = m_impl->windows;
+
+    if (windows.find(_windowId) != windows.end()) return windows.at(_windowId).get();
+
+    return nullptr;
+}
+
+[[nodiscard]] inline size_t WindowSystem::getWindowCount() const { return m_impl->windows.size(); }
 
 } // namespace window
 } // namespace mosaic

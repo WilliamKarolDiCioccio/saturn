@@ -15,72 +15,27 @@ namespace mosaic
 namespace graphics
 {
 
+struct RenderSystem::Impl
+{
+    RendererAPIType apiType;
+    std::unordered_map<const window::Window*, std::unique_ptr<RenderContext>> contexts;
+
+    Impl(RendererAPIType _apiType) : apiType(_apiType) {}
+};
+
 RenderSystem* RenderSystem::g_instance = nullptr;
 
-pieces::Result<RenderContext*, std::string> RenderSystem::createContext(
-    const window::Window* _window)
+RenderSystem::RenderSystem(RendererAPIType _apiType)
+    : EngineSystem(core::EngineSystemType::render), m_impl(new Impl(_apiType))
 {
-    if (m_contexts.find(_window) != m_contexts.end())
-    {
-        MOSAIC_WARN("RenderSystem: Context already exists for this window");
+    assert(!g_instance && "RenderSystem already exists!");
+    g_instance = this;
+};
 
-        return pieces::Ok<RenderContext*, std::string>(m_contexts[_window].get());
-    }
-
-    switch (m_apiType)
-    {
-#ifndef MOSAIC_PLATFORM_ANDROID
-        case RendererAPIType::web_gpu:
-        {
-            if (m_contexts.size() > 1)
-            {
-                return pieces::Err<RenderContext*, std::string>(
-                    "WebGPU backend only supports one context at a time");
-            }
-
-            m_contexts[_window] = std::make_unique<webgpu::WebGPURenderContext>(
-                _window, RenderContextSettings(true, 2));
-
-            break;
-        }
-#endif
-#ifndef MOSAIC_PLATFORM_EMSCRIPTEN
-        case RendererAPIType::vulkan:
-        {
-            m_contexts[_window] = std::make_unique<vulkan::VulkanRenderContext>(
-                _window, RenderContextSettings(true, 2));
-
-            break;
-        }
-#endif
-        default:
-        {
-            return pieces::Err<RenderContext*, std::string>("RenderSystem: Unsupported API type");
-        }
-    }
-
-    auto result = m_contexts[_window]->initialize(this);
-
-    if (result.isErr())
-    {
-        m_contexts.erase(_window);
-
-        return pieces::Err<RenderContext*, std::string>(std::move(result.error()));
-    }
-
-    return pieces::Ok<RenderContext*, std::string>(m_contexts.at(_window).get());
-}
-
-void RenderSystem::destroyContext(const window::Window* _window)
+RenderSystem::~RenderSystem()
 {
-    auto it = m_contexts.find(_window);
-
-    if (it != m_contexts.end())
-    {
-        it->second->shutdown();
-
-        m_contexts.erase(it);
-    }
+    g_instance = nullptr;
+    delete m_impl;
 }
 
 std::unique_ptr<RenderSystem> RenderSystem::create(RendererAPIType _apiType)
@@ -100,6 +55,98 @@ std::unique_ptr<RenderSystem> RenderSystem::create(RendererAPIType _apiType)
             throw std::runtime_error("Vulkan backend is not supported on Emscripten platform");
 #endif
     }
+}
+
+pieces::Result<RenderContext*, std::string> RenderSystem::createContext(
+    const window::Window* _window)
+{
+    auto& contexts = m_impl->contexts;
+
+    if (contexts.find(_window) != contexts.end())
+    {
+        MOSAIC_WARN("RenderSystem: Context already exists for this window");
+
+        return pieces::Ok<RenderContext*, std::string>(contexts[_window].get());
+    }
+
+    switch (m_impl->apiType)
+    {
+#ifndef MOSAIC_PLATFORM_ANDROID
+        case RendererAPIType::web_gpu:
+        {
+            if (contexts.size() > 1)
+            {
+                return pieces::Err<RenderContext*, std::string>(
+                    "WebGPU backend only supports one context at a time");
+            }
+
+            contexts[_window] = std::make_unique<webgpu::WebGPURenderContext>(
+                _window, RenderContextSettings(true, 2));
+
+            break;
+        }
+#endif
+#ifndef MOSAIC_PLATFORM_EMSCRIPTEN
+        case RendererAPIType::vulkan:
+        {
+            contexts[_window] = std::make_unique<vulkan::VulkanRenderContext>(
+                _window, RenderContextSettings(true, 2));
+
+            break;
+        }
+#endif
+        default:
+        {
+            return pieces::Err<RenderContext*, std::string>("RenderSystem: Unsupported API type");
+        }
+    }
+
+    auto result = contexts[_window]->initialize(this);
+
+    if (result.isErr())
+    {
+        contexts.erase(_window);
+
+        return pieces::Err<RenderContext*, std::string>(std::move(result.error()));
+    }
+
+    return pieces::Ok<RenderContext*, std::string>(contexts.at(_window).get());
+}
+
+void RenderSystem::destroyContext(const window::Window* _window)
+{
+    auto it = m_impl->contexts.find(_window);
+
+    if (it != m_impl->contexts.end())
+    {
+        it->second->shutdown();
+
+        m_impl->contexts.erase(it);
+    }
+}
+
+void RenderSystem::destroyAllContexts()
+{
+    for (auto& [window, context] : m_impl->contexts) context->shutdown();
+
+    m_impl->contexts.clear();
+}
+
+pieces::RefResult<core::System, std::string> RenderSystem::update()
+{
+    for (auto& [window, context] : m_impl->contexts) context->render();
+
+    return pieces::OkRef<core::System, std::string>(*this);
+}
+
+RenderContext* RenderSystem::getContext(const window::Window* _window) const
+{
+    if (m_impl->contexts.find(_window) != m_impl->contexts.end())
+    {
+        return m_impl->contexts.at(_window).get();
+    }
+
+    return nullptr;
 }
 
 } // namespace graphics

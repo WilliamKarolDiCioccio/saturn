@@ -8,7 +8,7 @@ namespace glfw
 {
 
 GLFWKeyboardInputSource::GLFWKeyboardInputSource(window::Window* _window)
-    : input::KeyboardInputSource(_window), m_nativeHandle(nullptr) {};
+    : input::KeyboardInputSource(_window), m_nativeHandle(nullptr), m_focusCallbackId(0) {};
 
 pieces::RefResult<input::InputSource, std::string> GLFWKeyboardInputSource::initialize()
 {
@@ -16,7 +16,7 @@ pieces::RefResult<input::InputSource, std::string> GLFWKeyboardInputSource::init
 
     m_isActive = glfwGetWindowAttrib(static_cast<GLFWwindow*>(m_nativeHandle), GLFW_FOCUSED);
 
-    m_focusCallbackId = m_window->registerWindowCallback<window::WindowFocusCallback>(
+    m_focusCallbackId = m_window->registerWindowFocusCallback(
         [this](int _focused) { m_isActive = _focused == GLFW_TRUE; });
 
     return pieces::OkRef<InputSource, std::string>(*this);
@@ -24,7 +24,7 @@ pieces::RefResult<input::InputSource, std::string> GLFWKeyboardInputSource::init
 
 void GLFWKeyboardInputSource::shutdown()
 {
-    m_window->unregisterWindowCallback<window::WindowFocusCallback>(m_focusCallbackId);
+    m_window->unregisterWindowFocusCallback(m_focusCallbackId);
 }
 
 void GLFWKeyboardInputSource::pollDevice()

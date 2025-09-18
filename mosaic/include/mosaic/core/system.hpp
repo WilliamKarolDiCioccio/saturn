@@ -65,6 +65,7 @@ enum class EngineSystemType
     window,
     input,
     render,
+    scene,
 };
 
 /**

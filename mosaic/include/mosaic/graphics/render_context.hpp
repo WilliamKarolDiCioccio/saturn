@@ -29,12 +29,13 @@ class RenderSystem;
 class RenderContext
 {
    protected:
-    const window::Window* m_window;
-    RenderContextSettings m_settings;
+    struct Impl;
+
+    Impl* m_impl;
 
    public:
     RenderContext(const window::Window* _window, const RenderContextSettings& _settings);
-    virtual ~RenderContext() = default;
+    virtual ~RenderContext();
 
    public:
     virtual pieces::RefResult<RenderContext, std::string> initialize(
@@ -43,10 +44,13 @@ class RenderContext
 
     void render();
 
-    // setScene()
-    // setCamera()
+    [[nodiscard]] const window::Window* getWindow() const;
+    [[nodiscard]] const RenderContextSettings getSettings() const;
 
    protected:
+    [[nodiscard]] window::Window* getWindowInternal();
+    [[nodiscard]] RenderContextSettings& getSettingsInternal();
+
     virtual void resizeFramebuffer() = 0;
     virtual void recreateSurface() = 0;
     virtual void beginFrame() = 0;

@@ -8,7 +8,10 @@ namespace glfw
 {
 
 GLFWMouseInputSource::GLFWMouseInputSource(window::Window* _window)
-    : input::MouseInputSource(_window), m_nativeHandle(nullptr), m_wheelOffsetBuffer(0.0f, 0.0f) {};
+    : input::MouseInputSource(_window),
+      m_nativeHandle(nullptr),
+      m_focusCallbackId(0),
+      m_wheelOffsetBuffer(0.0f, 0.0f) {};
 
 pieces::RefResult<input::InputSource, std::string> GLFWMouseInputSource::initialize()
 {
@@ -21,10 +24,10 @@ pieces::RefResult<input::InputSource, std::string> GLFWMouseInputSource::initial
         glfwSetInputMode(m_nativeHandle, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
     }
 
-    m_focusCallbackId = m_window->registerWindowCallback<window::WindowFocusCallback>(
+    m_focusCallbackId = m_window->registerWindowFocusCallback(
         [this](int _focused) { m_isActive = _focused == GLFW_TRUE; });
 
-    m_scrollCallbackId = m_window->registerWindowCallback<window::WindowScrollCallback>(
+    m_scrollCallbackId = m_window->registerWindowScrollCallback(
         [this](double xoffset, double yoffset)
         { m_wheelOffsetBuffer += glm::vec2(xoffset, yoffset); });
 
@@ -33,8 +36,8 @@ pieces::RefResult<input::InputSource, std::string> GLFWMouseInputSource::initial
 
 void GLFWMouseInputSource::shutdown()
 {
-    m_window->unregisterWindowCallback<window::WindowFocusCallback>(m_focusCallbackId);
-    m_window->unregisterWindowCallback<window::WindowScrollCallback>(m_scrollCallbackId);
+    m_window->unregisterWindowFocusCallback(m_focusCallbackId);
+    m_window->unregisterWindowScrollCallback(m_scrollCallbackId);
 }
 
 void GLFWMouseInputSource::pollDevice()

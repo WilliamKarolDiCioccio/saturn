@@ -95,11 +95,11 @@ class MOSAIC_API CommandLineParser
               parsed(false) {};
     };
 
-    static std::string m_executableName;
-    static std::string m_executablePath;
-    static std::vector<std::string> m_args;
-    static bool m_shouldTerminate;
-    static Config m_config;
+    static std::string s_executableName;
+    static std::string s_executablePath;
+    static std::vector<std::string> s_args;
+    static bool s_shouldTerminate;
+    static Config s_config;
     static std::unordered_map<std::string, std::unique_ptr<Option>> m_options;
     static std::unordered_map<std::string, std::string> m_shortToLong;
 
@@ -182,28 +182,28 @@ class MOSAIC_API CommandLineParser
     /**
      * @brief Set parser configuration
      */
-    static void setConfig(const Config& _config) { m_config = _config; }
+    static void setConfig(const Config& _config) { s_config = _config; }
 
     /**
      * @brief Get current configuration
      */
-    static const Config& getConfig() noexcept { return m_config; }
+    static const Config& getConfig() noexcept { return s_config; }
 
    public:
-    [[nodiscard]] static bool shouldTerminate() noexcept { return m_shouldTerminate; }
+    [[nodiscard]] static bool shouldTerminate() noexcept { return s_shouldTerminate; }
 
-    [[nodiscard]] static const std::vector<std::string>& getArgs() noexcept { return m_args; }
+    [[nodiscard]] static const std::vector<std::string> getArgs() noexcept { return s_args; }
 
-    [[nodiscard]] static size_t getArgsCount() noexcept { return m_args.size(); }
+    [[nodiscard]] static size_t getArgsCount() noexcept { return s_args.size(); }
 
     [[nodiscard]] static const std::string& getExecutableName() noexcept
     {
-        return m_executableName;
+        return s_executableName;
     }
 
     [[nodiscard]] static const std::string& getExecutablePath() noexcept
     {
-        return m_executablePath;
+        return s_executablePath;
     }
 
     /**

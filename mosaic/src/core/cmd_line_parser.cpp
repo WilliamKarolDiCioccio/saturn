@@ -12,15 +12,15 @@ namespace mosaic
 namespace core
 {
 
-std::string CommandLineParser::m_executableName;
+std::string CommandLineParser::s_executableName;
 
-std::string CommandLineParser::m_executablePath;
+std::string CommandLineParser::s_executablePath;
 
-std::vector<std::string> CommandLineParser::m_args;
+std::vector<std::string> CommandLineParser::s_args;
 
-bool CommandLineParser::m_shouldTerminate = false;
+bool CommandLineParser::s_shouldTerminate = false;
 
-CommandLineParser::Config CommandLineParser::m_config;
+CommandLineParser::Config CommandLineParser::s_config;
 
 std::unordered_map<std::string, std::unique_ptr<CommandLineParser::Option>>
     CommandLineParser::m_options;
@@ -83,9 +83,9 @@ uint8_t CommandLineParser::calculateEditDistance(const std::string& _str1, const
 
 std::string CommandLineParser::suggestCorrectOption(const std::string& _misspelledOption)
 {
-    if (!m_config.enableSpellCheck) return _misspelledOption;
+    if (!s_config.enableSpellCheck) return _misspelledOption;
 
-    uint8_t minDistance = m_config.maxSpellCheckDistance;
+    uint8_t minDistance = s_config.maxSpellCheckDistance;
     std::string bestMatch = _misspelledOption;
 
     for (const auto& [optionName, option] : m_options)
@@ -108,7 +108,7 @@ std::string CommandLineParser::suggestCorrectOption(const std::string& _misspell
         }
     }
 
-    return (minDistance < m_config.maxSpellCheckDistance) ? bestMatch : _misspelledOption;
+    return (minDistance < s_config.maxSpellCheckDistance) ? bestMatch : _misspelledOption;
 }
 
 std::vector<std::pair<std::string, std::vector<std::string>>>
@@ -136,7 +136,7 @@ CommandLineParser::extractOptionArgumentsPairs(std::span<const std::string> _arg
         }
         else
         {
-            m_args.push_back(arg);
+            s_args.push_back(arg);
         }
     }
 
@@ -152,12 +152,12 @@ std::optional<std::string> CommandLineParser::handleOptionArgumentsPair(
     const Option* option = findOption(optionName);
     if (!option)
     {
-        if (m_config.allowUnknownOptions) return std::nullopt;
+        if (s_config.allowUnknownOptions) return std::nullopt;
 
         std::string suggestion = suggestCorrectOption(optionName);
         std::string message = "Unknown option '" + optionName + "'";
 
-        if (suggestion != optionName && m_config.enableSpellCheck)
+        if (suggestion != optionName && s_config.enableSpellCheck)
         {
             message += ". Did you mean '" + suggestion + "'?";
         }
@@ -167,7 +167,7 @@ std::optional<std::string> CommandLineParser::handleOptionArgumentsPair(
 
     const_cast<Option*>(option)->parsed = true;
 
-    if (option->terminates) m_shouldTerminate = true;
+    if (option->terminates) s_shouldTerminate = true;
 
     switch (option->valueType)
     {
@@ -240,7 +240,7 @@ std::optional<std::string> CommandLineParser::handleOptionArgumentsPair(
 
 void CommandLineParser::registerBuiltinOptions()
 {
-    if (!m_config.autoHelp) return;
+    if (!s_config.autoHelp) return;
 
     registerOption("help", "h", "Show help", "Display this help message and exit",
                    CmdOptionValueTypes::none, true,
@@ -354,7 +354,7 @@ std::optional<std::string> CommandLineParser::parseCommandLine(
         return "Invalid argument count or empty args vector";
     }
 
-    if (_args.size() > m_config.maxArguments)
+    if (_args.size() > s_config.maxArguments)
     {
         return "Too many command line arguments";
     }
@@ -362,7 +362,7 @@ std::optional<std::string> CommandLineParser::parseCommandLine(
     reset();
     registerBuiltinOptions();
 
-    m_args.clear();
+    s_args.clear();
 
     auto optionPairs = extractOptionArgumentsPairs(_args);
 
@@ -371,7 +371,7 @@ std::optional<std::string> CommandLineParser::parseCommandLine(
         auto result = handleOptionArgumentsPair(pair);
         if (result.has_value())
         {
-            if (m_config.printErrors)
+            if (s_config.printErrors)
             {
                 core::SystemConsole::printError("Error: " + result.value() + '\n');
             }
@@ -383,7 +383,7 @@ std::optional<std::string> CommandLineParser::parseCommandLine(
     auto validationResult = validateRequiredOptions();
     if (validationResult.has_value())
     {
-        if (m_config.printErrors)
+        if (s_config.printErrors)
         {
             core::SystemConsole::printError("Error: " + validationResult.value() + '\n');
         }
@@ -448,8 +448,8 @@ void CommandLineParser::unregisterAllOptions()
 
 void CommandLineParser::reset()
 {
-    m_args.clear();
-    m_shouldTerminate = false;
+    s_args.clear();
+    s_shouldTerminate = false;
 
     for (auto& [name, option] : m_options) option->parsed = false;
 }
@@ -463,7 +463,7 @@ bool CommandLineParser::wasOptionParsed(const std::string& _optionName)
 std::string CommandLineParser::getHelpText()
 {
     std::ostringstream oss;
-    oss << "Usage: " << m_executableName << " [options]\n\nOptions:\n";
+    oss << "Usage: " << s_executableName << " [options]\n\nOptions:\n";
 
     for (const auto& [name, option] : m_options)
     {

@@ -13,6 +13,31 @@ namespace mosaic
 namespace core
 {
 
+struct PlatformContext::Impl
+{
+    std::vector<PlatformContextChangedEvent> platformContextListeners;
+};
+
+inline void PlatformContext::registerPlatformContextChangedCallback(
+    PlatformContextChangedEvent _callback)
+{
+    m_impl->platformContextListeners.push_back(_callback);
+}
+
+void PlatformContext::invokePlatformContextChangedCallbacks(void* _newContext)
+{
+    for (const auto& listener : m_impl->platformContextListeners) listener(_newContext);
+}
+
+struct Platform::Impl
+{
+    Application* app;
+    std::unique_ptr<PlatformContext> platformContext;
+    std::vector<PlatformContextChangedEvent> m_platformContextListeners;
+
+    Impl(Application* _app) : app(_app), platformContext(PlatformContext::create()) {};
+};
+
 std::unique_ptr<PlatformContext> PlatformContext::create()
 {
 #if defined(MOSAIC_PLATFORM_ANDROID)
@@ -22,21 +47,18 @@ std::unique_ptr<PlatformContext> PlatformContext::create()
 #endif
 }
 
-void PlatformContext::invokePlatformContextChangedCallbacks(void* _newContext)
-{
-    for (const auto& listener : m_platformContextListeners)
-    {
-        listener(_newContext);
-    }
-}
-
 Platform* Platform::s_instance = nullptr;
 
-Platform::Platform(Application* _app) : m_app(_app), m_platformContext(PlatformContext::create())
+Platform::Platform(Application* _app) : m_impl(new Impl(_app))
 {
     assert(!s_instance && "Platform instance already exists!");
-
     s_instance = this;
+}
+
+Platform::~Platform()
+{
+    s_instance = nullptr;
+    delete m_impl;
 }
 
 std::unique_ptr<Platform> Platform::create(Application* _app)
@@ -49,6 +71,10 @@ std::unique_ptr<Platform> Platform::create(Application* _app)
     return std::make_unique<platform::agdk::AGDKPlatform>(_app);
 #endif
 }
+
+PlatformContext* Platform::getPlatformContext() { return m_impl->platformContext.get(); }
+
+Application* Platform::getApplication() { return m_impl->app; }
 
 } // namespace core
 } // namespace mosaic

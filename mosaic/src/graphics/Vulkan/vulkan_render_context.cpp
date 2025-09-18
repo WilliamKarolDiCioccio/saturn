@@ -27,12 +27,15 @@ pieces::RefResult<RenderContext, std::string> VulkanRenderContext::initialize(
     m_instance = static_cast<VulkanRenderSystem*>(_renderSystem)->getInstance();
     m_device = static_cast<VulkanRenderSystem*>(_renderSystem)->getDevice();
 
-    m_frameData.resize(m_settings.backbufferCount);
+    auto window = getWindowInternal();
+    auto& settings = getSettings();
 
-    createSurface(m_surface, *m_instance, m_window->getNativeHandle());
+    m_frameData.resize(getSettings().backbufferCount);
 
-    createSwapchain(m_swapchain, *m_device, m_surface, m_window->getNativeHandle(),
-                    m_window->getFramebufferSize(), m_window->getWindowProperties().isFullscreen);
+    createSurface(m_surface, *m_instance, window->getNativeHandle());
+
+    createSwapchain(m_swapchain, *m_device, m_surface, window->getNativeHandle(),
+                    window->getFramebufferSize(), window->getWindowProperties().isFullscreen);
 
     createRenderPass(m_renderPass, *m_device, m_swapchain);
     createGraphicsPipeline(m_pipeline, *m_device, m_swapchain, m_renderPass);
@@ -43,8 +46,8 @@ pieces::RefResult<RenderContext, std::string> VulkanRenderContext::initialize(
 
 #if defined(MOSAIC_PLATFORM_DESKTOP) || defined(MOSAIC_PLATFORM_WEB)
 
-    const_cast<window::Window*>(m_window)->registerWindowCallback<window::WindowResizeCallback>(
-        [this](int height, int width) { m_framebufferResized = true; });
+    window->registerWindowResizeCallback([this](int height, int width)
+                                         { m_framebufferResized = true; });
 
 #elif defined(MOSAIC_PLATFORM_ANDROID)
 
@@ -79,11 +82,13 @@ void VulkanRenderContext::shutdown()
 
 void VulkanRenderContext::resizeFramebuffer()
 {
-    auto framebufferSize = m_window->getFramebufferSize();
+    auto window = getWindowInternal();
+
+    auto framebufferSize = window->getFramebufferSize();
 
     while (framebufferSize.x * framebufferSize.y == 0)
     {
-        framebufferSize = m_window->getFramebufferSize();
+        framebufferSize = window->getFramebufferSize();
     }
 
     vkDeviceWaitIdle(m_device->device);
@@ -93,8 +98,8 @@ void VulkanRenderContext::resizeFramebuffer()
     destroyRenderPass(m_renderPass, *m_device);
     destroySwapchain(m_swapchain);
 
-    createSwapchain(m_swapchain, *m_device, m_surface, m_window->getNativeHandle(), framebufferSize,
-                    m_window->getWindowProperties().isFullscreen);
+    createSwapchain(m_swapchain, *m_device, m_surface, window->getNativeHandle(), framebufferSize,
+                    window->getWindowProperties().isFullscreen);
 
     createRenderPass(m_renderPass, *m_device, m_swapchain);
     createGraphicsPipeline(m_pipeline, *m_device, m_swapchain, m_renderPass);
@@ -105,7 +110,10 @@ void VulkanRenderContext::resizeFramebuffer()
 
 void VulkanRenderContext::recreateSurface()
 {
-    if (!m_window->getNativeHandle()) return;
+    auto window = getWindowInternal();
+    auto windowProps = window->getWindowProperties();
+
+    if (!window->getNativeHandle()) return;
 
     vkDeviceWaitIdle(m_device->device);
 
@@ -115,9 +123,9 @@ void VulkanRenderContext::recreateSurface()
     destroySwapchain(m_swapchain);
     destroySurface(m_surface, *m_instance);
 
-    createSurface(m_surface, *m_instance, m_window->getNativeHandle());
-    createSwapchain(m_swapchain, *m_device, m_surface, m_window->getNativeHandle(),
-                    m_window->getFramebufferSize(), m_window->getWindowProperties().isFullscreen);
+    createSurface(m_surface, *m_instance, window->getNativeHandle());
+    createSwapchain(m_swapchain, *m_device, m_surface, window->getNativeHandle(),
+                    window->getFramebufferSize(), window->getWindowProperties().isFullscreen);
     createRenderPass(m_renderPass, *m_device, m_swapchain);
     createGraphicsPipeline(m_pipeline, *m_device, m_swapchain, m_renderPass);
     createSwapchainFramebuffers(m_swapchain, *m_device, m_renderPass);
@@ -239,7 +247,7 @@ void VulkanRenderContext::endFrame()
     }
 
     // Advance frame
-    m_currentFrame = (m_currentFrame + 1) % m_settings.backbufferCount;
+    m_currentFrame = (m_currentFrame + 1) % getSettings().backbufferCount;
 }
 
 void VulkanRenderContext::createFrames()

@@ -15,6 +15,8 @@ namespace mosaic
 namespace core
 {
 
+using PlatformContextChangedEvent = std::function<void(void* _newContext)>;
+
 /**
  * @brief Abstract base class representing the platform context.
  *
@@ -22,11 +24,10 @@ namespace core
  */
 class MOSAIC_API PlatformContext
 {
-   public:
-    using PlatformContextChangedEvent = std::function<void(void* _newContext)>;
-
    private:
-    std::vector<PlatformContextChangedEvent> m_platformContextListeners;
+    struct Impl;
+
+    Impl* m_impl;
 
    public:
     virtual ~PlatformContext() = default;
@@ -34,13 +35,10 @@ class MOSAIC_API PlatformContext
     static std::unique_ptr<PlatformContext> create();
 
    public:
-    inline void registerPlatformContextChangedCallback(PlatformContextChangedEvent _callback)
-    {
-        m_platformContextListeners.push_back(_callback);
-    }
+    inline void registerPlatformContextChangedCallback(PlatformContextChangedEvent _callback);
 
    protected:
-    void invokePlatformContextChangedCallbacks(void* _context);
+    void invokePlatformContextChangedCallbacks(void* _newContext);
 };
 
 /**
@@ -59,18 +57,21 @@ class MOSAIC_API Platform
     static Platform* s_instance;
 
    protected:
-    Application* m_app;
-    std::unique_ptr<PlatformContext> m_platformContext;
+    struct Impl;
+
+    Impl* m_impl;
 
    public:
     Platform(Application* _app);
-    virtual ~Platform() = default;
+    virtual ~Platform();
 
     static std::unique_ptr<Platform> create(Application* _app);
 
     [[nodiscard]] static Platform* getInstance() { return s_instance; }
 
-    [[nodiscard]] PlatformContext* getPlatformContext() { return m_platformContext.get(); }
+    [[nodiscard]] PlatformContext* getPlatformContext();
+
+    [[nodiscard]] Application* getApplication();
 
    public:
     virtual pieces::RefResult<Platform, std::string> initialize() = 0;

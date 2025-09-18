@@ -27,9 +27,9 @@ void TestbedApplication::onInitialize()
         {"resetCamera", input::KeyboardKey::key_r},
     });
 
-    inputContext->addSource<input::MouseInputSource>();
-    inputContext->addSource<input::KeyboardInputSource>();
-    inputContext->addSource<input::TextInputSource>();
+    inputContext->addMouseInputSource();
+    inputContext->addKeyboardInputSource();
+    inputContext->addTextInputSource();
 
     inputContext->registerActions({
         input::Action{
@@ -37,7 +37,7 @@ void TestbedApplication::onInitialize()
             "Move the camera left.",
             [](input::InputContext* ctx)
             {
-                auto src = ctx->getSource<input::KeyboardInputSource>();
+                auto src = ctx->getKeyboardInputSource();
 
                 const auto srcPollCount = src->getPollCount();
                 const auto event = src->getKeyEvent(ctx->translateKey("moveLeft"));
@@ -51,7 +51,7 @@ void TestbedApplication::onInitialize()
             "Move the camera right.",
             [](input::InputContext* ctx)
             {
-                auto src = ctx->getSource<input::KeyboardInputSource>();
+                auto src = ctx->getKeyboardInputSource();
 
                 const auto srcPollCount = src->getPollCount();
                 const auto event = src->getKeyEvent(ctx->translateKey("moveRight"));
@@ -65,7 +65,7 @@ void TestbedApplication::onInitialize()
             "Move the camera up.",
             [](input::InputContext* ctx)
             {
-                auto src = ctx->getSource<input::KeyboardInputSource>();
+                auto src = ctx->getKeyboardInputSource();
 
                 const auto srcPollCount = src->getPollCount();
                 const auto event = src->getKeyEvent(ctx->translateKey("moveUp"));
@@ -79,7 +79,7 @@ void TestbedApplication::onInitialize()
             "Move the camera down.",
             [](input::InputContext* ctx)
             {
-                auto src = ctx->getSource<input::KeyboardInputSource>();
+                auto src = ctx->getKeyboardInputSource();
 
                 const auto srcPollCount = src->getPollCount();
                 const auto event = src->getKeyEvent(ctx->translateKey("moveDown"));
@@ -93,7 +93,7 @@ void TestbedApplication::onInitialize()
             "Reset the camera position.",
             [](input::InputContext* ctx)
             {
-                auto src = ctx->getSource<input::KeyboardInputSource>();
+                auto src = ctx->getKeyboardInputSource();
 
                 const auto srcPollCount = src->getPollCount();
                 const auto event = src->getKeyEvent(ctx->translateKey("resetCamera"));
@@ -108,7 +108,7 @@ void TestbedApplication::onInitialize()
             "Close the application.",
             [](input::InputContext* ctx)
             {
-                auto src = ctx->getSource<input::KeyboardInputSource>();
+                auto src = ctx->getKeyboardInputSource();
 
                 const auto srcPollCount = src->getPollCount();
                 const auto event = src->getKeyEvent(ctx->translateKey("closeApp"));
@@ -157,7 +157,7 @@ void TestbedApplication::onPollInputs()
 
 #ifndef MOSAIC_PLATFORM_ANDROID
     {
-        auto src = inputContext->getSource<input::TextInputSource>();
+        auto src = inputContext->getTextInputSource();
 
         const auto srcPollCount = src->getPollCount();
         const auto event = src->getTextInputEvent();

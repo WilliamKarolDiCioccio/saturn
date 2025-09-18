@@ -53,20 +53,13 @@ concept IsApplication =
 class MOSAIC_API Application
 {
    private:
-    static bool s_created;
-    bool m_exitRequested;
+    struct Impl;
 
-    std::string m_appName;
-    ApplicationState m_state;
-
-   protected:
-    std::unique_ptr<window::WindowSystem> m_windowSystem;
-    std::unique_ptr<input::InputSystem> m_inputSystem;
-    std::unique_ptr<graphics::RenderSystem> m_renderSystem;
+    Impl* m_impl;
 
    public:
     Application(const std::string& _appName);
-    virtual ~Application() = default;
+    virtual ~Application();
 
     Application(Application&) = delete;
     Application& operator=(Application&) = delete;
@@ -80,13 +73,17 @@ class MOSAIC_API Application
     void resume();
     void shutdown();
 
-    [[nodiscard]] inline bool shouldExit() const { return m_exitRequested; }
-    void requestExit() { m_exitRequested = true; }
+    [[nodiscard]] bool shouldExit() const;
+    void requestExit();
 
-    [[nodiscard]] ApplicationState getState() const { return m_state; }
-    [[nodiscard]] bool isInitialized() const { return m_state != ApplicationState::uninitialized; }
-    [[nodiscard]] bool isPaused() const { return m_state == ApplicationState::paused; }
-    [[nodiscard]] bool isResumed() const { return m_state == ApplicationState::resumed; }
+    [[nodiscard]] ApplicationState getState() const;
+    [[nodiscard]] bool isInitialized() const;
+    [[nodiscard]] bool isPaused() const;
+    [[nodiscard]] bool isResumed() const;
+
+    [[nodiscard]] window::WindowSystem* getWindowSystem() const;
+    [[nodiscard]] input::InputSystem* getInputSystem() const;
+    [[nodiscard]] graphics::RenderSystem* getRenderSystem() const;
 
    protected:
     virtual void onInitialize() = 0;

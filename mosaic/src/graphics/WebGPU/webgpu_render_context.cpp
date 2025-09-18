@@ -28,8 +28,10 @@ WebGPURenderContext::WebGPURenderContext(const window::Window* _window,
 pieces::RefResult<RenderContext, std::string> WebGPURenderContext::initialize(
     RenderSystem* _renderSystem)
 {
+    auto window = getWindow();
+
     m_surface = glfwCreateWindowWGPUSurface(m_instance,
-                                            static_cast<GLFWwindow*>(m_window->getNativeHandle()));
+                                            static_cast<GLFWwindow*>(window->getNativeHandle()));
 
     m_instance = createInstance();
 
@@ -79,8 +81,8 @@ pieces::RefResult<RenderContext, std::string> WebGPURenderContext::initialize(
     wgpuQueueOnSubmittedWorkDone(m_presentQueue, workDoneCallbackInfo);
 
     configureSwapchain(m_adapter, m_device, m_surface,
-                       static_cast<GLFWwindow*>(m_window->getNativeHandle()),
-                       m_window->getFramebufferSize());
+                       static_cast<GLFWwindow*>(window->getNativeHandle()),
+                       window->getFramebufferSize());
 
     wgpuAdapterRelease(m_adapter);
 

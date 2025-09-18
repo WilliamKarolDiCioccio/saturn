@@ -135,6 +135,22 @@ using WindowPosCallback = WindowEventCallback<WindowPosCallbackFn>;
 using WindowContentScaleCallback = WindowEventCallback<WindowContentScaleCallbackFn>;
 using WindowCharCallback = WindowEventCallback<WindowCharCallbackFn>;
 
+enum class WindowCallbackType
+{
+    close,
+    focus,
+    resize,
+    refresh,
+    iconify,
+    maximize,
+    drop,
+    scroll,
+    cursorEnter,
+    pos,
+    contentScale,
+    character
+};
+
 /**
  * @brief Abstract base class representing a window in the application.
  *
@@ -152,26 +168,14 @@ using WindowCharCallback = WindowEventCallback<WindowCharCallbackFn>;
  */
 class MOSAIC_API Window
 {
-   protected:
-    WindowProperties m_properties;
+   private:
+    struct Impl;
 
-    // Callback storage
-    std::vector<WindowCloseCallback> m_windowCloseCallbacks;
-    std::vector<WindowFocusCallback> m_windowFocusCallbacks;
-    std::vector<WindowResizeCallback> m_windowResizeCallbacks;
-    std::vector<WindowRefreshCallback> m_windowRefreshCallbacks;
-    std::vector<WindowIconifyCallback> m_windowIconifyCallbacks;
-    std::vector<WindowMaximizeCallback> m_windowMaximizeCallbacks;
-    std::vector<WindowDropCallback> m_windowDropCallbacks;
-    std::vector<WindowScrollCallback> m_windowScrollCallbacks;
-    std::vector<WindowCursorEnterCallback> m_windowCursorEnterCallbacks;
-    std::vector<WindowPosCallback> m_windowPosCallbacks;
-    std::vector<WindowContentScaleCallback> m_windowContentScaleCallbacks;
-    std::vector<WindowCharCallback> m_windowCharCallbacks;
+    Impl* m_impl;
 
    public:
-    Window() = default;
-    virtual ~Window() = default;
+    Window();
+    virtual ~Window();
 
     static std::unique_ptr<Window> create();
 
@@ -211,111 +215,22 @@ class MOSAIC_API Window
     [[nodiscard]] virtual std::string getClipboardString() const = 0;
 
     // Property getters
-    [[nodiscard]] inline const WindowProperties& getWindowProperties() const
-    {
-        return m_properties;
-    }
+    [[nodiscard]] const WindowProperties getWindowProperties() const;
+    [[nodiscard]] const CursorProperties getCursorProperties() const;
 
-    [[nodiscard]] inline const CursorProperties& getCursorProperties() const
-    {
-        return m_properties.cursorProperties;
-    }
+#define DEFINE_CALLBACK(_Type, _Name, _Params, _Args)              \
+    size_t register##_Name##Callback(const _Type::CallbackFn& cb); \
+    void unregister##_Name##Callback(size_t id);                   \
+    std::vector<_Type> get##_Name##Callbacks();                    \
+    void invoke##_Name##Callbacks _Params;
 
-    // Callback registration methods
+#include "callbacks.def"
 
-    template <typename T>
-    [[nodiscard]] inline auto getCallbackVector() -> std::vector<T>&
-    {
-        if constexpr (std::is_same_v<T, WindowCloseCallback>)
-        {
-            return m_windowCloseCallbacks;
-        }
-        else if constexpr (std::is_same_v<T, WindowFocusCallback>)
-        {
-            return m_windowFocusCallbacks;
-        }
-        else if constexpr (std::is_same_v<T, WindowResizeCallback>)
-        {
-            return m_windowResizeCallbacks;
-        }
-        else if constexpr (std::is_same_v<T, WindowRefreshCallback>)
-        {
-            return m_windowRefreshCallbacks;
-        }
-        else if constexpr (std::is_same_v<T, WindowIconifyCallback>)
-        {
-            return m_windowIconifyCallbacks;
-        }
-        else if constexpr (std::is_same_v<T, WindowMaximizeCallback>)
-        {
-            return m_windowMaximizeCallbacks;
-        }
-        else if constexpr (std::is_same_v<T, WindowDropCallback>)
-        {
-            return m_windowDropCallbacks;
-        }
-        else if constexpr (std::is_same_v<T, WindowScrollCallback>)
-        {
-            return m_windowScrollCallbacks;
-        }
-        else if constexpr (std::is_same_v<T, WindowCursorEnterCallback>)
-        {
-            return m_windowCursorEnterCallbacks;
-        }
-        else if constexpr (std::is_same_v<T, WindowPosCallback>)
-        {
-            return m_windowPosCallbacks;
-        }
-        else if constexpr (std::is_same_v<T, WindowContentScaleCallback>)
-        {
-            return m_windowContentScaleCallbacks;
-        }
-        else if constexpr (std::is_same_v<T, WindowCharCallback>)
-        {
-            return m_windowCharCallbacks;
-        }
-        else
-        {
-            static_assert(false, "Unsupported callback type");
-        }
-    }
-
-    template <typename T>
-    [[nodiscard]] size_t registerWindowCallback(const typename T::CallbackFn& _callback)
-    {
-        static std::atomic<size_t> callbackIdCounter(0);
-
-        callbackIdCounter++;
-
-        auto& callbacks = getCallbackVector<T>();
-        callbacks.emplace_back(callbackIdCounter.load(), _callback);
-
-        return callbackIdCounter.load();
-    }
-
-    template <typename T>
-    void unregisterWindowCallback(size_t _id)
-    {
-        auto& callbacks = getCallbackVector<T>();
-        auto it = std::remove_if(callbacks.begin(), callbacks.end(),
-                                 [_id](const T& cb) { return cb.id == _id; });
-        if (it != callbacks.end()) callbacks.erase(it);
-    }
+#undef DEFINE_CALLBACK
 
    protected:
-    // Helper methods for derived classes to invoke callbacks
-    void invokeCloseCallbacks();
-    void invokeFocusCallbacks(int _focused);
-    void invokeResizeCallbacks(int _width, int _height);
-    void invokeRefreshCallbacks();
-    void invokeIconifyCallbacks(int _iconified);
-    void invokeMaximizeCallbacks(int _maximized);
-    void invokeDropCallbacks(int _count, const char** _paths);
-    void invokeScrollCallbacks(double _xoffset, double _yoffset);
-    void invokeCursorEnterCallbacks(int _entered);
-    void invokePosCallbacks(int _x, int _y);
-    void invokeContentScaleCallbacks(float _xscale, float _yscale);
-    void invokeCharCallbacks(unsigned int _codepoint);
+    [[nodiscard]] WindowProperties& getWindowPropertiesInternal();
+    [[nodiscard]] CursorProperties& getCursorPropertiesInternal();
 };
 
 } // namespace window

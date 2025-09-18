@@ -274,51 +274,51 @@ class MOSAIC_API TracerManager final
 #define MOSAIC_TRACE_FUNCTION() \
     mosaic::core::ScopedTrace _trace(__FUNCTION__, mosaic::core::TraceCategory::function)
 
-#define MOSAIC_TRACE_SCOPE(name) \
-    mosaic::core::ScopedTrace _trace(name, mosaic::core::TraceCategory::scope)
+#define MOSAIC_TRACE_SCOPE(_Name) \
+    mosaic::core::ScopedTrace _trace(_Name, mosaic::core::TraceCategory::scope)
 
-#define MOSAIC_TRACE_BEGIN(name, category) \
-    mosaic::core::TracerManager::getInstance()->beginTrace(name, category)
+#define MOSAIC_TRACE_BEGIN(_Name, _Category) \
+    mosaic::core::TracerManager::getInstance()->beginTrace(_Name, _Category)
 
 #define MOSAIC_TRACE_END() mosaic::core::TracerManager::getInstance()->endTrace()
 
-#define MOSAIC_TRACE_INSTANT(name, category) \
-    mosaic::core::TracerManager::getInstance()->instantTrace(name, category)
+#define MOSAIC_TRACE_INSTANT(_Name, _Category) \
+    mosaic::core::TracerManager::getInstance()->instantTrace(_Name, _Category)
 
-#define MOSAIC_TRACE_COUNTER(name, value) \
-    mosaic::core::TracerManager::getInstance()->counterTrace(name, value)
+#define MOSAIC_TRACE_COUNTER(_Name, _Value) \
+    mosaic::core::TracerManager::getInstance()->counterTrace(_Name, _Value)
 
-#define MOSAIC_TRACE_METADATA(name, value) \
-    mosaic::core::TracerManager::getInstance()->metadataTrace(name, value)
+#define MOSAIC_TRACE_METADATA(_Name, _Value) \
+    mosaic::core::TracerManager::getInstance()->metadataTrace(_Name, _Value)
 
-#define MOSAIC_TRACE_OBJECT_CREATED(name, args) \
-    mosaic::core::TracerManager::getInstance()->objectCreated(name, args)
-#define MOSAIC_TRACE_OBJECT_SNAPSHOT(name, args) \
-    mosaic::core::TracerManager::getInstance()->objectSnapshot(name, args)
-#define MOSAIC_TRACE_OBJECT_DESTROYED(name, args) \
-    mosaic::core::TracerManager::getInstance()->objectDestroyed(name, args)
+#define MOSAIC_TRACE_OBJECT_CREATED(_Name, _Args) \
+    mosaic::core::TracerManager::getInstance()->objectCreated(_Name, _Args)
+#define MOSAIC_TRACE_OBJECT_SNAPSHOT(_Name, _Args) \
+    mosaic::core::TracerManager::getInstance()->objectSnapshot(_Name, _Args)
+#define MOSAIC_TRACE_OBJECT_DESTROYED(_Name, _Args) \
+    mosaic::core::TracerManager::getInstance()->objectDestroyed(_Name, _Args)
 
-#define MOSAIC_TRACE_FLOW_BEGIN(name, category) \
-    mosaic::core::TracerManager::getInstance()->beginFlowTrace(name, category)
-#define MOSAIC_TRACE_FLOW_STEP(flowId, name) \
-    mosaic::core::TracerManager::getInstance()->stepFlowTrace(flowId, name)
-#define MOSAIC_TRACE_FLOW_END(flowId, name) \
-    mosaic::core::TracerManager::getInstance()->endFlowTrace(flowId, name)
+#define MOSAIC_TRACE_FLOW_BEGIN(_Name, _Category) \
+    mosaic::core::TracerManager::getInstance()->beginFlowTrace(_Name, _Category)
+#define MOSAIC_TRACE_FLOW_STEP(_FlowID, _Name) \
+    mosaic::core::TracerManager::getInstance()->stepFlowTrace(_FlowID, _Name)
+#define MOSAIC_TRACE_FLOW_END(_FlowID, _Name) \
+    mosaic::core::TracerManager::getInstance()->endFlowTrace(_FlowID, _Name)
 
 #else
 
 #define MOSAIC_TRACE_FUNCTION() ((void)0)
 #define MOSAIC_TRACE_SCOPE(name) ((void)0)
-#define MOSAIC_TRACE_BEGIN(name, category) ((void)0)
+#define MOSAIC_TRACE_BEGIN(_Name, _Category) ((void)0)
 #define MOSAIC_TRACE_END() ((void)0)
-#define MOSAIC_TRACE_INSTANT(name, category) ((void)0)
-#define MOSAIC_TRACE_COUNTER(name, value) ((void)0)
-#define MOSAIC_TRACE_METADATA(name, value) ((void)0)
-#define MOSAIC_TRACE_OBJECT_CREATED(name, args) ((void)0)
-#define MOSAIC_TRACE_OBJECT_SNAPSHOT(name, args) ((void)0)
-#define MOSAIC_TRACE_OBJECT_DESTROYED(name, args) ((void)0)
-#define MOSAIC_TRACE_FLOW_BEGIN(name, category) 0
-#define MOSAIC_TRACE_FLOW_STEP(flowId, name) ((void)0)
-#define MOSAIC_TRACE_FLOW_END(flowId, name) ((void)0)
+#define MOSAIC_TRACE_INSTANT(_Name, _Category) ((void)0)
+#define MOSAIC_TRACE_COUNTER(_Name, _Value) ((void)0)
+#define MOSAIC_TRACE_METADATA(_Name, _Value) ((void)0)
+#define MOSAIC_TRACE_OBJECT_CREATED(_Name, _Args) ((void)0)
+#define MOSAIC_TRACE_OBJECT_SNAPSHOT(_Name, _Args) ((void)0)
+#define MOSAIC_TRACE_OBJECT_DESTROYED(_Name, _Args) ((void)0)
+#define MOSAIC_TRACE_FLOW_BEGIN(_Name, _Category) 0
+#define MOSAIC_TRACE_FLOW_STEP(_FlowID, _Name) ((void)0)
+#define MOSAIC_TRACE_FLOW_END(_FlowID, _Name) ((void)0)
 
 #endif

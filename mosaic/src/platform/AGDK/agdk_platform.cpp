@@ -81,7 +81,7 @@ pieces::RefResult<core::Platform, std::string> AGDKPlatform::initialize()
         return pieces::ErrRef<core::Platform, std::string>("Platform context not available");
     }
 
-    auto result = m_app->initialize();
+    auto result = getApplication()->initialize();
 
     if (result.isErr())
     {
@@ -95,7 +95,9 @@ pieces::RefResult<core::Platform, std::string> AGDKPlatform::run()
 {
     auto context = static_cast<AGDKPlatformContext*>(getPlatformContext());
 
-    if (m_app->shouldExit())
+    auto app = getApplication();
+
+    if (app->shouldExit())
     {
         if (context && context->getActivity())
         {
@@ -109,9 +111,9 @@ pieces::RefResult<core::Platform, std::string> AGDKPlatform::run()
         return pieces::OkRef<core::Platform, std::string>(*this);
     }
 
-    if (m_app->isResumed() && context && context->getCurrentWindow())
+    if (app->isResumed() && context && context->getCurrentWindow())
     {
-        auto result = m_app->update();
+        auto result = app->update();
 
         if (result.isErr())
         {
@@ -122,7 +124,7 @@ pieces::RefResult<core::Platform, std::string> AGDKPlatform::run()
     return pieces::OkRef<core::Platform, std::string>(*this);
 }
 
-void AGDKPlatform::pause() { m_app->pause(); }
+void AGDKPlatform::pause() { getApplication()->pause(); }
 
 void AGDKPlatform::resume()
 {
@@ -130,7 +132,7 @@ void AGDKPlatform::resume()
 
     if (context && context->getCurrentWindow())
     {
-        m_app->resume();
+        getApplication()->resume();
     }
     else
     {
@@ -138,7 +140,7 @@ void AGDKPlatform::resume()
     }
 }
 
-void AGDKPlatform::shutdown() { m_app->shutdown(); }
+void AGDKPlatform::shutdown() { getApplication()->shutdown(); }
 
 } // namespace agdk
 } // namespace platform

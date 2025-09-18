@@ -9,6 +9,7 @@
 #include <iostream>
 #include <string>
 #include <random>
+#include <memory>
 
 #include "mosaic/internal/defines.hpp"
 
@@ -40,7 +41,34 @@ struct ScheduledCallback
  */
 class MOSAIC_API Timer
 {
+   private:
+    struct Impl;
+
+    Impl* m_impl;
+
    public:
+    Timer();
+    ~Timer();
+
+   public:
+    /**
+     * @brief Schedule a callback to be executed after a certain delay.
+     *
+     * @param _delaySeconds The delay before the callback is executed.
+     * @param _callback The callback function to be executed.
+     *
+     * @return A ScheduledCallback object representing the scheduled callback.
+     */
+    [[nodiscard]] size_t scheduleCallback(std::chrono::duration<double> _delaySeconds,
+                                          std::function<void()> _callback);
+
+    /**
+     * @brief Cancel a scheduled callback.
+     *
+     * @param _uuid The UUID of the callback to cancel.
+     */
+    void cancelCallback(const size_t _id);
+
     /**
      * @brief Get the current time in seconds since the epoch.
      *
@@ -73,52 +101,7 @@ class MOSAIC_API Timer
      * @brief Tick the timer. This function updates the last time to the current time
      * so that the delta time can be calculated correctly.
      */
-    static void tick() { s_lastTime = getCurrentTime(); }
-
-   public:
-    Timer() : m_running(true) { m_thread = std::thread(&Timer::runScheduledCallbacks, this); }
-
-    ~Timer()
-    {
-        m_running = false;
-        if (m_thread.joinable()) m_thread.join();
-    }
-
-   public:
-    /**
-     * @brief Schedule a callback to be executed after a certain delay.
-     *
-     * @param _delaySeconds The delay before the callback is executed.
-     * @param _callback The callback function to be executed.
-     *
-     * @return A ScheduledCallback object representing the scheduled callback.
-     */
-    [[nodiscard]] size_t scheduleCallback(std::chrono::duration<double> _delaySeconds,
-                                          std::function<void()> _callback);
-
-    /**
-     * @brief Cancel a scheduled callback.
-     *
-     * @param _uuid The UUID of the callback to cancel.
-     */
-    void cancelCallback(const size_t _id);
-
-   private:
-    /**
-     * @brief Runs the scheduled callbacks in a separate thread.
-     *
-     * This function continuously checks for scheduled callbacks and executes them when their
-     * trigger time is reached. It runs in a separate thread to avoid blocking the main application
-     * thread.
-     */
-    void runScheduledCallbacks();
-
-    static double s_lastTime;
-
-    std::vector<ScheduledCallback> m_callbacks;
-    std::mutex m_mutex;
-    bool m_running;
-    std::thread m_thread;
+    static void tick();
 };
 
 } // namespace core

@@ -11,6 +11,19 @@ namespace mosaic
 namespace window
 {
 
+struct Window::Impl
+{
+    WindowProperties properties;
+
+#define DEFINE_CALLBACK(_Type, _Name, ...) std::vector<_Type> _Name##Callbacks;
+#include "mosaic/window/callbacks.def"
+#undef DEFINE_CALLBACK
+};
+
+Window::Window() : m_impl(new Impl()) {}
+
+Window::~Window() { delete m_impl; }
+
 std::unique_ptr<Window> Window::create()
 {
 #if defined(MOSAIC_PLATFORM_DESKTOP) || defined(MOSAIC_PLATFORM_WEB)
@@ -20,65 +33,47 @@ std::unique_ptr<Window> Window::create()
 #endif
 }
 
-void Window::invokeCloseCallbacks()
+const WindowProperties Window::getWindowProperties() const { return m_impl->properties; }
+
+const CursorProperties Window::getCursorProperties() const
 {
-    for (auto& callback : m_windowCloseCallbacks) callback.callback();
+    return m_impl->properties.cursorProperties;
 }
 
-void Window::invokeFocusCallbacks(int _focused)
+WindowProperties& Window::getWindowPropertiesInternal() { return m_impl->properties; }
+
+CursorProperties& Window::getCursorPropertiesInternal()
 {
-    for (auto& callback : m_windowFocusCallbacks) callback.callback(_focused);
+    return m_impl->properties.cursorProperties;
 }
 
-void Window::invokeResizeCallbacks(int _width, int _height)
-{
-    for (auto& callback : m_windowResizeCallbacks) callback.callback(_width, _height);
-}
+#define DEFINE_CALLBACK(_Type, _Name, _Params, _Args)                                       \
+    size_t Window::register##_Name##Callback(const _Type::CallbackFn& cb)                   \
+    {                                                                                       \
+        static std::atomic<size_t> idCounter{0};                                            \
+        size_t id = ++idCounter;                                                            \
+        m_impl->_Name##Callbacks.emplace_back(id, cb);                                      \
+        return id;                                                                          \
+    }                                                                                       \
+                                                                                            \
+    void Window::unregister##_Name##Callback(size_t id)                                     \
+    {                                                                                       \
+        auto& callbacks = m_impl->_Name##Callbacks;                                         \
+        auto it = std::remove_if(callbacks.begin(), callbacks.end(),                        \
+                                 [id](const _Type& cb) { return cb.id == id; });            \
+        if (it != callbacks.end()) callbacks.erase(it);                                     \
+    }                                                                                       \
+                                                                                            \
+    std::vector<_Type> Window::get##_Name##Callbacks() { return m_impl->_Name##Callbacks; } \
+                                                                                            \
+    void Window::invoke##_Name##Callbacks _Params                                           \
+    {                                                                                       \
+        for (auto& cb : m_impl->_Name##Callbacks) cb.callback _Args;                        \
+    }
 
-void Window::invokeRefreshCallbacks()
-{
-    for (auto& callback : m_windowRefreshCallbacks) callback.callback();
-}
+#include "mosaic/window/callbacks.def"
 
-void Window::invokeIconifyCallbacks(int _iconified)
-{
-    for (auto& callback : m_windowIconifyCallbacks) callback.callback(_iconified);
-}
-
-void Window::invokeMaximizeCallbacks(int _maximized)
-{
-    for (auto& callback : m_windowMaximizeCallbacks) callback.callback(_maximized);
-}
-
-void Window::invokeDropCallbacks(int _count, const char** _paths)
-{
-    for (auto& callback : m_windowDropCallbacks) callback.callback(_count, _paths);
-}
-
-void Window::invokeScrollCallbacks(double _xoffset, double _yoffset)
-{
-    for (auto& callback : m_windowScrollCallbacks) callback.callback(_xoffset, _yoffset);
-}
-
-void Window::invokeCursorEnterCallbacks(int _entered)
-{
-    for (auto& callback : m_windowCursorEnterCallbacks) callback.callback(_entered);
-}
-
-void Window::invokePosCallbacks(int _x, int _y)
-{
-    for (auto& callback : m_windowPosCallbacks) callback.callback(_x, _y);
-}
-
-void Window::invokeContentScaleCallbacks(float _xscale, float _yscale)
-{
-    for (auto& callback : m_windowContentScaleCallbacks) callback.callback(_xscale, _yscale);
-}
-
-void Window::invokeCharCallbacks(unsigned int _codepoint)
-{
-    for (auto& callback : m_windowCharCallbacks) callback.callback(_codepoint);
-}
+#undef DEFINE_CALLBACK
 
 } // namespace window
 } // namespace mosaic

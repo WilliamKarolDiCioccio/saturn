@@ -19,7 +19,9 @@ namespace glfw
 pieces::RefResult<window::Window, std::string> GLFWWindow::initialize(
     const window::WindowProperties& _properties)
 {
-    m_properties = _properties;
+    auto& props = getWindowPropertiesInternal();
+
+    props = _properties;
 
 #ifdef MOSAIC_PLATFORM_EMSCRIPTEN
     static int windowCount = 0;
@@ -32,24 +34,24 @@ pieces::RefResult<window::Window, std::string> GLFWWindow::initialize(
 
     // Base window hints
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, m_properties.isResizeable ? GLFW_TRUE : GLFW_FALSE);
-    glfwWindowHint(GLFW_VISIBLE, m_properties.isMinimized ? GLFW_FALSE : GLFW_TRUE);
+    glfwWindowHint(GLFW_RESIZABLE, props.isResizeable ? GLFW_TRUE : GLFW_FALSE);
+    glfwWindowHint(GLFW_VISIBLE, props.isMinimized ? GLFW_FALSE : GLFW_TRUE);
     glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
-    glfwWindowHint(GLFW_DECORATED, !m_properties.isFullscreen
+    glfwWindowHint(GLFW_DECORATED, !props.isFullscreen
                                        ? GLFW_TRUE
                                        : GLFW_FALSE); // Remove decoration for fullscreen
 
 #ifndef MOSAIC_PLATFORM_EMSCRIPTEN
     // Set window position hints if supported
-    glfwWindowHint(GLFW_POSITION_X, m_properties.position.x);
-    glfwWindowHint(GLFW_POSITION_Y, m_properties.position.y);
+    glfwWindowHint(GLFW_POSITION_X, props.position.x);
+    glfwWindowHint(GLFW_POSITION_Y, props.position.y);
 #endif
 
     GLFWmonitor* monitor = nullptr;
     const GLFWvidmode* mode = nullptr;
 
     // Setup fullscreen if requested
-    if (m_properties.isFullscreen)
+    if (props.isFullscreen)
     {
         monitor = glfwGetPrimaryMonitor();
         mode = glfwGetVideoMode(monitor);
@@ -62,10 +64,10 @@ pieces::RefResult<window::Window, std::string> GLFWWindow::initialize(
         }
     }
 
-    const int width = m_properties.size.x;
-    const int height = m_properties.size.y;
+    const int width = props.size.x;
+    const int height = props.size.y;
 
-    m_glfwHandle = glfwCreateWindow(width, height, m_properties.title.c_str(), monitor, nullptr);
+    m_glfwHandle = glfwCreateWindow(width, height, props.title.c_str(), monitor, nullptr);
 
     if (!m_glfwHandle)
     {
@@ -74,13 +76,13 @@ pieces::RefResult<window::Window, std::string> GLFWWindow::initialize(
 
 #ifndef MOSAIC_PLATFORM_EMSCRIPTEN
     // Move window if not in fullscreen (fullscreen ignores position)
-    if (!m_properties.isFullscreen)
+    if (!props.isFullscreen)
     {
-        glfwSetWindowPos(m_glfwHandle, m_properties.position.x, m_properties.position.y);
+        glfwSetWindowPos(m_glfwHandle, props.position.x, props.position.y);
     }
 
     // Maximize if requested
-    if (m_properties.isMaximized)
+    if (props.isMaximized)
     {
         glfwMaximizeWindow(m_glfwHandle);
     }
@@ -88,8 +90,7 @@ pieces::RefResult<window::Window, std::string> GLFWWindow::initialize(
 
     registerCallbacks();
 
-    MOSAIC_DEBUG("Window created: {0} ({1} x {2})", m_properties.title, m_properties.size.x,
-                 m_properties.size.y);
+    MOSAIC_DEBUG("Window created: {0} ({1} x {2})", props.title, props.size.x, props.size.y);
 
     return pieces::OkRef<window::Window, std::string>(*this);
 }
@@ -124,25 +125,25 @@ glm::ivec2 GLFWWindow::getFramebufferSize() const
 void GLFWWindow::setTitle(const std::string& _title)
 {
     glfwSetWindowTitle(m_glfwHandle, _title.c_str());
-    m_properties.title = _title;
+    getWindowPropertiesInternal().title = _title;
 }
 
 void GLFWWindow::setSize(glm::vec2 _size)
 {
     glfwSetWindowSize(m_glfwHandle, static_cast<int>(_size.x), static_cast<int>(_size.y));
-    m_properties.size = _size;
+    getWindowPropertiesInternal().size = _size;
 }
 
 void GLFWWindow::setMinimized(bool _minimized)
 {
     _minimized ? glfwIconifyWindow(m_glfwHandle) : glfwRestoreWindow(m_glfwHandle);
-    m_properties.isMinimized = _minimized;
+    getWindowPropertiesInternal().isMinimized = _minimized;
 }
 
 void GLFWWindow::setMaximized(bool _maximized)
 {
     _maximized ? glfwMaximizeWindow(m_glfwHandle) : glfwRestoreWindow(m_glfwHandle);
-    m_properties.isMaximized = _maximized;
+    getWindowPropertiesInternal().isMaximized = _maximized;
 }
 
 void GLFWWindow::setFullscreen(bool _fullscreen)
@@ -159,19 +160,19 @@ void GLFWWindow::setFullscreen(bool _fullscreen)
         glfwSetWindowMonitor(m_glfwHandle, nullptr, 100, 100, 800, 600, 0);
     }
 
-    m_properties.isFullscreen = _fullscreen;
+    getWindowPropertiesInternal().isFullscreen = _fullscreen;
 }
 
 void GLFWWindow::setResizeable(bool _resizeable)
 {
     glfwSetWindowAttrib(m_glfwHandle, GLFW_RESIZABLE, _resizeable ? GLFW_TRUE : GLFW_FALSE);
-    m_properties.isResizeable = _resizeable;
+    getWindowPropertiesInternal().isResizeable = _resizeable;
 }
 
 void GLFWWindow::setVSync(bool enabled)
 {
     enabled ? glfwSwapInterval(1) : glfwSwapInterval(0);
-    m_properties.isVSync = enabled;
+    getWindowPropertiesInternal().isVSync = enabled;
 }
 
 void GLFWWindow::setWindowIcon(const std::string& _path, int _width, int _height)
@@ -242,18 +243,22 @@ void GLFWWindow::setCursorMode(window::CursorMode _mode)
 
 void GLFWWindow::setCursorType(window::CursorType _type)
 {
-    if (m_properties.cursorProperties.currentType == _type) return;
+    auto& props = getCursorPropertiesInternal();
 
-    m_properties.cursorProperties.currentType = _type;
-    setCursorIcon(m_properties.cursorProperties.srcPaths[static_cast<int>(_type)]);
+    if (props.currentType == _type) return;
+
+    props.currentType = _type;
+    setCursorIcon(props.srcPaths[static_cast<int>(_type)]);
 }
 
 void GLFWWindow::setCursorTypeIcon(window::CursorType _type, const std::string& _path, int _width,
                                    int _height)
 {
-    if (m_properties.cursorProperties.srcPaths[static_cast<int>(_type)] == _path) return;
+    auto& props = getCursorPropertiesInternal();
 
-    m_properties.cursorProperties.srcPaths[static_cast<int>(_type)] = _path;
+    if (props.srcPaths[static_cast<int>(_type)] == _path) return;
+
+    props.srcPaths[static_cast<int>(_type)] = _path;
     setCursorIcon(_path, _width, _height);
 }
 
@@ -365,7 +370,7 @@ void GLFWWindow::windowCloseCallback(GLFWwindow* window)
 
     if (instance)
     {
-        instance->invokeCloseCallbacks();
+        instance->invokeWindowCloseCallbacks();
     }
     else
     {
@@ -379,7 +384,7 @@ void GLFWWindow::windowFocusCallback(GLFWwindow* window, int focused)
 
     if (instance)
     {
-        instance->invokeFocusCallbacks(focused);
+        instance->invokeWindowFocusCallbacks(focused);
     }
     else
     {
@@ -393,8 +398,8 @@ void GLFWWindow::windowSizeCallback(GLFWwindow* window, int width, int height)
 
     if (instance)
     {
-        instance->m_properties.size = glm::ivec2(width, height);
-        instance->invokeResizeCallbacks(width, height);
+        instance->getWindowPropertiesInternal().size = glm::ivec2(width, height);
+        instance->invokeWindowResizeCallbacks(width, height);
     }
     else
     {
@@ -408,7 +413,7 @@ void GLFWWindow::windowRefreshCallback(GLFWwindow* window)
 
     if (instance)
     {
-        instance->invokeRefreshCallbacks();
+        instance->invokeWindowRefreshCallbacks();
     }
     else
     {
@@ -422,8 +427,8 @@ void GLFWWindow::windowIconifyCallback(GLFWwindow* window, int iconified)
 
     if (instance)
     {
-        instance->m_properties.isMinimized = (iconified == GLFW_TRUE);
-        instance->invokeIconifyCallbacks(iconified);
+        instance->getWindowPropertiesInternal().isMinimized = (iconified == GLFW_TRUE);
+        instance->invokeWindowIconifyCallbacks(iconified);
     }
     else
     {
@@ -437,8 +442,8 @@ void GLFWWindow::windowMaximizeCallback(GLFWwindow* window, int maximized)
 
     if (instance)
     {
-        instance->m_properties.isMaximized = (maximized == GLFW_TRUE);
-        instance->invokeMaximizeCallbacks(maximized);
+        instance->getWindowPropertiesInternal().isMaximized = (maximized == GLFW_TRUE);
+        instance->invokeWindowMaximizeCallbacks(maximized);
     }
     else
     {
@@ -452,7 +457,7 @@ void GLFWWindow::windowDropCallback(GLFWwindow* window, int count, const char** 
 
     if (instance)
     {
-        instance->invokeDropCallbacks(count, paths);
+        instance->invokeWindowDropCallbacks(count, paths);
     }
     else
     {
@@ -466,7 +471,7 @@ void GLFWWindow::windowScrollCallback(GLFWwindow* window, double xoffset, double
 
     if (instance)
     {
-        instance->invokeScrollCallbacks(xoffset, yoffset);
+        instance->invokeWindowScrollCallbacks(xoffset, yoffset);
     }
     else
     {
@@ -480,7 +485,7 @@ void GLFWWindow::windowCursorEnterCallback(GLFWwindow* window, int entered)
 
     if (instance)
     {
-        instance->invokeCursorEnterCallbacks(entered);
+        instance->invokeWindowCursorEnterCallbacks(entered);
     }
     else
     {
@@ -494,8 +499,8 @@ void GLFWWindow::windowPosCallback(GLFWwindow* window, int x, int y)
 
     if (instance)
     {
-        instance->m_properties.position = glm::ivec2(x, y);
-        instance->invokePosCallbacks(x, y);
+        instance->getWindowPropertiesInternal().position = glm::ivec2(x, y);
+        instance->invokeWindowPosCallbacks(x, y);
     }
     else
     {
@@ -509,7 +514,7 @@ void GLFWWindow::windowContentScaleCallback(GLFWwindow* window, float xscale, fl
 
     if (instance)
     {
-        instance->invokeContentScaleCallbacks(xscale, yscale);
+        instance->invokeWindowContentScaleCallbacks(xscale, yscale);
     }
     else
     {
@@ -523,7 +528,7 @@ void GLFWWindow::windowCharCallback(GLFWwindow* _window, unsigned int _codepoint
 
     if (instance)
     {
-        instance->invokeCharCallbacks(_codepoint);
+        instance->invokeWindowCharCallbacks(_codepoint);
     }
     else
     {

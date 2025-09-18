@@ -5,6 +5,32 @@ namespace mosaic
 namespace input
 {
 
+struct InputContext::Impl
+{
+    const window::Window* window;
+
+    // Input sources
+#define DEFINE_SOURCE(_Type, _Member, _Name) std::unique_ptr<_Type> _Member;
+#include "mosaic/input/sources.def"
+#undef DEFINE_SOURCE
+
+    // Virtual keys and buttons mapped to their native equivalents
+    std::unordered_map<std::string, KeyboardKey> virtualKeyboardKeys;
+    std::unordered_map<std::string, MouseButton> virtualMouseButtons;
+
+    // Bound actions triggers
+    std::unordered_map<std::string, Action> actions;
+
+    // Cache
+    std::unordered_map<std::string, bool> triggeredActionsCache;
+
+    Impl(const window::Window* _window) : window(_window) {};
+};
+
+InputContext::InputContext(const window::Window* _window) : m_impl(new Impl(_window)) {}
+
+InputContext::~InputContext() { delete m_impl; }
+
 pieces::RefResult<InputContext, std::string> InputContext::initialize()
 {
     return pieces::OkRef<InputContext, std::string>(*this);
@@ -12,17 +38,18 @@ pieces::RefResult<InputContext, std::string> InputContext::initialize()
 
 void InputContext::shutdown()
 {
-    removeSource<MouseInputSource>();
-    removeSource<KeyboardInputSource>();
+    removeTextInputSource();
+    removeKeyboardInputSource();
+    removeMouseInputSource();
 }
 
 void InputContext::update()
 {
-    if (m_mouseSource) m_mouseSource->processInput();
-    if (m_keyboardInputSource) m_keyboardInputSource->processInput();
-    if (m_textInputSource) m_textInputSource->processInput();
+    if (m_impl->keyboardInputSource) m_impl->mouseSource->processInput();
+    if (m_impl->keyboardInputSource) m_impl->keyboardInputSource->processInput();
+    if (m_impl->textInputSource) m_impl->textInputSource->processInput();
 
-    m_triggeredActionsCache.clear();
+    m_impl->triggeredActionsCache.clear();
 }
 
 void InputContext::loadVirtualKeysAndButtons(const std::string& _filePath)
@@ -51,7 +78,7 @@ void InputContext::loadVirtualKeysAndButtons(const std::string& _filePath)
     {
         for (const auto& [k, v] : jsonData["virtualMouseButtons"].items())
         {
-            m_virtualMouseButtons[k] = static_cast<MouseButton>(v);
+            m_impl->virtualMouseButtons[k] = static_cast<MouseButton>(v);
         }
     }
 
@@ -59,7 +86,7 @@ void InputContext::loadVirtualKeysAndButtons(const std::string& _filePath)
     {
         for (const auto& [k, v] : jsonData["virtualKeyboardKeys"].items())
         {
-            m_virtualKeyboardKeys[v] = static_cast<KeyboardKey>(v);
+            m_impl->virtualKeyboardKeys[v] = static_cast<KeyboardKey>(v);
         }
     }
 }
@@ -83,54 +110,55 @@ void InputContext::saveVirtualKeysAndButtons(const std::string& _filePath)
     catch (const nlohmann::json::parse_error& e)
     {
         MOSAIC_ERROR("Failed to parse virtual keyboard keys JSON: {}", e.what());
-        return;
     }
 }
 
 void InputContext::updateVirtualKeyboardKeys(
     const std::unordered_map<std::string, KeyboardKey>&& _map)
 {
-    const auto backupMap = m_virtualKeyboardKeys;
+    const auto backupMap = m_impl->virtualKeyboardKeys;
+    auto& virtualKeyboardKeys = m_impl->virtualKeyboardKeys;
 
     try
     {
         for (const auto& [k, v] : _map)
         {
-            if (m_virtualKeyboardKeys.find(k) == m_virtualKeyboardKeys.end())
+            if (virtualKeyboardKeys.find(k) == virtualKeyboardKeys.end())
             {
                 MOSAIC_WARN("Virtual keyboard key not found: {}", k);
             }
 
-            m_virtualKeyboardKeys[k] = v;
+            virtualKeyboardKeys[k] = v;
         }
     }
     catch (const std::exception& e)
     {
-        m_virtualKeyboardKeys = backupMap;
-        throw;
+        virtualKeyboardKeys = backupMap;
+
+        MOSAIC_ERROR("Failed to update virtual keyboard keys: {}", e.what());
     }
 }
 
 void InputContext::updateVirtualMouseButtons(
     const std::unordered_map<std::string, MouseButton>&& _map)
 {
-    auto backupMap = m_virtualMouseButtons;
+    auto backupMap = m_impl->virtualMouseButtons;
 
     try
     {
         for (const auto& [k, v] : _map)
         {
-            if (m_virtualMouseButtons.find(k) == m_virtualMouseButtons.end())
+            if (m_impl->virtualMouseButtons.find(k) == m_impl->virtualMouseButtons.end())
             {
                 MOSAIC_WARN("Virtual mouse button not found: {}", k);
             }
 
-            m_virtualMouseButtons[k] = v;
+            m_impl->virtualMouseButtons[k] = v;
         }
     }
     catch (const std::exception& e)
     {
-        m_virtualMouseButtons = backupMap;
+        m_impl->virtualMouseButtons = backupMap;
 
         MOSAIC_ERROR("Failed to update virtual mouse buttons: {}", e.what());
     }
@@ -138,24 +166,26 @@ void InputContext::updateVirtualMouseButtons(
 
 void InputContext::registerActions(const std::vector<Action>&& _actions)
 {
-    const auto backupActions = m_actions;
+    auto& actions = m_impl->actions;
+
+    const auto backupActions = m_impl->actions;
 
     try
     {
         for (auto& action : _actions)
         {
-            if (m_actions.find(action.name) != m_actions.end())
+            if (actions.find(action.name) != actions.end())
             {
                 MOSAIC_ERROR("An action with the name '{}' already exists. ", action.name);
                 continue;
             }
 
-            m_actions[action.name] = action;
+            actions[action.name] = action;
         }
     }
     catch (const std::exception& e)
     {
-        m_actions = backupActions;
+        actions = backupActions;
 
         MOSAIC_ERROR("Failed to register actions: {}", e.what());
     }
@@ -165,61 +195,108 @@ void InputContext::unregisterActions(const std::vector<std::string>&& _names)
 {
     for (const auto& name : _names)
     {
-        if (m_actions.find(name) == m_actions.end())
+        if (m_impl->actions.find(name) == m_impl->actions.end())
         {
             MOSAIC_ERROR("An action with the name '{}' does not exist. ", name);
             continue;
         }
 
-        m_actions.erase(name);
+        m_impl->actions.erase(name);
     }
 }
 
 bool InputContext::isActionTriggered(const std::string& _name, bool _onlyCurrPoll)
 {
-    const auto actionIt = m_actions.find(_name);
+    auto& actions = m_impl->actions;
+    auto& triggeredActionsCache = m_impl->triggeredActionsCache;
 
-    if (actionIt == m_actions.end())
+    const auto actionIt = m_impl->actions.find(_name);
+
+    if (actionIt == actions.end())
     {
         MOSAIC_ERROR("Action not found: {}", _name);
         return false;
     }
 
-    const auto cacheIt = m_triggeredActionsCache.find(_name);
+    const auto cacheIt = triggeredActionsCache.find(_name);
 
-    if (cacheIt != m_triggeredActionsCache.end())
+    if (cacheIt != triggeredActionsCache.end())
     {
         return cacheIt->second;
     }
 
     auto result = actionIt->second.trigger(this);
 
-    m_triggeredActionsCache[_name] = result;
+    triggeredActionsCache[_name] = result;
 
     return result;
 }
 
 KeyboardKey InputContext::translateKey(const std::string& _key) const
 {
-    if (m_virtualKeyboardKeys.find(_key) == m_virtualKeyboardKeys.end())
+    auto& virtualKeyboardKeys = m_impl->virtualKeyboardKeys;
+
+    if (virtualKeyboardKeys.find(_key) == virtualKeyboardKeys.end())
     {
         MOSAIC_ERROR("Virtual keyboard key not found: {}", _key);
         return static_cast<KeyboardKey>(0);
     };
 
-    return m_virtualKeyboardKeys.at(_key);
+    return virtualKeyboardKeys.at(_key);
 }
 
 MouseButton InputContext::translateButton(const std::string& _button) const
 {
-    if (m_virtualMouseButtons.find(_button) == m_virtualMouseButtons.end())
+    auto& virtualMouseButtons = m_impl->virtualMouseButtons;
+
+    if (virtualMouseButtons.find(_button) == virtualMouseButtons.end())
     {
         MOSAIC_ERROR("Virtual mouse button not found: {}", _button);
         return static_cast<MouseButton>(0);
     };
 
-    return m_virtualMouseButtons.at(_button);
+    return virtualMouseButtons.at(_button);
 }
+
+#define DEFINE_SOURCE(_Type, _Member, _Name)                                     \
+    pieces::Result<_Type*, std::string> InputContext::add##_Name##Source()       \
+    {                                                                            \
+        auto& member = m_impl->_Member;                                          \
+        if (member != nullptr)                                                   \
+        {                                                                        \
+            MOSAIC_WARN(#_Type " already exists.");                              \
+            return pieces::Ok<_Type*, std::string>(member.get());                \
+        }                                                                        \
+                                                                                 \
+        member = _Type::create(const_cast<window::Window*>(m_impl->window));     \
+        auto result = member->initialize();                                      \
+        if (result.isErr())                                                      \
+        {                                                                        \
+            MOSAIC_ERROR("Failed to initialize " #_Type ": {}", result.error()); \
+            return pieces::Err<_Type*, std::string>(std::move(result.error()));  \
+        }                                                                        \
+                                                                                 \
+        return pieces::Ok<_Type*, std::string>(member.get());                    \
+    }                                                                            \
+                                                                                 \
+    void InputContext::remove##_Name##Source()                                   \
+    {                                                                            \
+        auto& member = m_impl->_Member;                                          \
+        if (!member) return;                                                     \
+        member->shutdown();                                                      \
+        member.reset();                                                          \
+    }                                                                            \
+                                                                                 \
+    [[nodiscard]] bool InputContext::has##_Name##Source() const                  \
+    {                                                                            \
+        return m_impl->_Member != nullptr;                                       \
+    }                                                                            \
+                                                                                 \
+    [[nodiscard]] _Type* InputContext::get##_Name##Source() const { return m_impl->_Member.get(); }
+
+#include "mosaic/input/sources.def"
+
+#undef DEFINE_SOURCE
 
 } // namespace input
 } // namespace mosaic

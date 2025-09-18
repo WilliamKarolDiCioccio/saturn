@@ -42,25 +42,13 @@ namespace input
 class MOSAIC_API InputContext
 {
    private:
-    const window::Window* m_window;
+    struct Impl;
 
-    // Input sources
-    std::unique_ptr<MouseInputSource> m_mouseSource;
-    std::unique_ptr<KeyboardInputSource> m_keyboardInputSource;
-    std::unique_ptr<TextInputSource> m_textInputSource;
-
-    // Virtual keys and buttons mapped to their native equivalents
-    std::unordered_map<std::string, KeyboardKey> m_virtualKeyboardKeys;
-    std::unordered_map<std::string, MouseButton> m_virtualMouseButtons;
-
-    // Bound actions triggers
-    std::unordered_map<std::string, Action> m_actions;
-
-    // Cache
-    std::unordered_map<std::string, bool> m_triggeredActionsCache;
+    Impl* m_impl;
 
    public:
-    InputContext(const window::Window* _window) : m_window(_window) {};
+    InputContext(const window::Window* _window);
+    ~InputContext();
 
     InputContext(InputContext&) = delete;
     InputContext& operator=(InputContext&) = delete;
@@ -86,147 +74,15 @@ class MOSAIC_API InputContext
     [[nodiscard]] KeyboardKey translateKey(const std::string& _key) const;
     [[nodiscard]] MouseButton translateButton(const std::string& _button) const;
 
-    template <typename T>
-    pieces::Result<T*, std::string> addSource()
-    {
-        if constexpr (std::is_same_v<T, MouseInputSource>)
-        {
-            if (m_mouseSource != nullptr)
-            {
-                MOSAIC_WARN("Mouse input source already exists.");
-                return pieces::Ok<T*, std::string>(m_mouseSource.get());
-            }
+#define DEFINE_SOURCE(_Type, _Member, _Name)                  \
+    pieces::Result<_Type*, std::string> add##_Name##Source(); \
+    void remove##_Name##Source();                             \
+    [[nodiscard]] bool has##_Name##Source() const;            \
+    [[nodiscard]] _Type* get##_Name##Source() const;
 
-            m_mouseSource = MouseInputSource::create(const_cast<window::Window*>(m_window));
+#include "sources.def"
 
-            auto result = m_mouseSource->initialize();
-
-            if (result.isErr())
-            {
-                MOSAIC_ERROR("Failed to initialize mouse input source: {}", result.error());
-                return pieces::Err<T*, std::string>(std::move(result.error()));
-            }
-
-            return pieces::Ok<T*, std::string>(m_mouseSource.get());
-        }
-        else if constexpr (std::is_same_v<T, KeyboardInputSource>)
-        {
-            if (m_keyboardInputSource != nullptr)
-            {
-                MOSAIC_WARN("Keyboard input source already exists.");
-                return pieces::Ok<T*, std::string>(m_keyboardInputSource.get());
-            }
-
-            m_keyboardInputSource =
-                KeyboardInputSource::create(const_cast<window::Window*>(m_window));
-
-            auto result = m_keyboardInputSource->initialize();
-
-            if (result.isErr())
-            {
-                MOSAIC_ERROR("Failed to initialize keyboard input source: {}", result.error());
-                return pieces::Err<T*, std::string>(std::move(result.error()));
-            }
-
-            return pieces::Ok<T*, std::string>(m_keyboardInputSource.get());
-        }
-        else if constexpr (std::is_same_v<T, TextInputSource>)
-        {
-            if (m_textInputSource != nullptr)
-            {
-                MOSAIC_WARN("Text input source already exists.");
-                return pieces::Ok<T*, std::string>(m_textInputSource.get());
-            }
-
-            m_textInputSource = TextInputSource::create(const_cast<window::Window*>(m_window));
-
-            auto result = m_textInputSource->initialize();
-
-            if (result.isErr())
-            {
-                MOSAIC_ERROR("Failed to initialize text input source: {}", result.error());
-                return pieces::Err<T*, std::string>(std::move(result.error()));
-            }
-
-            return pieces::Ok<T*, std::string>(m_textInputSource.get());
-        }
-        else
-        {
-            static_assert(false, "Unsupported input source type");
-        }
-    }
-
-    template <typename T>
-    void removeSource()
-    {
-        if constexpr (std::is_same_v<T, MouseInputSource>)
-        {
-            if (!m_mouseSource) return;
-
-            m_mouseSource->shutdown();
-            m_mouseSource.reset();
-        }
-        else if constexpr (std::is_same_v<T, KeyboardInputSource>)
-        {
-            if (!m_keyboardInputSource) return;
-
-            m_keyboardInputSource->shutdown();
-            m_keyboardInputSource.reset();
-        }
-        else if constexpr (std::is_same_v<T, TextInputSource>)
-        {
-            if (!m_textInputSource) return;
-
-            m_textInputSource->shutdown();
-            m_textInputSource.reset();
-        }
-        else
-        {
-            static_assert(false, "Unsupported input source type");
-        }
-    }
-
-    template <typename T>
-    [[nodiscard]] inline bool hasSource()
-    {
-        if constexpr (std::is_same_v<T, MouseInputSource>)
-        {
-            return m_mouseSource != nullptr;
-        }
-        else if constexpr (std::is_same_v<T, KeyboardInputSource>)
-        {
-            return m_keyboardInputSource != nullptr;
-        }
-        else if constexpr (std::is_same_v<T, TextInputSource>)
-        {
-            return m_textInputSource != nullptr;
-        }
-        else
-        {
-            static_assert(false, "Unsupported input source type");
-        }
-    }
-
-    template <typename T>
-    [[nodiscard]] inline auto getSource() -> T*
-    {
-        if constexpr (std::is_same_v<T, MouseInputSource>)
-        {
-            return m_mouseSource.get();
-        }
-        else if constexpr (std::is_same_v<T, KeyboardInputSource>)
-        {
-            return m_keyboardInputSource.get();
-        }
-        else if constexpr (std::is_same_v<T, TextInputSource>)
-        {
-            return m_textInputSource.get();
-        }
-        else
-        {
-            static_assert(false, "Unsupported input source type");
-        }
-    }
+#undef DEFINE_SOURCE
 };
 
 } // namespace input

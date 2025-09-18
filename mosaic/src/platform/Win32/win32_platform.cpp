@@ -28,25 +28,29 @@ pieces::RefResult<core::Platform, std::string> Win32Platform::initialize()
         return pieces::ErrRef<core::Platform, std::string>("Failed to initialize COM security.");
     }
 
-    auto result = m_app->initialize();
+    auto app = getApplication();
+
+    auto result = app->initialize();
 
     if (result.isErr())
     {
         return pieces::ErrRef<core::Platform, std::string>(std::move(result.error()));
     }
 
-    m_app->resume();
+    app->resume();
 
     return pieces::OkRef<Platform, std::string>(*this);
 }
 
 pieces::RefResult<core::Platform, std::string> Win32Platform::run()
 {
-    while (!m_app->shouldExit())
+    auto app = getApplication();
+
+    while (!app->shouldExit())
     {
-        if (m_app->isResumed())
+        if (app->isResumed())
         {
-            auto result = m_app->update();
+            auto result = app->update();
 
             if (result.isErr())
             {
@@ -58,13 +62,13 @@ pieces::RefResult<core::Platform, std::string> Win32Platform::run()
     return pieces::OkRef<core::Platform, std::string>(*this);
 }
 
-void Win32Platform::pause() { m_app->pause(); }
+void Win32Platform::pause() { getApplication()->pause(); }
 
-void Win32Platform::resume() { m_app->resume(); }
+void Win32Platform::resume() { getApplication()->resume(); }
 
 void Win32Platform::shutdown()
 {
-    m_app->shutdown();
+    getApplication()->shutdown();
 
     CoUninitialize();
 }

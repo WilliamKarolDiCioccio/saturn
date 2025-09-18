@@ -14,14 +14,14 @@ pieces::RefResult<core::Platform, std::string> EmscriptenPlatform::initialize()
         return pieces::ErrRef<core::Platform, std::string>("Failed to initialize GLFW");
     }
 
-    auto result = m_app->initialize();
+    auto result = getApplication()->initialize();
 
     if (result.isErr())
     {
         return pieces::ErrRef<core::Platform, std::string>(std::move(result.error()));
     }
 
-    m_app->resume();
+    getApplication()->resume();
 
     return pieces::OkRef<core::Platform, std::string>(*this);
 }
@@ -66,21 +66,21 @@ pieces::RefResult<core::Platform, std::string> EmscriptenPlatform::run()
 
 void EmscriptenPlatform::pause()
 {
-    m_app->pause();
+    getApplication()->pause();
 
     emscripten_pause_main_loop();
 }
 
 void EmscriptenPlatform::resume()
 {
-    m_app->resume();
+    getApplication()->resume();
 
     emscripten_resume_main_loop();
 }
 
 void EmscriptenPlatform::shutdown()
 {
-    m_app->shutdown();
+    getApplication()->shutdown();
 
     glfwTerminate();
 }
