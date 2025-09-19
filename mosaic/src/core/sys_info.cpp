@@ -1,5 +1,10 @@
 #include "mosaic/core/sys_info.hpp"
 
+#include <memory>
+#include <vector>
+
+#include "mosaic/internal/defines.hpp"
+
 #if defined(MOSAIC_PLATFORM_WINDOWS)
 #include "platform/Win32/win32_sys_info.hpp"
 #elif defined(MOSAIC_PLATFORM_EMSCRIPTEN)

@@ -1,7 +1,16 @@
 #include "mosaic/core/application.hpp"
 
-#include <thread>
-#include <chrono>
+#include <cassert>
+#include <exception>
+#include <memory>
+#include <string>
+#include <utility>
+#include <mosaic/core/logger.hpp>
+#include <mosaic/core/timer.hpp>
+#include <mosaic/graphics/render_system.hpp>
+#include <mosaic/input/input_system.hpp>
+#include <mosaic/window/window_system.hpp>
+#include <pieces/core/result.hpp>
 
 using namespace std::chrono_literals;
 

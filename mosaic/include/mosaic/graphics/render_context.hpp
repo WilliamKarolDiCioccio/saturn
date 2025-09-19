@@ -4,12 +4,6 @@
 
 #include "mosaic/window/window.hpp"
 
-#include "buffer.hpp"
-#include "texture.hpp"
-#include "shader.hpp"
-#include "pipeline.hpp"
-#include "draw_call.hpp"
-
 namespace mosaic
 {
 namespace graphics

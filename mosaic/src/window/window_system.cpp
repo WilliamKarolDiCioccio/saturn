@@ -1,5 +1,18 @@
 #include "mosaic/window/window_system.hpp"
 
+#include <cassert>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <utility>
+
+#include <pieces/core/result.hpp>
+
+#include "mosaic/core/logger.hpp"
+#include "mosaic/core/system.hpp"
+#include "mosaic/internal/defines.hpp"
+#include "mosaic/window/window.hpp"
+
 #if defined(MOSAIC_PLATFORM_DESKTOP) || defined(MOSAIC_PLATFORM_WEB)
 #include "platform/GLFW/glfw_window_system.hpp"
 #elif defined(MOSAIC_PLATFORM_ANDROID)

@@ -1,5 +1,7 @@
 #include "mosaic/graphics/render_context.hpp"
 
+#include "mosaic/window/window.hpp"
+
 namespace mosaic
 {
 namespace graphics

@@ -2,15 +2,12 @@
 
 #include "mosaic/internal/defines.hpp"
 
-#include <time.h>
 #include <memory>
 #include <string>
 #include <array>
-#include <chrono>
 #include <unordered_map>
 #include <mutex>
 #include <atomic>
-#include <stacktrace>
 
 #include <fmt/format.h>
 
@@ -254,84 +251,7 @@ class LoggerManager final
             // Format message with arguments
             std::string formattedMessage = fmt::vformat(_message, fmt::make_format_args(_args...));
 
-            // Prepend log level if requested
-            if (m_config.showLevel)
-            {
-                formattedMessage = fmt::format("[{}] {}", c_levelNames[static_cast<int>(_level)],
-                                               formattedMessage);
-            }
-
-            auto tid = std::this_thread::get_id(); // Moved outside the scope for reuse
-
-            // Prepend thread ID if requested
-            if (m_config.showTid)
-            {
-                std::ostringstream oss;
-                oss << tid; // Trick to get a readable thread ID
-
-                formattedMessage = fmt::format("[{}] {}", oss.str(), formattedMessage);
-            }
-
-            // Prepend timestamp if requested
-            if (m_config.showTimestamp)
-            {
-                auto now = std::chrono::system_clock::now();
-                const std::time_t now_c = std::chrono::system_clock::to_time_t(now);
-                std::tm now_tm;
-
-                localtime_s(&now_tm, &now_c);
-
-                char timeBuffer[100];
-                std::strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", &now_tm);
-
-                formattedMessage = fmt::format("[{}] {}", timeBuffer, formattedMessage);
-            }
-
-            // Append stack trace if requested (platform-dependent, stubbed here)
-            if (m_config.showStackTrace)
-            {
-                std::ostringstream oss;
-                oss << std::stacktrace::current(); // Trick to get a readable stack trace
-
-                formattedMessage += fmt::format("\n[Stack Trace]\n{}", oss.str());
-            }
-
-            for (const auto& [name, sink] : m_sinks)
-            {
-                switch (_level)
-                {
-                    case LogLevel::trace:
-                        sink->trace(formattedMessage);
-                        break;
-                    case LogLevel::debug:
-                        sink->debug(formattedMessage);
-                        break;
-                    case LogLevel::info:
-                        sink->info(formattedMessage);
-                        break;
-                    case LogLevel::warn:
-                        sink->warn(formattedMessage);
-                        break;
-                    case LogLevel::error:
-                        sink->error(formattedMessage);
-                        break;
-                    case LogLevel::critical:
-                        sink->critical(formattedMessage);
-                        break;
-                    default:
-                        break;
-                }
-            }
-
-            if (m_history.find(tid) == m_history.end())
-            {
-                std::lock_guard<std::mutex> lock(m_historyMutex);
-                m_history[tid] = std::vector<std::string>();
-            }
-
-            if (m_history.at(tid).size() >= m_config.historySize) clearHistory();
-
-            m_history.at(tid).emplace_back(formattedMessage);
+            logInternal(_level, formattedMessage);
         }
         catch (const std::exception& e)
         {
@@ -340,6 +260,9 @@ class LoggerManager final
     }
 
     [[nodiscard]] static inline LoggerManager* getGlobalInstance() { return s_instance; }
+
+   private:
+    MOSAIC_API void logInternal(LogLevel _level, std::string _message) noexcept;
 };
 
 } // namespace core

@@ -1,5 +1,10 @@
 #include "mosaic/core/sys_console.hpp"
 
+#include <memory>
+#include <string>
+
+#include "mosaic/internal/defines.hpp"
+
 #if defined(MOSAIC_PLATFORM_WINDOWS)
 #include "platform/Win32/win32_sys_console.hpp"
 #elif defined(MOSAIC_PLATFORM_EMSCRIPTEN)

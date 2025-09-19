@@ -1,4 +1,11 @@
-#include "mosaic/core/sys_info.hpp"
+#include "mosaic/core/sys_ui.hpp"
+
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <string>
+
+#include "mosaic/internal/defines.hpp"
 
 #if defined(MOSAIC_PLATFORM_WINDOWS)
 #include "platform/Win32/win32_sys_ui.hpp"

@@ -1,9 +1,17 @@
 #include "mosaic/core/cmd_line_parser.hpp"
 
-#include <filesystem>
 #include <sstream>
 #include <algorithm>
 #include <cctype>
+#include <cstdint>
+#include <exception>
+#include <memory>
+#include <optional>
+#include <span>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 #include "mosaic/core/sys_console.hpp"
 

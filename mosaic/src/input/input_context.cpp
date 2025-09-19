@@ -1,5 +1,23 @@
 #include "mosaic/input/input_context.hpp"
 
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+#include <exception>
+#include <fstream>
+
+#include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
+
+#include <pieces/core/result.hpp>
+
+#include "mosaic/core/logger.hpp"
+#include "mosaic/input/action.hpp"
+#include "mosaic/input/mappings.hpp"
+#include "mosaic/window/window.hpp"
+
 namespace mosaic
 {
 namespace input

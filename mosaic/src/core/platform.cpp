@@ -1,5 +1,9 @@
 #include "mosaic/core/platform.hpp"
 
+#include <cassert>
+#include <memory>
+#include <vector>
+
 #if defined(MOSAIC_PLATFORM_WINDOWS)
 #include "platform/Win32/win32_platform.hpp"
 #elif defined(MOSAIC_PLATFORM_EMSCRIPTEN)
@@ -7,6 +11,9 @@
 #elif defined(MOSAIC_PLATFORM_ANDROID)
 #include "mosaic/platform/AGDK/agdk_platform.hpp"
 #endif
+
+#include "mosaic/internal/defines.hpp"
+#include "mosaic/core/application.hpp"
 
 namespace mosaic
 {

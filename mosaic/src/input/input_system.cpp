@@ -1,5 +1,18 @@
 #include "mosaic/input/input_system.hpp"
 
+#include <cassert>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <utility>
+
+#include <pieces/core/result.hpp>
+
+#include "mosaic/core/logger.hpp"
+#include "mosaic/core/system.hpp"
+#include "mosaic/input/input_context.hpp"
+#include "mosaic/window/window.hpp"
+
 namespace mosaic
 {
 namespace input

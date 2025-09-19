@@ -1,5 +1,19 @@
 #include "mosaic/graphics/render_system.hpp"
 
+#include <cassert>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <utility>
+
+#include <pieces/core/result.hpp>
+
+#include "mosaic/core/logger.hpp"
+#include "mosaic/core/system.hpp"
+#include "mosaic/graphics/render_context.hpp"
+#include "mosaic/window/window.hpp"
+#include "mosaic/internal/defines.hpp"
+
 #ifndef MOSAIC_PLATFORM_ANDROID
 #include "WebGPU/webgpu_render_context.hpp"
 #include "WebGPU/webgpu_render_system.hpp"

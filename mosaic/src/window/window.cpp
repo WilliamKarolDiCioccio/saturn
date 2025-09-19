@@ -1,5 +1,10 @@
 #include "mosaic/window/window.hpp"
 
+#include <vector>
+#include <memory>
+
+#include "mosaic/internal/defines.hpp"
+
 #if defined(MOSAIC_PLATFORM_DESKTOP) || defined(MOSAIC_PLATFORM_WEB)
 #include "platform/GLFW/glfw_window.hpp"
 #elif defined(MOSAIC_PLATFORM_ANDROID)

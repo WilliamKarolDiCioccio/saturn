@@ -1,5 +1,16 @@
 #include "mosaic/core/timer.hpp"
 
+#include <corecrt.h>
+#include <algorithm>
+#include <atomic>
+#include <chrono>
+#include <ctime>
+#include <functional>
+#include <mutex>
+#include <string>
+#include <thread>
+#include <vector>
+
 namespace mosaic
 {
 namespace core
