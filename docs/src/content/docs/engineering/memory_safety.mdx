@@ -1,0 +1,38 @@
+---
+title: Memory Safety
+description: Guidelines for managing memory safely in Mosaic using RAII, custom allocators, and diagnostic tools.
+---
+
+Memory safety is a hot topic in modern software development—and with good reason. C++ gives us immense power, but with power comes responsibility. In Mosaic, we recognize that C++ can be **safe and maintainable** if the right preventive measures are in place.
+
+## Principles of Safe Memory Management
+
+We **strongly discourage manual memory management** wherever possible. Instead, we rely on:
+
+* **Custom allocators**: Inspired by Zig-style memory management, these provide deterministic and controlled memory usage without sacrificing performance.
+* **RAII-based wrappers**: We wrap C-style code and resources in RAII classes to guarantee proper acquisition and release, making leaks and double frees much less likely.
+
+By adhering to these principles, we reduce the chances of undefined behavior while maintaining the performance and flexibility that game engine development demands.
+
+## Diagnosis and Safety Checks
+
+Mosaic comes equipped with robust tools for memory diagnosis. Our **CMakePresets.json** includes profiles for **MSVC and Clang Address Sanitizers**, making it easy to run memory-safe builds with minimal setup.
+
+We recommend running these diagnostic modes **every time you work with manual memory management or complex inheritance hierarchies**. This ensures that:
+
+* All destructors are properly virtualized and overridden.
+* No resource leaks or use-after-free issues exist.
+* Ownership rules are followed consistently across the codebase.
+
+:::caution
+Currently, we do not have sanitizer coverage for web builds with Emscripten. This limitation will remain until development on the web branch resumes. Exercise extra caution when dealing with memory in web targets.
+:::
+
+## Practical Advice
+
+* Prefer smart pointers (`std::unique_ptr`, `std::shared_ptr`) for dynamic objects.
+* Use custom allocators for large pools of objects where performance and control are important.
+* Wrap C-style resources (file handles, GPU buffers, sockets) in RAII classes immediately.
+* Run Address Sanitizer builds frequently, not just as a one-time check.
+
+By combining **preventive design** and **diagnostic tooling**, Mosaic achieves a high standard of memory safety without compromising the flexibility and performance that C++ provides.
