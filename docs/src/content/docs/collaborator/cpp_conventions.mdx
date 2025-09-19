@@ -143,6 +143,20 @@ enum class RenderMode {
 
 Regardless of these naming preventive measures, we strongly recommend using **scoped enums** (`enum class`) instead of traditional enums. Scoped enums prevent name collisions and make the code more self-documenting. When you see `RenderMode::wireframe`, you know exactly what you're dealing with, without worrying about conflicting names in the global namespace.
 
+### Macro Parameters: Clear and Consistent
+
+Macro parameters follow the same naming rules as function parameters, with one important twist: they start with an **uppercase letter**. This may seem redundant in simple macros, but it becomes crucial when macros generate larger code expressions. Using uppercase letters for macro parameters makes it immediately clear which identifiers are part of the generated code versus which are literals or fixed parts of the macro.
+
+```cpp
+DEFINE_CLASS_WITH_MEMBER(_Type, _Member, _Name)        \
+class _Name {                                          \
+  public:                                              \
+    _Type get##_Member() const { return m_##_Member; } \
+  private:                                             \
+    _Type m_##_Member;                                 \
+};
+```
+
 ## Documentation: Writing for Future You
 
 Documentation serves two masters: the person trying to understand your code right now, and the person (possibly you) who needs to modify it six months from now. We use **Doxygen** as the standard documentation generator for the engine because it integrates well with IDEs and generates useful reference material, but the real value is in writing documentation that actually helps.
