@@ -1,0 +1,71 @@
+---
+title: ABI Safety
+description: Guidelines for ensuring Application Binary Interface (ABI) safety when building and distributing Mosaic as a dynamic library.
+---
+
+ABI safety is a non-negotiable requirement when building a dynamic library that will be distributed and reused across different machines and projects. In our case, the Mosaic engine DLL must follow strict rules to ensure that game programs can link against it without needing to recompile the entire engine.
+
+## What ABI Really Means
+
+The **Application Binary Interface (ABI)** defines how compiled code communicates at the binary level. It includes things like:
+
+* **Instruction conventions**: How functions are called, how parameters are passed, and how return values are handled.
+* **Memory layout**: How classes, structs, and data members are arranged in memory, including padding and alignment.
+* **VTable layout**: How virtual functions are represented and called.
+* **Exception and RTTI handling**: How exceptions and runtime type information are represented across binaries.
+
+Even small differences in ABI—caused by compiler versions, compiler settings, or target architectures—can cause catastrophic failures if a program tries to use an incompatible binary.
+
+## The Most Dangerous Objects to Export
+
+Certain objects are particularly unsafe to expose across DLL boundaries:
+
+* **STL components and anything from `std`**: These may change layout, internal implementation, or memory management between compiler versions.
+* **Non-const references and raw pointers**: Accessing memory through a client-side pointer or reference assumes a memory layout that may differ from the library's expectations.
+* **Objects managed by different memory systems**: Constructing an object in the library but destructing it in the client (or vice versa) can lead to undefined behavior.
+* **Inline methods exposing internal types**: Even harmless-looking inline methods can introduce ABI leaks if they expose STL or internal headers.
+* **Cross-DLL exceptions or RTTI**: Throwing exceptions or sharing type info across DLL boundaries is unsafe unless the same compiler and CRT are guaranteed.
+
+### Safer Options
+
+* **Opaque pointers / PIMPL**: Export only a pointer to an incomplete `struct Impl`. All data members live in the `.cpp`, and inline methods only forward to the Impl. This isolates internal layout changes from the client.
+* **Copied objects**: Safe because they are fully constructed and destroyed on the same side.
+* **Const references**: Safe in most cases because they only read data without attempting modification or destruction.
+
+### Ownership Rules
+
+To maintain ABI safety, objects should have **clear ownership**:
+
+* If the library constructs an object, the library should also destruct it.
+* If the client constructs an object, the client should destruct it.
+* Access to internal data should generally be done through **safe accessors** (copies or const references), never assuming internal layout.
+
+### Virtual Functions & Interface Stability
+
+* Public virtual functions form an **ABI contract**.
+* Never remove existing virtual functions.
+* Adding virtual functions should be done carefully—prefer appending to the end of the vtable and versioning the DLL accordingly.
+
+### Singletons & Static Objects
+
+* Static or singleton objects should live entirely inside the DLL.
+* Provide access via static getters to avoid cross-DLL construction/destruction issues.
+
+### Platform & Compiler Considerations
+
+* ABI can differ between compiler vendors, versions, and build types (Debug vs Release).
+* STL implementations may differ across compilers or CRT versions.
+* When breaking rules for design reasons, carefully document and isolate the exceptions.
+
+### Testing & Versioning
+
+* Use automated ABI testing tools (`nm`, `readelf`, `dumpbin`, `abi-compliance-checker`) to detect accidental breaks.
+* Provide a versioning policy for the DLL to indicate when ABI-breaking changes occur.
+
+### Pragmatic Exceptions
+
+Sometimes, breaking these rules is necessary for **quality-of-life improvements** or **design reasons**. In these cases, extra care is required:
+
+* Document the exception clearly.
+* Limit exposure to a small, well-audited API.
+* Accept that changes in compiler, settings, or CRT may require careful review or recompilation.
