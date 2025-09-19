@@ -1,0 +1,43 @@
+---
+title: PIMPL Idiom
+description: Using the PIMPL (Pointer to Implementation) idiom in Mosaic for robust class design and interface separation.
+---
+
+The PIMPL idiom is one of those subtle C++ patterns that quietly solves multiple problems at once. At its core, PIMPL separates a class’s interface from its implementation by moving the actual data and sometimes behavior into a private structure, typically hidden behind a pointer. This separation gives us flexibility: it lets us change implementation details without affecting users of the class and reduces the coupling between headers and users.
+
+## What PIMPL Is
+
+PIMPL (Pointer to IMPLementation) is a design pattern where a class contains a single pointer to an opaque structure, usually called `Impl` or `Implementation`. This structure holds the private data members—and optionally, the methods—of the class. The public class exposes a stable interface, while the underlying details live in the implementation struct, invisible to users.
+
+```cpp
+class Renderer {
+ private:
+  struct Impl;
+  Impl* m_impl;
+
+ public:
+  Renderer();
+  ~Renderer();
+
+  void initialize();
+  void renderFrame();
+};
+```
+
+Here, `Impl` contains the actual state of `Renderer`, while the public class provides the methods users interact with.
+
+## Structural vs Behavioral PIMPL
+
+Not all PIMPLs are created equal. In Mosaic, we distinguish between **structural** and **behavioral** PIMPL:
+
+* **Structural PIMPL**: Only the **state** (data members) of the class is moved into the `Impl`. All interface methods are still implemented in the public class, which forwards to the data where needed. This approach provides a satisfactory level of separation and keeps the design simple. It is especially convenient for intermediate classes in inheritance hierarchies.
+
+* **Behavioral PIMPL**: Both **state and logic** live inside the `Impl`. All public methods simply forward to the implementation, meaning the `Impl` essentially owns the behavior. This adds flexibility but also increases complexity and requires more boilerplate forwarding.
+
+In practice, Mosaic mostly uses **structural PIMPL**. It gives us the benefits of encapsulation and separation without the added forwarding complexity of behavioral PIMPL.
+
+## Why Use PIMPL
+
+PIMPL helps manage **header dependencies** and keeps class interfaces clean. By hiding implementation details behind a pointer, the public header exposes only what’s necessary. This allows developers to modify private members without forcing recompilation of all dependent code, and it makes class hierarchies easier to manage at scale.
+
+Even in its simplest form, PIMPL encourages clear separation of concerns: the public class focuses on **what** the object does, and the `Impl` focuses on **how** it does it. This separation is a small upfront investment for a cleaner, more maintainable, and flexible codebase.
