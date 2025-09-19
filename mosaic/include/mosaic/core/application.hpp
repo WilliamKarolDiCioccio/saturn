@@ -6,12 +6,25 @@
 
 #include "mosaic/internal/defines.hpp"
 #include "mosaic/version.hpp"
-#include "mosaic/window/window_system.hpp"
-#include "mosaic/input/input_system.hpp"
-#include "mosaic/graphics/render_system.hpp"
 
 namespace mosaic
 {
+
+namespace window
+{
+class WindowSystem;
+}
+
+namespace input
+{
+class InputSystem;
+}
+
+namespace graphics
+{
+class RenderSystem;
+}
+
 namespace core
 {
 

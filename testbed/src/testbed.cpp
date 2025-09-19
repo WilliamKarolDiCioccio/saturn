@@ -2,6 +2,11 @@
 
 #include <chrono>
 
+#include <mosaic/core/logger.hpp>
+#include <mosaic/core/timer.hpp>
+#include <mosaic/window/window_system.hpp>
+#include <mosaic/input/input_system.hpp>
+#include <mosaic/graphics/render_system.hpp>
 #include <mosaic/ecs/entity_registry.hpp>
 
 using namespace std::chrono_literals;
