@@ -1,0 +1,61 @@
+---
+title: Compilation Times Optimization
+description: Strategies and practices in Mosaic to reduce C++ compilation times without sacrificing maintainability.
+---
+
+In a large C++ codebase like Mosaic, **compilation time** is a critical concern. Slow builds disrupt workflow, hinder experimentation, and make incremental changes expensive. To mitigate this, we adopt several strategies focused on reducing header dependencies and improving compiler efficiency.
+
+## Precompiled Headers (PCH)
+
+Mosaic leverages **CMake precompiled headers** to reduce repetitive parsing of commonly used headers. Unlike traditional PCH, CMake's system automatically force-includes them via compiler options—you don’t need to include them manually in your source files.
+
+```cmake
+target_precompile_headers(
+  mosaic
+  PRIVATE
+  <vector>
+  <string>
+  <iostream>
+  <algorithm>
+  <unordered_map>
+  <unordered_set>
+  <functional>
+  <memory>
+  <array>
+  <chrono>)
+```
+
+**Guidelines for PCH usage:**
+
+* Only include **general-purpose headers** used across many source files.
+* Avoid project-specific or rarely used headers to prevent unnecessary recompilation.
+* Use PCH to accelerate parsing of STL headers and other large dependencies.
+
+## Build Analysis
+
+We regularly use **Visual Studio 2022’s built-in code and build analysis tools** to monitor compilation performance. These tools help identify:
+
+* Large template instantiations
+* Heavily included headers
+* Files with excessive dependencies
+
+By pinpointing these hotspots, we can make informed refactoring decisions and reduce build times where it matters most.
+
+## Optional Includes via Opaque Handles
+
+We are experimenting with **opaque handles** to make certain includes optional. This is particularly useful for large APIs like our Renderer API, where numerous data types could otherwise force large transitive inclusions.
+
+Opaque handles allow headers to forward-declare types, limiting what must be included in a given file. However, this pattern has trade-offs:
+
+* **Pros**: Reduces header dependencies, speeds up incremental builds.
+* **Cons**: Introduces potential **ABI safety risks** and additional indirection in code.
+
+Care must be taken to balance compile-time performance against safety and maintainability.
+
+## Future Plans
+
+To further improve compilation speed, Mosaic will eventually:
+
+* **Split the engine into multiple sub-targets**: This allows tailored precompiled headers per subsystem and faster incremental builds.
+* Refine PCH usage based on subsystem dependencies rather than a single monolithic header set.
+* Experiment with the use of C++20 modules as they become more widely supported.
