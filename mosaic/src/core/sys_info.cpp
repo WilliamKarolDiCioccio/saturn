@@ -3,7 +3,7 @@
 #include <memory>
 #include <vector>
 
-#include "mosaic/internal/defines.hpp"
+#include "mosaic/defines.hpp"
 
 #if defined(MOSAIC_PLATFORM_WINDOWS)
 #include "platform/Win32/win32_sys_info.hpp"

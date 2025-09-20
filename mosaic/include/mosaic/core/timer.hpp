@@ -4,7 +4,7 @@
 #include <functional>
 #include <string>
 
-#include "mosaic/internal/defines.hpp"
+#include "mosaic/defines.hpp"
 
 namespace mosaic
 {

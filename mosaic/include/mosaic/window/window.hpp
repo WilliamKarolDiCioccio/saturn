@@ -9,7 +9,7 @@
 
 #include <glm/glm.hpp>
 
-#include "mosaic/internal/defines.hpp"
+#include "mosaic/defines.hpp"
 
 namespace mosaic
 {

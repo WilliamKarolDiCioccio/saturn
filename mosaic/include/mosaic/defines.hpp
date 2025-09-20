@@ -3,19 +3,19 @@
 // Platform detection
 #if defined(__EMSCRIPTEN__)
 #define MOSAIC_PLATFORM_EMSCRIPTEN
-#define MOSCAIC_PLATFORM_NAME "Emscripten"
+#define MOSAIC_PLATFORM_NAME "Emscripten"
 #elif defined(__ANDROID__) || defined(ANDROID)
 #define MOSAIC_PLATFORM_ANDROID
-#define MOSCAIC_PLATFORM_NAME "Android"
+#define MOSAIC_PLATFORM_NAME "Android"
 #elif defined(_WIN32) || defined(_WIN64)
 #define MOSAIC_PLATFORM_WINDOWS
-#define MOSCAIC_PLATFORM_NAME "Windows"
+#define MOSAIC_PLATFORM_NAME "Windows"
 #elif defined(__APPLE__) || defined(__MACH__)
 #define MOSAIC_PLATFORM_MACOS
-#define MOSCAIC_PLATFORM_NAME "macOS"
+#define MOSAIC_PLATFORM_NAME "macOS"
 #elif defined(__linux__)
 #define MOSAIC_PLATFORM_LINUX
-#define MOSCAIC_PLATFORM_NAME "Linux"
+#define MOSAIC_PLATFORM_NAME "Linux"
 #else
 #error "Unknown platform!"
 #endif

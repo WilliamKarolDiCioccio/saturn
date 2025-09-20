@@ -12,7 +12,7 @@
 #include "mosaic/platform/AGDK/agdk_platform.hpp"
 #endif
 
-#include "mosaic/internal/defines.hpp"
+#include "mosaic/defines.hpp"
 #include "mosaic/core/application.hpp"
 
 namespace mosaic

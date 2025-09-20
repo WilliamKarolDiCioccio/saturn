@@ -1,6 +1,6 @@
 #pragma once
 
-#include "mosaic/internal/defines.hpp"
+#include "mosaic/defines.hpp"
 
 #if defined(MOSAIC_PLATFORM_DESKTOP) || defined(MOSAIC_PLATFORM_WEB)
 #include "mosaic/platform/GLFW/glfw_input_mappings.hpp"

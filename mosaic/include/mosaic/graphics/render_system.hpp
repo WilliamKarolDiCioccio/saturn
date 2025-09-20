@@ -4,7 +4,7 @@
 
 #include <pieces/core/result.hpp>
 
-#include "mosaic/internal/defines.hpp"
+#include "mosaic/defines.hpp"
 #include "mosaic/window/window.hpp"
 #include "mosaic/core/logger.hpp"
 #include "mosaic/core/system.hpp"

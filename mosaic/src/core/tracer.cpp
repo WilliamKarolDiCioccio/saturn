@@ -11,10 +11,10 @@
 #include <ostream>
 #include <string>
 #include <thread>
-#include <mosaic/core/logger.hpp>
-#include <mosaic/internal/defines.hpp>
 #include <nlohmann/json_fwd.hpp>
 
+#include "mosaic/defines.hpp"
+#include "mosaic/core/logger.hpp"
 #include "mosaic/version.h"
 #include "mosaic/core/cmd_line_parser.hpp"
 

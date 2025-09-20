@@ -3,7 +3,7 @@
 #include <string>
 #include <optional>
 
-#include "mosaic/internal/defines.hpp"
+#include "mosaic/defines.hpp"
 
 namespace mosaic
 {

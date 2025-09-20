@@ -12,7 +12,7 @@
 #include "mosaic/core/system.hpp"
 #include "mosaic/graphics/render_context.hpp"
 #include "mosaic/window/window.hpp"
-#include "mosaic/internal/defines.hpp"
+#include "mosaic/defines.hpp"
 
 #ifndef MOSAIC_PLATFORM_ANDROID
 #include "WebGPU/webgpu_render_context.hpp"

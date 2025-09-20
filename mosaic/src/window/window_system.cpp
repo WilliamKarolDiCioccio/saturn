@@ -10,7 +10,7 @@
 
 #include "mosaic/core/logger.hpp"
 #include "mosaic/core/system.hpp"
-#include "mosaic/internal/defines.hpp"
+#include "mosaic/defines.hpp"
 #include "mosaic/window/window.hpp"
 
 #if defined(MOSAIC_PLATFORM_DESKTOP) || defined(MOSAIC_PLATFORM_WEB)

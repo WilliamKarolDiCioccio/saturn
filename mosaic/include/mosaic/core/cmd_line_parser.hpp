@@ -1,6 +1,6 @@
 #pragma once
 
-#include "mosaic/internal/defines.hpp"
+#include "mosaic/defines.hpp"
 
 #include <functional>
 #include <unordered_map>

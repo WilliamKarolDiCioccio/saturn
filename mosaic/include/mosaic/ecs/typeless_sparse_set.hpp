@@ -10,7 +10,7 @@
 
 #include <pieces/core/templates.hpp>
 
-#include "mosaic/internal/defines.hpp"
+#include "mosaic/defines.hpp"
 
 #include "entity.hpp"
 #include "typeless_vector.hpp"
