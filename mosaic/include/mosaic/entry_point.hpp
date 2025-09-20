@@ -5,6 +5,7 @@
 #include <mosaic/core/sys_ui.hpp>
 #include <mosaic/core/sys_console.hpp>
 #include <mosaic/core/logger.hpp>
+#include <mosaic/core/logger_default_sink.hpp>
 #include <mosaic/core/tracer.hpp>
 #include <mosaic/core/cmd_line_parser.hpp>
 #include <mosaic/core/platform.hpp>

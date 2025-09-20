@@ -5,6 +5,7 @@
 set(FRAMEWORK_SRC
     # Core
     "src/core/logger.cpp"
+    "src/core/logger_default_sink.cpp"
     "src/core/application.cpp"
     "src/core/platform.cpp"
     "src/core/sys_info.cpp"
