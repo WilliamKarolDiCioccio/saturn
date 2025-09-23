@@ -53,6 +53,8 @@ find_package(benchmark REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(Stb REQUIRED)
 find_package(utf8cpp CONFIG REQUIRED)
+find_package(lyra CONFIG REQUIRED)
+find_package(unofficial-tree-sitter CONFIG REQUIRED)
 
 if(NOT EMSCRIPTEN)
   find_package(Vulkan REQUIRED)
@@ -80,6 +82,7 @@ if(NOT ANDROID)
   endif()
 
   add_subdirectory("vendor/glfw3webgpu")
+  add_subdirectory("vendor/tree-sitter-cpp")
 
 endif()
 

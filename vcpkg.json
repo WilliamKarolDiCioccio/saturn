@@ -13,6 +13,7 @@
     "gtest",
     "nlohmann-json",
     "stb",
+    "tree-sitter",
     "utfcpp",
     {
       "name": "volk",
@@ -30,6 +31,6 @@
       "name": "vulkan-utility-libraries",
       "platform": "!emscripten"
     },
-    "tree-sitter"
+    "bfgroup-lyra"
   ]
 }
