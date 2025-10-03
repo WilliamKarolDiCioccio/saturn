@@ -8,7 +8,7 @@
 
 namespace mosaic
 {
-namespace ecs
+namespace scene
 {
 
 struct TagComponent
@@ -98,5 +98,5 @@ struct LightComponent
         : color(_color), intensity(_intensity), type(_type) {};
 };
 
-} // namespace ecs
+} // namespace scene
 } // namespace mosaic
