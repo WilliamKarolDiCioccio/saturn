@@ -61,7 +61,7 @@ TracerManager::TracerManager(const TracerConfig& _config)
     m_metadata["startTime"] = std::chrono::system_clock::to_time_t(systemStartTime);
     m_metadata["processId"] = 0;
     m_metadata["threadName"] = nlohmann::json::object();
-    m_metadata["processName"] = CommandLineParser::getExecutableName();
+    m_metadata["processName"] = CommandLineParser::getGlobalInstance()->getExecutableName();
 }
 
 bool TracerManager::initialize(const std::string& _tracesDir, const TracerConfig& _config) noexcept

@@ -22,15 +22,19 @@ int runApp(const std::vector<std::string>& _cmdLineArgs, Args&&... _appConstucto
 {
     core::SystemConsole::attachParent();
 
-    auto parseResult = core::CommandLineParser::parseCommandLine(_cmdLineArgs);
+    core::CommandLineParser::initialize();
+
+    auto cmdLineParser = core::CommandLineParser::getGlobalInstance();
+
+    auto parseResult = cmdLineParser->parseCommandLine(_cmdLineArgs);
 
     if (parseResult.has_value())
     {
-        core::SystemConsole::print(core::CommandLineParser::getHelpText());
+        core::SystemConsole::print(cmdLineParser->getHelpText());
         return 1;
     }
 
-    if (core::CommandLineParser::shouldTerminate()) return 0;
+    if (cmdLineParser->shouldTerminate()) return 0;
 
     core::SystemConsole::detachParent();
 
@@ -63,8 +67,8 @@ int runApp(const std::vector<std::string>& _cmdLineArgs, Args&&... _appConstucto
     }
 
     core::TracerManager::shutdown();
-
     core::LoggerManager::shutdown();
+    core::CommandLineParser::shutdown();
 
     core::SystemConsole::destroy();
 

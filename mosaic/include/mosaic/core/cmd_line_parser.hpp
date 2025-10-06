@@ -2,6 +2,8 @@
 
 #include "mosaic/defines.hpp"
 
+#include "mosaic/core/logger.hpp"
+
 #include <functional>
 #include <unordered_map>
 #include <string>
@@ -33,7 +35,7 @@ enum class CmdOptionValueTypes : uint8_t
 using ArgumentValue = std::variant<std::string, int, float, bool>;
 
 /**
- * @brief Handler function signature - now supports typed values
+ * @brief Handler function signature
  */
 using OptionHandler = std::function<bool(const std::vector<ArgumentValue>&)>;
 
@@ -45,7 +47,7 @@ using ValueValidator = std::function<std::optional<ArgumentValue>(const std::str
 /**
  * @brief The command line parser class for managing and parsing command line arguments.
  */
-class MOSAIC_API CommandLineParser
+class CommandLineParser
 {
    public:
     /**
@@ -95,43 +97,32 @@ class MOSAIC_API CommandLineParser
               parsed(false) {};
     };
 
-    static std::string s_executableName;
-    static std::string s_executablePath;
-    static std::vector<std::string> s_args;
-    static bool s_shouldTerminate;
-    static Config s_config;
-    static std::unordered_map<std::string, std::unique_ptr<Option>> m_options;
-    static std::unordered_map<std::string, std::string> m_shortToLong;
+    MOSAIC_API static CommandLineParser* s_instance;
 
-   private:
-    CommandLineParser() = delete;
-
-    static const Option* findOption(const std::string& _option);
-    static uint8_t calculateEditDistance(const std::string& _str1, const std::string& _str2);
-    static std::string suggestCorrectOption(const std::string& _misspelledOption);
-    static std::vector<std::pair<std::string, std::vector<std::string>>>
-    extractOptionArgumentsPairs(std::span<const std::string> _args);
-    static std::optional<std::string> handleOptionArgumentsPair(
-        const std::pair<std::string, std::vector<std::string>>& _pair);
-    static void registerBuiltinOptions();
-    static std::optional<std::string> validateRequiredOptions();
-    static std::string normalizeOptionName(const std::string& _option);
-
-    // Built-in value validators
-
-    static std::optional<ArgumentValue> validateString(const std::string& _value);
-    static std::optional<ArgumentValue> validateInt(const std::string& _value);
-    static std::optional<ArgumentValue> validateFloat(const std::string& _value);
-    static std::optional<ArgumentValue> validateBool(const std::string& _value);
+    Config m_config;
+    std::string m_executableName;
+    std::string m_executablePath;
+    std::vector<std::string> m_args;
+    bool m_shouldTerminate;
+    std::unordered_map<std::string, std::unique_ptr<Option>> m_options;
+    std::unordered_map<std::string, std::string> m_shortToLong;
 
    public:
+    CommandLineParser(const Config& _config)
+        : m_config(_config), m_executableName(""), m_executablePath(""), m_shouldTerminate(false) {
+          };
+
+   public:
+    MOSAIC_API static bool initialize(const Config& _config = Config()) noexcept;
+    MOSAIC_API static void shutdown() noexcept;
+
     /**
      * @brief Parse command line arguments from vector
      *
      * @param _args Vector of argument strings
      * @return ParseResult indicating success or failure details
      */
-    static std::optional<std::string> parseCommandLine(const std::vector<std::string>& _args);
+    MOSAIC_API std::optional<std::string> parseCommandLine(const std::vector<std::string>& _args);
 
     /**
      * @brief Register a command line option with enhanced features
@@ -148,7 +139,7 @@ class MOSAIC_API CommandLineParser
      * @param _defaultValue Default value if not provided
      * @return ParseResult indicating registration success
      */
-    static std::optional<std::string> registerOption(
+    std::optional<std::string> registerOption(
         const std::string& _name, const std::string& _shortName, const std::string& _description,
         const std::string& _help, CmdOptionValueTypes _valueType, bool _terminates,
         OptionHandler _handler, ValueValidator _validator = nullptr, bool _required = false,
@@ -158,7 +149,7 @@ class MOSAIC_API CommandLineParser
      * @brief Register option with common validators
      */
     template <typename T>
-    static std::optional<std::string> registerTypedOption(
+    std::optional<std::string> registerTypedOption(
         const std::string& _name, const std::string& _shortName, const std::string& _description,
         const std::string& _help, CmdOptionValueTypes _valueType,
         std::function<bool(const std::vector<T>&)> _handler, bool _required = false,
@@ -167,59 +158,72 @@ class MOSAIC_API CommandLineParser
     /**
      * @brief Unregister a command line option
      */
-    static bool unregisterOption(const std::string& _optionName);
+    MOSAIC_API bool unregisterOption(const std::string& _optionName);
 
     /**
      * @brief Unregister all options (including built-ins)
      */
-    static void unregisterAllOptions();
+    MOSAIC_API void unregisterAllOptions();
 
     /**
      * @brief Reset parser state for re-use
      */
-    static void reset();
+    MOSAIC_API void reset();
 
     /**
      * @brief Set parser configuration
      */
-    static void setConfig(const Config& _config) { s_config = _config; }
+    MOSAIC_API void setConfig(const Config& _config) { m_config = _config; }
 
     /**
      * @brief Get current configuration
      */
-    static const Config& getConfig() noexcept { return s_config; }
+    MOSAIC_API const Config& getConfig() noexcept { return m_config; }
 
    public:
-    [[nodiscard]] static bool shouldTerminate() noexcept { return s_shouldTerminate; }
+    MOSAIC_API [[nodiscard]] bool shouldTerminate() noexcept;
 
-    [[nodiscard]] static const std::vector<std::string> getArgs() noexcept { return s_args; }
+    MOSAIC_API [[nodiscard]] const std::vector<std::string> getArgs() noexcept;
 
-    [[nodiscard]] static size_t getArgsCount() noexcept { return s_args.size(); }
+    MOSAIC_API [[nodiscard]] size_t getArgsCount() noexcept;
 
-    [[nodiscard]] static const std::string& getExecutableName() noexcept
-    {
-        return s_executableName;
-    }
+    MOSAIC_API [[nodiscard]] const std::string& getExecutableName() noexcept;
 
-    [[nodiscard]] static const std::string& getExecutablePath() noexcept
-    {
-        return s_executablePath;
-    }
+    MOSAIC_API [[nodiscard]] const std::string& getExecutablePath() noexcept;
 
     /**
      * @brief Check if a specific option was parsed
      */
-    [[nodiscard]] static bool wasOptionParsed(const std::string& _optionName);
+    MOSAIC_API [[nodiscard]] bool wasOptionParsed(const std::string& _optionName);
 
     /**
      * @brief Get help text for all registered options
      */
-    [[nodiscard]] static std::string getHelpText();
+    MOSAIC_API [[nodiscard]] std::string getHelpText();
 
     /**
      * @brief Get list of all registered option names
      */
-    [[nodiscard]] static std::vector<std::string> getRegisteredOptions();
+    MOSAIC_API [[nodiscard]] std::vector<std::string> getRegisteredOptions();
+
+    [[nodiscard]] static inline CommandLineParser* getGlobalInstance() { return s_instance; }
+
+   private:
+    const Option* findOption(const std::string& _option);
+    uint8_t calculateEditDistance(const std::string& _str1, const std::string& _str2);
+    std::string suggestCorrectOption(const std::string& _misspelledOption);
+    std::vector<std::pair<std::string, std::vector<std::string>>> extractOptionArgumentsPairs(
+        std::span<const std::string> _args);
+    std::optional<std::string> handleOptionArgumentsPair(
+        const std::pair<std::string, std::vector<std::string>>& _pair);
+    void registerBuiltinOptions();
+    std::optional<std::string> validateRequiredOptions();
+    std::string normalizeOptionName(const std::string& _option);
+
+    std::optional<ArgumentValue> validateString(const std::string& _value);
+    std::optional<ArgumentValue> validateInt(const std::string& _value);
+    std::optional<ArgumentValue> validateFloat(const std::string& _value);
+    std::optional<ArgumentValue> validateBool(const std::string& _value);
 };
 
 template <typename T>
