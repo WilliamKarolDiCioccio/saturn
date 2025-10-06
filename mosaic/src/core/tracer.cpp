@@ -42,7 +42,7 @@ ScopedTrace::~ScopedTrace() noexcept
     if (auto* manager = TracerManager::getInstance()) manager->endTrace();
 }
 
-TracerManager::TracerManager(const TracerConfig& _config)
+TracerManager::TracerManager(const Config& _config)
     : m_config(_config), m_fileCounter(0), m_nextTraceId(1)
 {
     m_startTime = std::chrono::steady_clock::now();
@@ -64,7 +64,7 @@ TracerManager::TracerManager(const TracerConfig& _config)
     m_metadata["processName"] = CommandLineParser::getGlobalInstance()->getExecutableName();
 }
 
-bool TracerManager::initialize(const std::string& _tracesDir, const TracerConfig& _config) noexcept
+bool TracerManager::initialize(const std::string& _tracesDir, const Config& _config) noexcept
 {
     if (s_instance) return false;
 

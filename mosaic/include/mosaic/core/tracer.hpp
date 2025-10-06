@@ -94,48 +94,6 @@ constexpr std::array<const char*, 13> c_phaseNames = {
 };
 
 /**
- * @brief Configuration for the TracerManager.
- *
- * This struct holds the configuration options for the tracer, including
- * whether tracing is enabled, auto-flush settings, flush intervals, maximum
- * number of traces, maximum file size, and category-specific enable flags.
- */
-struct TracerConfig
-{
-    std::atomic_bool enabled;
-    std::atomic_bool autoFlush;
-    std::atomic_uint32_t flushIntervalMs;
-    std::atomic_uint32_t maxTraces;
-    std::atomic_uint32_t maxFileSizeMb; // MB
-
-    std::array<std::atomic_bool, 8> categoryEnabled;
-
-    TracerConfig(bool _enabled = true, bool _autoFlush = true, uint32_t _flushIntervalMs = 1000,
-                 uint32_t _maxTraces = 10000, uint32_t _maxFileSizeMb = 100)
-        : enabled(_enabled),
-          autoFlush(_autoFlush),
-          flushIntervalMs(_flushIntervalMs),
-          maxTraces(_maxTraces),
-          maxFileSizeMb(_maxFileSizeMb)
-    {
-        for (auto& e : categoryEnabled) e.store(true);
-    }
-
-    TracerConfig(const TracerConfig& other)
-        : enabled(other.enabled.load()),
-          autoFlush(other.autoFlush.load()),
-          flushIntervalMs(other.flushIntervalMs.load()),
-          maxTraces(other.maxTraces.load()),
-          maxFileSizeMb(other.maxFileSizeMb.load())
-    {
-        for (size_t i = 0; i < categoryEnabled.size(); ++i)
-        {
-            categoryEnabled[i].store(other.categoryEnabled[i].load());
-        }
-    }
-};
-
-/**
  * @brief RAII helper for automatic trace scoping.
  */
 class MOSAIC_API ScopedTrace final
@@ -158,6 +116,49 @@ class MOSAIC_API ScopedTrace final
  */
 class MOSAIC_API TracerManager final
 {
+   public:
+    /**
+     * @brief Configuration for the TracerManager.
+     *
+     * This struct holds the configuration options for the tracer, including
+     * whether tracing is enabled, auto-flush settings, flush intervals, maximum
+     * number of traces, maximum file size, and category-specific enable flags.
+     */
+    struct Config
+    {
+        std::atomic_bool enabled;
+        std::atomic_bool autoFlush;
+        std::atomic_uint32_t flushIntervalMs;
+        std::atomic_uint32_t maxTraces;
+        std::atomic_uint32_t maxFileSizeMb; // MB
+
+        std::array<std::atomic_bool, 8> categoryEnabled;
+
+        Config(bool _enabled = true, bool _autoFlush = true, uint32_t _flushIntervalMs = 1000,
+               uint32_t _maxTraces = 10000, uint32_t _maxFileSizeMb = 100)
+            : enabled(_enabled),
+              autoFlush(_autoFlush),
+              flushIntervalMs(_flushIntervalMs),
+              maxTraces(_maxTraces),
+              maxFileSizeMb(_maxFileSizeMb)
+        {
+            for (auto& e : categoryEnabled) e.store(true);
+        }
+
+        Config(const Config& other)
+            : enabled(other.enabled.load()),
+              autoFlush(other.autoFlush.load()),
+              flushIntervalMs(other.flushIntervalMs.load()),
+              maxTraces(other.maxTraces.load()),
+              maxFileSizeMb(other.maxFileSizeMb.load())
+        {
+            for (size_t i = 0; i < categoryEnabled.size(); ++i)
+            {
+                categoryEnabled[i].store(other.categoryEnabled[i].load());
+            }
+        }
+    };
+
    private:
     static TracerManager* s_instance;
 
@@ -181,14 +182,14 @@ class MOSAIC_API TracerManager final
     std::chrono::steady_clock::time_point m_lastFlush;
     uint64_t m_nextTraceId;
 
-    TracerConfig m_config;
+    Config m_config;
 
    private:
-    TracerManager(const TracerConfig& _config);
+    TracerManager(const Config& _config);
 
    public:
     static bool initialize(const std::string& _tracesDir = "./traces",
-                           const TracerConfig& _config = TracerConfig()) noexcept;
+                           const Config& _config = Config()) noexcept;
     static void shutdown() noexcept;
 
     // Configurable options

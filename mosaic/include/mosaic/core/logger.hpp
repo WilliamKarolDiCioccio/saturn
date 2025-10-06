@@ -65,53 +65,54 @@ constexpr std::array<const char*, 6> c_levelNames = {
 };
 
 /**
- * @brief Configuration for the LoggerManager.
- *
- * This struct allows customization of logging behavior, such as enabling/disabling log levels,
- * showing thread IDs, timestamps, and stack traces, as well as setting the history size
- * and base logs path.
- */
-struct LoggerConfig
-{
-    std::atomic_bool showLevel;
-    std::atomic_bool showTid;
-    std::atomic_bool showTimestamp;
-    std::atomic_bool showStackTrace;
-
-    std::atomic_uint16_t historySize;
-
-    std::array<std::atomic_bool, 6> levelEnabled;
-
-    LoggerConfig(bool _showLevel = true, bool _showTid = false, bool _showTimestamp = true,
-                 bool _showStackTrace = false, uint16_t _historySize = k_logHistorySize)
-        : showLevel(_showLevel),
-          showTid(_showTid),
-          showTimestamp(_showTimestamp),
-          showStackTrace(_showStackTrace),
-          historySize(_historySize)
-    {
-        for (auto& e : levelEnabled) e.store(true);
-    }
-
-    LoggerConfig(const LoggerConfig& other)
-        : showLevel(other.showLevel.load()),
-          showTid(other.showTid.load()),
-          showTimestamp(other.showTimestamp.load()),
-          showStackTrace(other.showStackTrace.load()),
-          historySize(other.historySize.load())
-    {
-        for (size_t i = 0; i < levelEnabled.size(); ++i)
-        {
-            levelEnabled[i].store(other.levelEnabled[i].load());
-        }
-    }
-};
-
-/**
  * @brief Manages logging functionality, including sink management, history, and configuration.
  */
 class LoggerManager final
 {
+   public:
+    /**
+     * @brief Configuration for the LoggerManager.
+     *
+     * This struct allows customization of logging behavior, such as enabling/disabling log levels,
+     * showing thread IDs, timestamps, and stack traces, as well as setting the history size
+     * and base logs path.
+     */
+    struct Config
+    {
+        std::atomic_bool showLevel;
+        std::atomic_bool showTid;
+        std::atomic_bool showTimestamp;
+        std::atomic_bool showStackTrace;
+
+        std::atomic_uint16_t historySize;
+
+        std::array<std::atomic_bool, 6> levelEnabled;
+
+        Config(bool _showLevel = true, bool _showTid = false, bool _showTimestamp = true,
+               bool _showStackTrace = false, uint16_t _historySize = k_logHistorySize)
+            : showLevel(_showLevel),
+              showTid(_showTid),
+              showTimestamp(_showTimestamp),
+              showStackTrace(_showStackTrace),
+              historySize(_historySize)
+        {
+            for (auto& e : levelEnabled) e.store(true);
+        }
+
+        Config(const Config& other)
+            : showLevel(other.showLevel.load()),
+              showTid(other.showTid.load()),
+              showTimestamp(other.showTimestamp.load()),
+              showStackTrace(other.showStackTrace.load()),
+              historySize(other.historySize.load())
+        {
+            for (size_t i = 0; i < levelEnabled.size(); ++i)
+            {
+                levelEnabled[i].store(other.levelEnabled[i].load());
+            }
+        }
+    };
+
    private:
     MOSAIC_API static LoggerManager* s_instance;
 
@@ -120,13 +121,13 @@ class LoggerManager final
     std::unordered_map<std::thread::id, std::vector<std::string>> m_history;
     std::mutex m_historyMutex;
 
-    LoggerConfig m_config;
+    Config m_config;
 
    private:
-    LoggerManager(const LoggerConfig& _config);
+    LoggerManager(const Config& _config);
 
    public:
-    MOSAIC_API static bool initialize(const LoggerConfig& _config = LoggerConfig()) noexcept;
+    MOSAIC_API static bool initialize(const Config& _config = Config()) noexcept;
     MOSAIC_API static void shutdown() noexcept;
 
     // Configurable options

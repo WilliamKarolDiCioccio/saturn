@@ -24,9 +24,9 @@ namespace core
 
 LoggerManager* LoggerManager::s_instance = nullptr;
 
-LoggerManager::LoggerManager(const LoggerConfig& _config) : m_config(_config) {}
+LoggerManager::LoggerManager(const Config& _config) : m_config(_config) {}
 
-bool LoggerManager::initialize(const LoggerConfig& _config) noexcept
+bool LoggerManager::initialize(const Config& _config) noexcept
 {
     if (s_instance) return false;
 
