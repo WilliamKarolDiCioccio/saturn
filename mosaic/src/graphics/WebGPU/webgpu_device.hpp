@@ -13,7 +13,7 @@ WGPUAdapter requestAdapter(WGPUInstance _instance, WGPUSurface _surface);
 
 bool isAdapterSuitable(WGPUAdapter _adapter);
 
-WGPUDevice createDevice(WGPUAdapter adapter);
+WGPUDevice createDevice(WGPUAdapter _adapter);
 
 } // namespace webgpu
 } // namespace graphics

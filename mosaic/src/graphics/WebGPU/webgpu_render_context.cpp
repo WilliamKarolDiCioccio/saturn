@@ -91,11 +91,11 @@ pieces::RefResult<RenderContext, std::string> WebGPURenderContext::initialize(
 
 void WebGPURenderContext::shutdown()
 {
+    wgpuSurfaceUnconfigure(m_surface);
+    wgpuSurfaceRelease(m_surface);
+    wgpuInstanceRelease(m_instance);
     wgpuQueueRelease(m_presentQueue);
     wgpuDeviceRelease(m_device);
-    wgpuSurfaceRelease(m_surface);
-    wgpuSurfaceUnconfigure(m_surface);
-    wgpuInstanceRelease(m_instance);
 }
 
 void WebGPURenderContext::resizeFramebuffer() {}
@@ -150,11 +150,7 @@ void WebGPURenderContext::pollDevice(int _times)
 
 void WebGPURenderContext::beginFrame()
 {
-    if (!m_frameData.targetView)
-    {
-        MOSAIC_ERROR("Could not get WebGPU target view!");
-        return;
-    }
+    getNextSurfaceViewData();
 
     m_frameData.commandEncoder = createCommandEncoder(m_device, "Clear Screen Encoder");
 

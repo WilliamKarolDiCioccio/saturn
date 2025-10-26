@@ -19,7 +19,7 @@ WGPUAdapter requestAdapter(WGPUInstance _instance, WGPUSurface _surface)
 
     WGPURequestAdapterCallback onAdapterRequestEnded =
         [](WGPURequestAdapterStatus _status, WGPUAdapter _adapter, WGPUStringView _message,
-           void* _userData1, void* _userData2)
+           void* _userData1, [[maybe_unused]] void* _userData2)
     {
         UserData& userData = *reinterpret_cast<UserData*>(_userData1);
 
@@ -36,9 +36,9 @@ WGPUAdapter requestAdapter(WGPUInstance _instance, WGPUSurface _surface)
     };
 
     WGPURequestAdapterCallbackInfo callbackInfo = {
+        .mode = WGPUCallbackMode::WGPUCallbackMode_AllowSpontaneous,
         .callback = onAdapterRequestEnded,
         .userdata1 = (void*)&userData,
-        .userdata2 = nullptr,
     };
 
     WGPURequestAdapterOptions adapterOpts = {};
@@ -79,7 +79,7 @@ bool isAdapterSuitable(WGPUAdapter _adapter)
     }
 #endif
 
-    WGPUSupportedFeatures supportedFeatures;
+    WGPUSupportedFeatures supportedFeatures = {};
 
     wgpuAdapterGetFeatures(_adapter, &supportedFeatures);
 
@@ -89,7 +89,7 @@ bool isAdapterSuitable(WGPUAdapter _adapter)
         return false;
     }
 
-    WGPUAdapterInfo infos;
+    WGPUAdapterInfo infos = {};
 
     wgpuAdapterGetInfo(_adapter, &infos);
 
@@ -102,7 +102,7 @@ bool isAdapterSuitable(WGPUAdapter _adapter)
     return true;
 }
 
-WGPUDevice createDevice(WGPUAdapter adapter)
+WGPUDevice createDevice(WGPUAdapter _adapter)
 {
     struct UserData
     {
@@ -169,6 +169,7 @@ WGPUDevice createDevice(WGPUAdapter adapter)
     };
 
     WGPURequestDeviceCallbackInfo callbackInfo = {
+        .mode = WGPUCallbackMode::WGPUCallbackMode_AllowSpontaneous,
         .callback = onDeviceRequestEnded,
         .userdata1 = (void*)&userData,
         .userdata2 = nullptr,
@@ -179,7 +180,7 @@ WGPUDevice createDevice(WGPUAdapter adapter)
     deviceDesc.deviceLostCallbackInfo = onDeviceLostCallbackInfo;
     deviceDesc.uncapturedErrorCallbackInfo = uncapturedErrorCallbackInfo;
 
-    wgpuAdapterRequestDevice(adapter, &deviceDesc, callbackInfo);
+    wgpuAdapterRequestDevice(_adapter, &deviceDesc, callbackInfo);
 
 #ifdef __EMSCRIPTEN__
     while (!userData.requestEnded)

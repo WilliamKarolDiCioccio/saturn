@@ -20,6 +20,12 @@ class WebGPURenderContext : public RenderContext
         WGPUTextureView targetView;
         WGPURenderPassEncoder renderPass;
         WGPUCommandEncoder commandEncoder;
+
+        FrameData()
+            : surfaceTexture({}),
+              targetView(nullptr),
+              renderPass(nullptr),
+              commandEncoder(nullptr) {};
     } m_frameData;
 
     WGPUInstance m_instance;
