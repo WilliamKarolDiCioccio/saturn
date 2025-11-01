@@ -13,7 +13,8 @@ namespace win32
 
 pieces::RefResult<core::Platform, std::string> Win32Platform::initialize()
 {
-    HRESULT hres = CoInitializeEx(0, COINIT_APARTMENTTHREADED);
+    HRESULT hres = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
     if (FAILED(hres))
     {
         return pieces::ErrRef<core::Platform, std::string>("Failed to initialize COM library.");

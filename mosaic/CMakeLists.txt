@@ -14,6 +14,8 @@ set(FRAMEWORK_SRC
     "src/core/tracer.cpp"
     "src/core/timer.cpp"
     "src/core/cmd_line_parser.cpp"
+    # Execution
+    "src/exec/thread_pool.cpp"
     # Window
     "src/window/window.cpp"
     "src/window/window_system.cpp"

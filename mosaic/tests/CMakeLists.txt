@@ -1,9 +1,12 @@
 set(TEST_SOURCES
   "unit/ecs_test.cpp"
   "unit/typeless_vector_test.cpp"
-  "unit/typeless_sparse_set_test.cpp")
+  "unit/typeless_sparse_set_test.cpp"
+  "unit/thread_pool_test.cpp")
 
 add_executable(mosaic_tests ${TEST_SOURCES} "main.cpp")
+
+target_include_directories(mosaic_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/mocks")
 
 target_link_libraries(
   mosaic_tests PRIVATE mosaic GTest::gtest GTest::gtest_main GTest::gmock

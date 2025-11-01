@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "dependencies": [
     "benchmark",
+    "bfgroup-lyra",
     "color-console",
     "fmt",
     {
@@ -31,6 +32,6 @@
       "name": "vulkan-utility-libraries",
       "platform": "!emscripten"
     },
-    "bfgroup-lyra"
+    "concurrentqueue"
   ]
 }
