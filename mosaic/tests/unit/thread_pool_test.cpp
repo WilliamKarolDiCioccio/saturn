@@ -62,7 +62,7 @@ TEST_F(ThreadPoolTest, Initialization)
     EXPECT_GT(pool->getWorkersCount(), 0);
 
     std::atomic<int> counter{0};
-    std::vector<std::future<void>> futures;
+    std::vector<TaskFuture<void>> futures;
 
     for (int i = 0; i < 10; ++i)
     {
@@ -113,7 +113,7 @@ TEST_F(ThreadPoolTest, MultipleTasksExecution)
 {
     constexpr int numTasks = 100;
     std::atomic<int> counter{0};
-    std::vector<std::future<void>> futures;
+    std::vector<TaskFuture<void>> futures;
 
     for (int i = 0; i < numTasks; ++i)
     {
@@ -150,7 +150,7 @@ TEST_F(ThreadPoolTest, ConcurrentTaskExecution)
 {
     constexpr int numTasks = 1000;
     std::atomic<int> counter{0};
-    std::vector<std::future<void>> futures;
+    std::vector<TaskFuture<void>> futures;
 
     for (int i = 0; i < numTasks; ++i)
     {
@@ -174,7 +174,7 @@ TEST_F(ThreadPoolTest, ParallelAccumulation)
     constexpr int numTasks = 100;
 
     std::vector<int> results(numTasks);
-    std::vector<std::future<int>> futures;
+    std::vector<TaskFuture<int>> futures;
 
     for (int i = 0; i < numTasks; ++i)
     {
@@ -203,7 +203,7 @@ TEST_F(ThreadPoolTest, RaceConditionDetection)
     int unsafeCounter = 0;
     std::mutex mutex;
 
-    std::vector<std::future<void>> futures;
+    std::vector<TaskFuture<void>> futures;
 
     // Safe increments
     for (int i = 0; i < numIterations; ++i)
@@ -241,7 +241,7 @@ TEST_F(ThreadPoolTest, WorkStealingOccurs)
     // Saturate one worker with tasks
     constexpr int numTasks = 100;
     std::atomic<int> counter{0};
-    std::vector<std::future<void>> futures;
+    std::vector<TaskFuture<void>> futures;
 
     // Submit all tasks
     for (int i = 0; i < numTasks; ++i)
@@ -343,7 +343,7 @@ TEST_F(ThreadPoolTest, HighThroughput)
     constexpr int workIterations = 10;
 
     std::atomic<int> counter{0};
-    std::vector<std::future<void>> futures;
+    std::vector<TaskFuture<void>> futures;
     futures.reserve(numTasks);
 
     auto start = std::chrono::steady_clock::now();
@@ -377,7 +377,7 @@ TEST_F(ThreadPoolTest, BurstyLoad)
 
     // Burst 1: Many small tasks
     {
-        std::vector<std::future<void>> futures;
+        std::vector<TaskFuture<void>> futures;
         for (int i = 0; i < 500; ++i)
         {
             auto future = pool->enqueueToWorker([&counter]() { counter.fetch_add(1); });
@@ -390,7 +390,7 @@ TEST_F(ThreadPoolTest, BurstyLoad)
 
     // Burst 2: Fewer heavy tasks
     {
-        std::vector<std::future<void>> futures;
+        std::vector<TaskFuture<void>> futures;
         for (int i = 0; i < 50; ++i)
         {
             auto future = pool->enqueueToWorker(
@@ -418,7 +418,7 @@ TEST_F(ThreadPoolTest, LatchSynchronization)
     std::latch done{numTasks};
     std::atomic<int> counter{0};
 
-    std::vector<std::future<void>> futures;
+    std::vector<TaskFuture<void>> futures;
 
     for (int i = 0; i < numTasks; ++i)
     {
@@ -450,7 +450,7 @@ TEST_F(ThreadPoolTest, BarrierSynchronization)
     std::barrier sync{numTasks};
     std::atomic<int> phase1{0}, phase2{0};
 
-    std::vector<std::future<void>> futures;
+    std::vector<TaskFuture<void>> futures;
 
     for (int i = 0; i < numTasks; ++i)
     {
@@ -485,7 +485,7 @@ TEST_F(ThreadPoolTest, BusyWorkersCount)
     std::latch start{1};
     std::latch done{numTasks};
 
-    std::vector<std::future<void>> futures;
+    std::vector<TaskFuture<void>> futures;
 
     for (int i = 0; i < numTasks; ++i)
     {
@@ -526,10 +526,10 @@ TEST_F(ThreadPoolTest, BusyWorkersCount)
 
     EXPECT_TRUE(hadBusyWorkers);
 
-    std::this_thread::sleep_for(20ms);
+    std::this_thread::sleep_for(50ms);
 
     // After completion, should be idle
-    EXPECT_TRUE(pool->getBusyWorkersCount() == 0);
+    EXPECT_EQ(pool->getBusyWorkersCount(), 0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -31,13 +31,13 @@ struct ThreadPool::Impl
     static bool s_created;
 
     // fixed after initialization (no need for atomic)
-    uint16_t workersCount = 0;
+    uint32_t workersCount = 0;
 
     moodycamel::ConcurrentQueue<std::move_only_function<void()>> globalTaskQueue;
     std::vector<std::unique_ptr<ThreadWorker>> workers;
 
     // Aligned to 64 bytes boundaries to avoid false sharing
-    alignas(64) std::atomic<uint16_t> idleWorkersCount;
+    alignas(64) std::atomic<uint32_t> idleWorkersCount;
     alignas(64) std::atomic<bool> stop;
 
     Impl() : workersCount(0), idleWorkersCount(0), stop(false)
@@ -75,7 +75,7 @@ class ThreadWorker final
     std::mutex m_cvMutex;
 
    public:
-    uint16_t m_idx;
+    uint32_t m_idx;
     size_t m_tid;
 
     std::string m_debugName;
@@ -86,7 +86,7 @@ class ThreadWorker final
     moodycamel::ConcurrentQueue<std::move_only_function<void()>> m_taskQueue;
 
    public:
-    explicit ThreadWorker(uint16_t _idx, const std::string& _debugName, ThreadPool::Impl* _pool,
+    explicit ThreadWorker(uint32_t _idx, const std::string& _debugName, ThreadPool::Impl* _pool,
                           WorkerSharingMode _sharingMode = worker_sharing_presets::shared)
         : m_pool(_pool),
           m_idx(_idx),
@@ -164,25 +164,23 @@ class ThreadWorker final
         return true;
     }
 
-    bool shouldSteal() { return true; }
-
     bool tryStealing(std::move_only_function<void()>& _outTask) noexcept
     {
         const auto& impl = *m_pool;
         const auto& workers = impl.workers;
-        const uint16_t n = impl.workersCount;
+        const uint32_t n = impl.workersCount;
 
         if (n <= 1) return false;
 
-        static thread_local uint16_t nextStart = 0;
-        const uint16_t start = nextStart;
+        static thread_local uint32_t nextStart = 0;
+        const uint32_t start = nextStart;
         nextStart = (nextStart + 1) % n;
 
         const auto thisWorker = this;
 
-        for (uint16_t i = 0; i < n; ++i)
+        for (uint32_t i = 0; i < n; ++i)
         {
-            const uint16_t victimIdx = (start + i) % n;
+            const uint32_t victimIdx = (start + i) % n;
             const auto victim = workers[victimIdx].get();
 
             if (victim == thisWorker) continue;
@@ -214,9 +212,18 @@ class ThreadWorker final
 
     void executeTask(std::move_only_function<void()>& task) noexcept
     {
-        auto& impl = *m_pool;
-
-        task();
+        try
+        {
+            task();
+        }
+        catch (const std::exception& e)
+        {
+            MOSAIC_ERROR("Worker {}: task threw std::exception: {}", m_idx, e.what());
+        }
+        catch (...)
+        {
+            MOSAIC_ERROR("Worker {}: task threw unknown exception.", m_idx);
+        }
 
         task = nullptr;
     }
@@ -252,14 +259,14 @@ pieces::RefResult<ThreadPool, std::string> ThreadPool::initialize() noexcept
     int logical = static_cast<int>(cpuInfo.logicalCores);
 
     // -1 to leave one thread for main flow
-    uint16_t workersCount =
-        static_cast<uint16_t>(std::max(logical - 1, static_cast<int>(k_minThreads)));
+    uint32_t workersCount =
+        static_cast<uint32_t>(std::max(logical - 1, static_cast<int>(k_minThreads)));
 
     m_impl->workersCount = workersCount;
     m_impl->workers.reserve(workersCount);
 
-    for (uint16_t i = 0; i < workersCount; ++i) setupWorker(i);
-    for (uint16_t i = 0; i < workersCount; ++i) startupWorker(i);
+    for (uint32_t i = 0; i < workersCount; ++i) setupWorker(i);
+    for (uint32_t i = 0; i < workersCount; ++i) startupWorker(i);
 
     return pieces::OkRef<ThreadPool, std::string>(*this);
 }
@@ -278,7 +285,7 @@ void ThreadPool::shutdown() noexcept
     m_impl->workers.clear();
 }
 
-void ThreadPool::setWorkerAffinity(uint16_t _workerId, size_t _cpuCoreId) noexcept
+void ThreadPool::setWorkerAffinity(uint32_t _workerId, size_t _cpuCoreId) noexcept
 {
     ThreadWorker* worker = getWorkerByIdx(_workerId);
 
@@ -303,7 +310,7 @@ void ThreadPool::setWorkerAffinity(uint16_t _workerId, size_t _cpuCoreId) noexce
 #endif
 }
 
-void ThreadPool::setWorkerSharingMode(uint16_t _workerId, WorkerSharingMode _sharingMode) noexcept
+void ThreadPool::setWorkerSharingMode(uint32_t _workerId, WorkerSharingMode _sharingMode) noexcept
 {
     ThreadWorker* worker = getWorkerByIdx(_workerId);
 
@@ -313,7 +320,7 @@ void ThreadPool::setWorkerSharingMode(uint16_t _workerId, WorkerSharingMode _sha
         return;
     }
 
-    static std::atomic<uint16_t> s_indirectAcceptingWorkers{0};
+    static std::atomic<uint32_t> s_indirectAcceptingWorkers{0};
 
     bool currentlyAcceptsIndirect =
         mosaic::utils::hasFlag(worker->m_sharingMode, WorkerSharingMode::accept_indirect);
@@ -346,16 +353,16 @@ bool ThreadPool::isRunning() const noexcept
     return !m_impl->stop.load(std::memory_order_relaxed);
 }
 
-uint16_t ThreadPool::getWorkersCount() const noexcept { return m_impl->workersCount; }
+uint32_t ThreadPool::getWorkersCount() const noexcept { return m_impl->workersCount; }
 
-uint16_t ThreadPool::getBusyWorkersCount() const noexcept
+uint32_t ThreadPool::getBusyWorkersCount() const noexcept
 {
-    return m_impl->workersCount - m_impl->idleWorkersCount.load(std::memory_order_relaxed);
+    return m_impl->workersCount - m_impl->idleWorkersCount.load(std::memory_order_acquire);
 }
 
-uint16_t ThreadPool::getIdleWorkersCount() const noexcept
+uint32_t ThreadPool::getIdleWorkersCount() const noexcept
 {
-    return m_impl->workersCount - getBusyWorkersCount();
+    return m_impl->idleWorkersCount.load(std::memory_order_acquire);
 }
 
 ThreadWorker* ThreadPool::getRandomWorker() const noexcept
@@ -363,17 +370,17 @@ ThreadWorker* ThreadPool::getRandomWorker() const noexcept
     if (m_impl->workers.empty()) return nullptr;
 
     static thread_local std::mt19937_64 rng{std::random_device{}()};
-    std::uniform_int_distribution<uint16_t> dist{
+    std::uniform_int_distribution<uint32_t> dist{
         0,
-        static_cast<uint16_t>(m_impl->workersCount - 1),
+        static_cast<uint32_t>(m_impl->workersCount - 1),
     };
 
-    uint16_t idx = dist(rng);
+    uint32_t idx = dist(rng);
 
     return m_impl->workers[idx].get();
 }
 
-ThreadWorker* ThreadPool::getWorkerByIdx(uint16_t _idx) const noexcept
+ThreadWorker* ThreadPool::getWorkerByIdx(uint32_t _idx) const noexcept
 {
     if (_idx >= m_impl->workersCount)
     {
@@ -396,14 +403,14 @@ ThreadWorker* ThreadPool::getWorkerByDebugName(const std::string& _debugName) co
     return nullptr;
 }
 
-void ThreadPool::setupWorker(uint16_t _idx)
+void ThreadPool::setupWorker(uint32_t _idx)
 {
     std::string workerDebugName = "ThreadWorker-" + std::to_string(_idx);
 
     m_impl->workers.emplace_back(std::make_unique<ThreadWorker>(_idx, workerDebugName, m_impl));
 }
 
-void ThreadPool::startupWorker(uint16_t _idx)
+void ThreadPool::startupWorker(uint32_t _idx)
 {
     auto worker = m_impl->workers[_idx].get();
 
@@ -420,7 +427,7 @@ bool ThreadPool::assignTaskToWorker(std::move_only_function<void()> _task) noexc
         return false;
     }
 
-    for (uint16_t i = 0; i < m_impl->workersCount; ++i)
+    for (uint32_t i = 0; i < m_impl->workersCount; ++i)
     {
         ThreadWorker* worker = getRandomWorker();
 
@@ -447,7 +454,7 @@ bool ThreadPool::assignTaskToWorker(std::move_only_function<void()> _task) noexc
     return true;
 }
 
-bool ThreadPool::assignTaskToWorkerById(uint16_t _idx,
+bool ThreadPool::assignTaskToWorkerById(uint32_t _idx,
                                         std::move_only_function<void()> _task) noexcept
 {
     ThreadWorker* worker = getWorkerByIdx(_idx);

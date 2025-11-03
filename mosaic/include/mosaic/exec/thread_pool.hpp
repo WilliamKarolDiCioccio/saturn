@@ -2,15 +2,14 @@
 
 #include "mosaic/defines.hpp"
 
-#include <future>
 #include <functional>
-#include <memory>
-#include <chrono>
 
 #include <pieces/core/result.hpp>
 #include <pieces/utils/enum_flags.hpp>
 
 #include "mosaic/core/logger.hpp"
+
+#include "task_future.hpp"
 
 namespace mosaic
 {
@@ -97,18 +96,18 @@ class MOSAIC_API ThreadPool
      * @tparam Args The types of the arguments to forward to the task.
      * @param f The callable to execute.
      * @param args The arguments to forward to the task.
-     * @return std::optional<std::future<std::invoke_result_t<std::decay_t<F>,
+     * @return std::optional<TaskFuture<std::invoke_result_t<std::decay_t<F>,
      * std::decay_t<Args>...>>>
      *
      * @see assignTaskToGlobal for details on task assignment behavior.
      */
     template <typename F, typename... Args>
-    std::optional<std::future<std::invoke_result_t<std::decay_t<F>, std::decay_t<Args>...>>>
+    std::optional<TaskFuture<std::invoke_result_t<std::decay_t<F>, std::decay_t<Args>...>>>
     enqueueToGlobal(F&& f, Args&&... args)
     {
         using Ret = std::invoke_result_t<std::decay_t<F>, std::decay_t<Args>...>;
 
-        auto [wrapper, future] = makeTask(std::forward<F>(f), std::forward<Args>(args)...);
+        auto [wrapper, future] = makeTaskPair(std::forward<F>(f), std::forward<Args>(args)...);
 
         if (!assignTaskToGlobal(std::move(wrapper))) return std::nullopt;
 
@@ -123,18 +122,18 @@ class MOSAIC_API ThreadPool
      * @tparam Args The types of the arguments to forward to the task.
      * @param _f The callable to execute.
      * @param _args The arguments to forward to the task.
-     * @return std::optional<std::future<std::invoke_result_t<std::decay_t<F>,
+     * @return std::optional<TaskFuture<std::invoke_result_t<std::decay_t<F>,
      * std::decay_t<Args>...>>>
      *
      * @see assignTaskToWorker for details on task assignment behavior.
      */
     template <typename F, typename... Args>
-    std::optional<std::future<std::invoke_result_t<std::decay_t<F>, std::decay_t<Args>...>>>
+    std::optional<TaskFuture<std::invoke_result_t<std::decay_t<F>, std::decay_t<Args>...>>>
     enqueueToWorker(F&& _f, Args&&... _args)
     {
         using Ret = std::invoke_result_t<std::decay_t<F>, std::decay_t<Args>...>;
 
-        auto [wrapper, future] = makeTask(std::forward<F>(_f), std::forward<Args>(_args)...);
+        auto [wrapper, future] = makeTaskPair(std::forward<F>(_f), std::forward<Args>(_args)...);
 
         if (!assignTaskToWorker(std::move(wrapper))) return std::nullopt;
 
@@ -149,18 +148,18 @@ class MOSAIC_API ThreadPool
      * @param _id The ID of the worker thread.
      * @param _f The callable to execute.
      * @param _args The arguments to forward to the task.
-     * @return std::optional<std::future<std::invoke_result_t<std::decay_t<F>,
+     * @return std::optional<TaskFuture<std::invoke_result_t<std::decay_t<F>,
      * std::decay_t<Args>...>>>
      *
      * @see assignTaskToWorkerById for details on task assignment behavior.
      */
     template <typename F, typename... Args>
-    std::optional<std::future<std::invoke_result_t<std::decay_t<F>, std::decay_t<Args>...>>>
-    enqueueToWorkerById(uint16_t _id, F&& _f, Args&&... _args)
+    std::optional<TaskFuture<std::invoke_result_t<std::decay_t<F>, std::decay_t<Args>...>>>
+    enqueueToWorkerById(uint32_t _id, F&& _f, Args&&... _args)
     {
         using Ret = std::invoke_result_t<std::decay_t<F>, std::decay_t<Args>...>;
 
-        auto [wrapper, future] = makeTask(std::forward<F>(_f), std::forward<Args>(_args)...);
+        auto [wrapper, future] = makeTaskPair(std::forward<F>(_f), std::forward<Args>(_args)...);
 
         if (!assignTaskToWorkerById(_id, std::move(wrapper))) return std::nullopt;
 
@@ -175,38 +174,38 @@ class MOSAIC_API ThreadPool
      * @param _debugName The debug name of the worker thread.
      * @param _f The callable to execute.
      * @param _args The arguments to forward to the task.
-     * @return std::optional<std::future<std::invoke_result_t<std::decay_t<F>,
+     * @return std::optional<TaskFuture<std::invoke_result_t<std::decay_t<F>,
      * std::decay_t<Args>...>>>
      *
      * @see assignTaskToWorkerByDebugName for details on task assignment behavior.
      */
     template <typename F, typename... Args>
-    std::optional<std::future<std::invoke_result_t<std::decay_t<F>, std::decay_t<Args>...>>>
+    std::optional<TaskFuture<std::invoke_result_t<std::decay_t<F>, std::decay_t<Args>...>>>
     enqueueToWorkerByDebugName(const std::string& _debugName, F&& _f, Args&&... _args)
     {
         using Ret = std::invoke_result_t<std::decay_t<F>, std::decay_t<Args>...>;
 
-        auto [wrapper, future] = makeTask(std::forward<F>(_f), std::forward<Args>(_args)...);
+        auto [wrapper, future] = makeTaskPair(std::forward<F>(_f), std::forward<Args>(_args)...);
 
         if (!assignTaskToWorkerByDebugName(_debugName, std::move(wrapper))) return std::nullopt;
 
         return std::make_optional(std::move(future));
     }
 
-    void setWorkerAffinity(uint16_t _workerId, size_t _cpuCoreId) noexcept;
-    void setWorkerSharingMode(uint16_t _workerId, WorkerSharingMode _sharingMode) noexcept;
+    void setWorkerAffinity(uint32_t _workerId, size_t _cpuCoreId) noexcept;
+    void setWorkerSharingMode(uint32_t _workerId, WorkerSharingMode _sharingMode) noexcept;
 
     [[nodiscard]] bool isRunning() const noexcept;
 
-    [[nodiscard]] uint16_t getWorkersCount() const noexcept;
-    [[nodiscard]] uint16_t getBusyWorkersCount() const noexcept;
-    [[nodiscard]] uint16_t getIdleWorkersCount() const noexcept;
+    [[nodiscard]] uint32_t getWorkersCount() const noexcept;
+    [[nodiscard]] uint32_t getBusyWorkersCount() const noexcept;
+    [[nodiscard]] uint32_t getIdleWorkersCount() const noexcept;
 
     /// @brief Get a random worker from the pool using a uniform distribution.
     [[nodiscard]] ThreadWorker* getRandomWorker() const noexcept;
 
     /// @brief Get a worker by its unique ID.
-    [[nodiscard]] ThreadWorker* getWorkerByIdx(uint16_t _idx) const noexcept;
+    [[nodiscard]] ThreadWorker* getWorkerByIdx(uint32_t _idx) const noexcept;
 
     /// @brief Get a worker by its debug name.
     [[nodiscard]] ThreadWorker* getWorkerByDebugName(const std::string& _debugName) const noexcept;
@@ -219,40 +218,8 @@ class MOSAIC_API ThreadPool
     }
 
    private:
-    template <typename F, typename... Args>
-    inline auto makeTask(F&& f, Args&&... args)
-    {
-        using Ret = std::invoke_result_t<std::decay_t<F>, std::decay_t<Args>...>;
-
-        auto promise = std::make_shared<std::promise<Ret>>();
-        std::future<Ret> future = promise->get_future();
-
-        std::move_only_function<void()> wrapper =
-            [promise, f = std::forward<F>(f), ... args = std::forward<Args>(args)]() mutable
-        {
-            try
-            {
-                if constexpr (std::is_void_v<Ret>)
-                {
-                    std::invoke(std::move(f), std::move(args)...);
-                    promise->set_value();
-                }
-                else
-                {
-                    promise->set_value(std::invoke(std::move(f), std::move(args)...));
-                }
-            }
-            catch (...)
-            {
-                promise->set_exception(std::current_exception());
-            }
-        };
-
-        return std::make_pair(std::move(wrapper), std::move(future));
-    }
-
-    void setupWorker(uint16_t _idx);
-    void startupWorker(uint16_t _idx);
+    void setupWorker(uint32_t _idx);
+    void startupWorker(uint32_t _idx);
 
     /**
      * @brief Tries to perform optimal assignment of a task to a worker.
@@ -270,7 +237,7 @@ class MOSAIC_API ThreadPool
      * @return false if the thread pool is shutting down or the worker does not allow direct task
      * assignments.
      */
-    bool assignTaskToWorkerById(uint16_t _idx, std::move_only_function<void()> _task) noexcept;
+    bool assignTaskToWorkerById(uint32_t _idx, std::move_only_function<void()> _task) noexcept;
 
     /**
      * @brief Assigns a task directly to a specific worker by its debug name.
