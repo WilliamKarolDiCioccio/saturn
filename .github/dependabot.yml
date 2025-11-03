@@ -1,0 +1,33 @@
+version: 2
+
+updates:
+  # CI
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  # VCPKG C++ core
+  - package-ecosystem: "vcpkg"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  # Flutter editor app
+  - package-ecosystem: "pub"
+    directory: "/editor/app"
+    schedule:
+      interval: "weekly"
+
+  # Dart CLI tools
+  - package-ecosystem: "pub"
+    directory: "/editor/tools"
+    schedule:
+      interval: "weekly"
+
+  # Editor-specific reusable packages (melos packages)
+  - package-ecosystem: "pub"
+    directory: "/editor/packages"
+    schedule:
+      interval: "weekly"
