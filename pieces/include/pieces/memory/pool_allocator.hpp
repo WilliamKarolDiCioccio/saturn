@@ -33,7 +33,7 @@ enum class PoolAllocatorPolicy : uint8_t
  * non-trivially-destructible types.
  */
 template <typename T, PoolAllocatorPolicy Policy = PoolAllocatorPolicy::automatic_indexing>
-class PoolAllocator final : public NonCopyable
+class PoolAllocator final : public NonCopyable<PoolAllocator<T, Policy>>
 {
    public:
     using Byte = uint8_t;

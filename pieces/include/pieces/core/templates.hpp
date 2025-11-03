@@ -119,28 +119,30 @@ concept Allocator = Movable<A> && requires(A a, size_t n) {
 
 // Class templates for non-copyable and non-movable types
 
+template <typename T>
 class NonCopyable
 {
-   protected:
+   public:
     NonCopyable() = default;
-    virtual ~NonCopyable() = default;
+    ~NonCopyable() = default;
 
-   private:
     NonCopyable(NonCopyable &&) = default;
     NonCopyable &operator=(NonCopyable &&) = default;
+
     NonCopyable(const NonCopyable &) = delete;
     NonCopyable &operator=(const NonCopyable &) = delete;
 };
 
+template <typename T>
 class NonMovable
 {
-   protected:
+   public:
     NonMovable() = default;
-    virtual ~NonMovable() = default;
+    ~NonMovable() = default;
 
-   private:
     NonMovable(const NonMovable &) = default;
     NonMovable &operator=(const NonMovable &) = default;
+
     NonMovable(NonMovable &&) = delete;
     NonMovable &operator=(NonMovable &&) = delete;
 };

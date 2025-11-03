@@ -40,7 +40,7 @@ enum class ContiguousAllocatorPolicy : uint8_t
  * non-trivially-destructible types.
  */
 template <typename T, ContiguousAllocatorPolicy Policy = ContiguousAllocatorPolicy::linear>
-class ContiguousAllocatorBase final : public NonCopyable
+class ContiguousAllocatorBase final : public NonCopyable<ContiguousAllocatorBase<T, Policy>>
 {
    public:
     using Byte = uint8_t;

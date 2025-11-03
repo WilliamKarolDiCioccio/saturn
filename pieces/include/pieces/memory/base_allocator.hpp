@@ -16,7 +16,7 @@ namespace pieces
  * @tparam T The type of objects to allocate memory for.
  */
 template <typename T>
-class BaseAllocator final : public NonCopyable, NonMovable
+class BaseAllocator final : public NonCopyable<BaseAllocator<T>>, NonMovable<BaseAllocator<T>>
 {
    public:
     using Byte = uint8_t;

@@ -16,7 +16,8 @@ namespace pieces
  */
 template <typename T, typename A = BaseAllocator<T>>
     requires std::is_trivially_destructible_v<T>
-class ProxyAllocator final : public NonCopyable, NonMovable
+class ProxyAllocator final : public NonCopyable<ProxyAllocator<T, A>>,
+                             NonMovable<ProxyAllocator<T, A>>
 {
    public:
     using Byte = A::Byte;
