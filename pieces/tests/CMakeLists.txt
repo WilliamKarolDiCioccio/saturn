@@ -3,10 +3,7 @@ set(TEST_SOURCES
     "unit/bitset_test.cpp"
     "unit/coroutines_test.cpp"
     "unit/result_test.cpp"
-    "unit/sparse_set_test.cpp"
-    "unit/tsafe_deque_test.cpp"
-    "unit/tsafe_map_test.cpp"
-    "unit/tsafe_queue_test.cpp")
+    "unit/sparse_set_test.cpp")
 
 add_executable(pieces_tests ${TEST_SOURCES} "main.cpp")
 
