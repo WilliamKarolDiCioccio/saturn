@@ -8,6 +8,10 @@
 
 using namespace pieces;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Test Fixture for LinearAllocator
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 class LinearAllocatorTest : public ::testing::Test
 {
    protected:
@@ -15,7 +19,6 @@ class LinearAllocatorTest : public ::testing::Test
     LinearAllocator<int> linearAlloc{kCapacity};
 };
 
-// Test fixture for LinearAllocator
 TEST_F(LinearAllocatorTest, AllocateWithinCapacity)
 {
     int* ptr1 = linearAlloc.allocate(10);
@@ -105,7 +108,10 @@ TEST_F(LinearAllocatorTest, EqualityOperators)
     EXPECT_TRUE(alloc3 != alloc2);
 }
 
-// Test fixture for StackAllocator
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Test Fixture for StackAllocator
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 class StackAllocatorTest : public ::testing::Test
 {
    protected:
@@ -132,7 +138,10 @@ TEST_F(StackAllocatorTest, DeallocateWrongOrderThrows)
     EXPECT_THROW(stackAlloc.deallocate(ptr1, 1), std::runtime_error);
 }
 
-// Test fixture for CircularAllocator
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Test Fixture for CircularAllocator
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 class CircularAllocatorTest : public ::testing::Test
 {
    protected:
@@ -186,6 +195,10 @@ TEST_F(AutomaticIdxPoolAllocatorTest, AllocateCountFailsIfNotEnoughContiguousSlo
 
     EXPECT_EQ(poolAlloc.allocate(4), nullptr);
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Test Fixture for ManualIndexingPoolAllocator
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class ManualIdxPoolAllocatorTest : public ::testing::Test
 {

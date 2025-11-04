@@ -7,17 +7,22 @@
 
 using namespace pieces;
 
-// A simple coroutine that returns an int via Task<int>
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Helpers and Test Coroutines
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 Task<int> returnFive() { co_return 5; }
 
-// A coroutine that throws an exception
 Task<int> throwError()
 {
     throw std::runtime_error("oops");
     co_return 0; // unreachable
 }
 
-// Helper for testing LambdaAwaitable directly
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Tests
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 TEST(LambdaAwaitableTest, ReadySuspendResume)
 {
     bool readyCalled = false;
@@ -51,7 +56,6 @@ TEST(LambdaAwaitableTest, ReadySuspendResume)
     EXPECT_TRUE(resumeCalled);
 }
 
-// Test makeAwaitable exception propagation in resume
 TEST(LambdaAwaitableTest, ResumeThrows)
 {
     auto awaitable = makeAwaitable([]() { return true; }, [](std::coroutine_handle<>) {},
@@ -61,7 +65,6 @@ TEST(LambdaAwaitableTest, ResumeThrows)
     EXPECT_THROW(awaitable.await_resume(), std::logic_error);
 }
 
-// Compile-time tests for promise_type traits
 TEST(PromiseTypeInt, InitialFinalSuspendNoexcept)
 {
     using P = Task<int>::promise_type;

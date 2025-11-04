@@ -7,7 +7,21 @@
 
 using namespace pieces;
 
-// Test UnwrapRef
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Helpers for Testing
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Result<int, std::string> multiplyByTwo(int v) { return Ok<int, std::string>(v * 2); }
+
+Result<int, std::string> failWithMessage(const std::string& msg)
+{
+    return Err<int, std::string>(std::string("Error: ") + msg);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Tests
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 TEST(UnwrapRefTest, PlainType)
 {
     int x = 42;
@@ -33,15 +47,6 @@ TEST(UnwrapRefTest, ReferenceWrapper)
     EXPECT_EQ(x, 20);
 }
 
-// Helper functions for chaining
-Result<int, std::string> multiplyByTwo(int v) { return Ok<int, std::string>(v * 2); }
-
-Result<int, std::string> failWithMessage(const std::string& msg)
-{
-    return Err<int, std::string>(std::string("Error: ") + msg);
-}
-
-// Test Result basic functionality
 TEST(ResultTest, OkAndErrStates)
 {
     auto okRes = Result<int, std::string>::Ok(123);
@@ -67,7 +72,6 @@ TEST(ResultTest, ErrorThrowsOnOk)
     EXPECT_THROW(okRes.error(), std::runtime_error);
 }
 
-// Test andThen chaining
 TEST(ResultTest, AndThenChainsOnOk)
 {
     auto okRes = Ok<int, std::string>(5);
@@ -86,7 +90,6 @@ TEST(ResultTest, AndThenShortCircuitsOnErr)
     EXPECT_EQ(chained.error(), "bad");
 }
 
-// Test orElse chaining
 TEST(ResultTest, OrElseChainsOnErr)
 {
     auto errRes = Err<int, std::string>("problem");

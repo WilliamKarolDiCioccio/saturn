@@ -18,7 +18,6 @@ struct Bar
     double d;
 };
 
-// Test construction with initial capacity
 TEST(TypelessVectorTest, ConstructWithCapacity)
 {
     TypelessVector vec(sizeof(Foo), 4);
@@ -27,7 +26,6 @@ TEST(TypelessVectorTest, ConstructWithCapacity)
     EXPECT_EQ(vec.stride(), sizeof(Foo));
 }
 
-// Test pushing back elements and accessing them
 TEST(TypelessVectorTest, PushAndAccess)
 {
     TypelessVector vec(sizeof(Foo), 2);
@@ -47,7 +45,6 @@ TEST(TypelessVectorTest, PushAndAccess)
     EXPECT_FLOAT_EQ(r2->y, -1.5f);
 }
 
-// Test automatic growth of capacity
 TEST(TypelessVectorTest, GrowsCapacityAutomatically)
 {
     TypelessVector vec(sizeof(int), 1);
@@ -67,7 +64,6 @@ TEST(TypelessVectorTest, GrowsCapacityAutomatically)
     EXPECT_EQ(*reinterpret_cast<int*>(vec[2]), 3);
 }
 
-// Test reserve() increases capacity without changing size
 TEST(TypelessVectorTest, ReserveIncreasesCapacity)
 {
     TypelessVector vec(sizeof(int), 2);
@@ -77,7 +73,6 @@ TEST(TypelessVectorTest, ReserveIncreasesCapacity)
     EXPECT_GE(vec.capacity(), 10);
 }
 
-// Test shrinkToFit() reduces capacity to size
 TEST(TypelessVectorTest, ShrinkToFitReducesCapacity)
 {
     TypelessVector vec(sizeof(int), 5);
@@ -92,7 +87,6 @@ TEST(TypelessVectorTest, ShrinkToFitReducesCapacity)
     EXPECT_EQ(vec.capacity(), 2);
 }
 
-// Test resize changes size and possibly capacity
 TEST(TypelessVectorTest, ResizeExpandsSize)
 {
     TypelessVector vec(sizeof(int), 2);
@@ -101,7 +95,6 @@ TEST(TypelessVectorTest, ResizeExpandsSize)
     EXPECT_GE(vec.capacity(), 5);
 }
 
-// Test clear resets size but not capacity
 TEST(TypelessVectorTest, ClearResetsSizeButNotCapacity)
 {
     TypelessVector vec(sizeof(int), 4);
@@ -117,7 +110,6 @@ TEST(TypelessVectorTest, ClearResetsSizeButNotCapacity)
     EXPECT_EQ(vec.capacity(), 4); // unchanged
 }
 
-// Test popBack() removes the last element
 TEST(TypelessVectorTest, PopBackRemovesLast)
 {
     TypelessVector vec(sizeof(int), 3);
@@ -132,7 +124,6 @@ TEST(TypelessVectorTest, PopBackRemovesLast)
     EXPECT_EQ(*reinterpret_cast<int*>(vec[0]), 5);
 }
 
-// Test erase removes element at index and swaps with last
 TEST(TypelessVectorTest, EraseRemovesAndSwapsLast)
 {
     TypelessVector vec(sizeof(int), 3);
@@ -155,7 +146,6 @@ TEST(TypelessVectorTest, EraseRemovesAndSwapsLast)
     EXPECT_EQ(*r1, 3);
 }
 
-// Test with different types but same stride
 TEST(TypelessVectorTest, WorksWithDifferentTypesSameStride)
 {
     size_t stride = std::max(sizeof(Foo), sizeof(Bar));
@@ -177,7 +167,6 @@ TEST(TypelessVectorTest, WorksWithDifferentTypesSameStride)
     EXPECT_DOUBLE_EQ(r2->d, 99.9);
 }
 
-// Test iterator functionality
 TEST(TypelessVectorTest, IterateByStride)
 {
     TypelessVector vec(sizeof(int), 3);

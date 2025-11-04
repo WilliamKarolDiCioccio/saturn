@@ -12,14 +12,16 @@ using K = size_t;
 using T = int;
 using SparseSetType = SparseSet<K, T, 64, true>;
 
-// Test fixture
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Test Fixture
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 class SparseSetTest : public ::testing::Test
 {
    protected:
     SparseSetType set;
 };
 
-// Test insertion of keys
 TEST_F(SparseSetTest, InsertAndContains)
 {
     EXPECT_FALSE(set.contains(1));
@@ -35,7 +37,6 @@ TEST_F(SparseSetTest, InsertAndContains)
     EXPECT_EQ(set.get(1).unwrap(), 200);
 }
 
-// Test removal of keys
 TEST_F(SparseSetTest, RemoveKey)
 {
     set.insert(3, 300);
@@ -50,10 +51,8 @@ TEST_F(SparseSetTest, RemoveKey)
     EXPECT_TRUE(set.contains(5));
 }
 
-// Test get throws on missing key
 TEST_F(SparseSetTest, GetMissingReturn) { EXPECT_EQ(set.get(10).error(), ErrorCode::out_of_range); }
 
-// Test clear
 TEST_F(SparseSetTest, ClearEmptiesSet)
 {
     set.insert(7, 700);
@@ -68,7 +67,6 @@ TEST_F(SparseSetTest, ClearEmptiesSet)
     EXPECT_FALSE(set.contains(8));
 }
 
-// Test reserve does not break functionality
 TEST_F(SparseSetTest, ReserveCapacity)
 {
     // Reserve sparse capacity for keys up to 100 and values count 5
@@ -88,7 +86,6 @@ TEST_F(SparseSetTest, ReserveCapacity)
     EXPECT_EQ(set.size(), 5);
 }
 
-// Test iteration over keys and values maintains dense order
 TEST_F(SparseSetTest, DenseIterationOrder)
 {
     set.insert(10, 1000);
@@ -109,7 +106,6 @@ TEST_F(SparseSetTest, DenseIterationOrder)
     EXPECT_EQ(values[2], 1500);
 }
 
-// Test get by reference
 TEST_F(SparseSetTest, GetByReference)
 {
     set.insert(4, 400);
@@ -123,8 +119,7 @@ TEST_F(SparseSetTest, GetByReference)
     EXPECT_EQ(set.get(4).unwrap(), 500);
 }
 
-// Test aggressive reclaim
-TEST_F(SparseSetTest, RealisticInsertRemove)
+TEST_F(SparseSetTest, AggressiveReclaim)
 {
     const size_t keyCount = 1024;
 

@@ -9,6 +9,10 @@
 
 using namespace mosaic::ecs;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Test Components
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 struct Position
 {
     float x, y, z;
@@ -45,25 +49,10 @@ struct Health
     }
 };
 
-// Test fixture for basic int components
-class TypelessSparseSetTest : public ::testing::Test
-{
-   protected:
-    TypelessSparseSet<64, true> intSet{sizeof(int)};
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Test Fixture
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    void SetUp() override { intSet.clear(); }
-};
-
-// Test fixture for Position components
-class TypelessSparseSetPositionTest : public ::testing::Test
-{
-   protected:
-    TypelessSparseSet<64, true> positionSet{sizeof(Position)};
-
-    void SetUp() override { positionSet.clear(); }
-};
-
-// Test fixture for mixed component testing
 class TypelessSparseSetMixedTest : public ::testing::Test
 {
    protected:
@@ -77,8 +66,9 @@ class TypelessSparseSetMixedTest : public ::testing::Test
     }
 };
 
-// Almost all the logic in TypelessSparseSet is shared with pieces::SparseSet and already tested
-// there. For this reason we focus on simulating more complex ECS-like scenarios here.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Stress Tests with Mixed Component Types
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TEST_F(TypelessSparseSetMixedTest, MultiComponentECSSimulation)
 {
