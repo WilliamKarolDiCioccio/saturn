@@ -91,8 +91,8 @@ endif()
 # ---------------------------
 add_subdirectory("pieces")
 add_subdirectory("mosaic")
-add_subdirectory("codex/lib")
-add_subdirectory("codex/cli")
+add_subdirectory("codex")
+add_subdirectory("docsgen")
 
 # ---------------------------
 # Applications & Tests
