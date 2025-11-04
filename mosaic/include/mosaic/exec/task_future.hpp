@@ -88,14 +88,20 @@ class SharedState
     using StorageType = std::conditional_t<std::is_void_v<T>, std::monostate, T>;
 
    private:
+    static constexpr int k_spinCount = 100;
+
     alignas(64) mutable std::mutex m_mutex;
     alignas(64) std::condition_variable m_cv;
-    std::atomic<FutureStatus> m_status{FutureStatus::pending};
+    std::atomic<FutureStatus> m_status;
     std::variant<std::monostate, StorageType, std::exception_ptr> m_storage;
-    std::atomic<bool> m_future_retrieved{false};
+    std::atomic<bool> m_future_retrieved;
 
    public:
-    SharedState() = default;
+    SharedState()
+        : m_storage(std::monostate{}),
+          m_status(FutureStatus::pending),
+          m_future_retrieved(false) {};
+
     ~SharedState() = default;
 
     SharedState(const SharedState&) = delete;
@@ -221,8 +227,7 @@ class SharedState
         auto status = m_status.load(std::memory_order_acquire);
         if (status != FutureStatus::pending) return;
 
-        constexpr int spinCount = 100;
-        for (int i = 0; i < spinCount; ++i)
+        for (int i = 0; i < k_spinCount; ++i)
         {
             status = m_status.load(std::memory_order_acquire);
             if (status != FutureStatus::pending) return;
@@ -243,8 +248,7 @@ class SharedState
         auto status = m_status.load(std::memory_order_acquire);
         if (status != FutureStatus::pending) return true;
 
-        constexpr int spinCount = 100;
-        for (int i = 0; i < spinCount; ++i)
+        for (int i = 0; i < k_spinCount; ++i)
         {
             status = m_status.load(std::memory_order_acquire);
             if (status != FutureStatus::pending) return true;
@@ -272,8 +276,7 @@ class SharedState
 
         if (status != FutureStatus::pending) return true;
 
-        constexpr int spinCount = 100;
-        for (int i = 0; i < spinCount; ++i)
+        for (int i = 0; i < k_spinCount; ++i)
         {
             status = m_status.load(std::memory_order_acquire);
             if (status != FutureStatus::pending) return true;
@@ -334,10 +337,7 @@ class TaskFuture
      */
     T get()
     {
-        if (!valid())
-        {
-            throw FutureException(FutureErrorCode::no_state);
-        }
+        if (!valid()) throw FutureException(FutureErrorCode::no_state);
 
         return m_state->get();
     }
@@ -347,10 +347,8 @@ class TaskFuture
      */
     void wait() const
     {
-        if (!valid())
-        {
-            throw FutureException(FutureErrorCode::no_state);
-        }
+        if (!valid()) throw FutureException(FutureErrorCode::no_state);
+
         m_state->wait();
     }
 
@@ -430,10 +428,7 @@ class TaskPromise
      */
     TaskFuture<T> getFuture()
     {
-        if (!m_state)
-        {
-            throw FutureException(FutureErrorCode::no_state);
-        }
+        if (!m_state) throw FutureException(FutureErrorCode::no_state);
 
         if (!m_state->tryRetrieveFuture())
         {
@@ -470,10 +465,8 @@ class TaskPromise
      */
     void setException(std::exception_ptr _ex)
     {
-        if (!m_state)
-        {
-            throw FutureException(FutureErrorCode::no_state);
-        }
+        if (!m_state) throw FutureException(FutureErrorCode::no_state);
+
         m_state->setException(std::move(_ex));
     }
 
@@ -485,9 +478,6 @@ class TaskPromise
 
 /**
  * @brief Helper to create a task with promise/future pair
- *
- * This replaces the makeTask function in ThreadPool with reduced allocations.
- * Uses perfect forwarding and tuple storage to avoid unnecessary copies.
  */
 template <typename F, typename... Args>
 inline auto makeTaskPair(F&& _f, Args&&... _args)
