@@ -11,6 +11,8 @@
 #include <tuple>
 #include <chrono>
 
+#include "mosaic/defines.hpp"
+
 namespace mosaic
 {
 namespace exec
@@ -90,17 +92,14 @@ class SharedState
    private:
     static constexpr int k_spinCount = 100;
 
-    alignas(64) mutable std::mutex m_mutex;
-    alignas(64) std::condition_variable m_cv;
+    alignas(MOSAIC_CACHE_LINE_SIZE) mutable std::mutex m_mutex;
+    alignas(MOSAIC_CACHE_LINE_SIZE) std::condition_variable m_cv;
     std::atomic<FutureStatus> m_status;
     std::variant<std::monostate, StorageType, std::exception_ptr> m_storage;
     std::atomic<bool> m_future_retrieved;
 
    public:
-    SharedState()
-        : m_storage(std::monostate{}),
-          m_status(FutureStatus::pending),
-          m_future_retrieved(false) {};
+    SharedState() : m_status(FutureStatus::pending), m_future_retrieved(false) {};
 
     ~SharedState() = default;
 

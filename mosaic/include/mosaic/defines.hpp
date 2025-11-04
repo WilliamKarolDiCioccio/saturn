@@ -136,6 +136,10 @@
 #define MOSAIC_STRINGIFY_HELPER(x) #x
 #define MOSAIC_STRINGIFY(x) MOSAIC_STRINGIFY_HELPER(x)
 
+// Cache line size definition (assumed 64 bytes for most modern architectures, used to prevent
+// false sharing in multithreaded code)
+#define MOSAIC_CACHE_LINE_SIZE 64
+
 // SI (decimal) unit definitions
 #define BYTES_PER_KB 1000UL
 #define BYTES_PER_MB 1000000UL

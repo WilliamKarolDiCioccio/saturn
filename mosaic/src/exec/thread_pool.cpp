@@ -37,8 +37,8 @@ struct ThreadPool::Impl
     std::vector<std::unique_ptr<ThreadWorker>> workers;
 
     // Aligned to 64 bytes boundaries to avoid false sharing
-    alignas(64) std::atomic<uint32_t> idleWorkersCount;
-    alignas(64) std::atomic<bool> stop;
+    alignas(MOSAIC_CACHE_LINE_SIZE) std::atomic<uint32_t> idleWorkersCount;
+    alignas(MOSAIC_CACHE_LINE_SIZE) std::atomic<bool> stop;
 
     Impl() : workersCount(0), idleWorkersCount(0), stop(false)
     {
