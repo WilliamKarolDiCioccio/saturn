@@ -4,17 +4,17 @@
 
 #include <pieces/core/result.hpp>
 
-#include "mosaic/core/logger.hpp"
+#include "mosaic/tools/logger.hpp"
 
 namespace mosaic
 {
-namespace core
+namespace tools
 {
 
 /**
  * @brief Default logging sink that outputs logs to the console.
  */
-class MOSAIC_API DefaultSink final : public core::Sink
+class MOSAIC_API DefaultSink final : public Sink
 {
    public:
     ~DefaultSink() override = default;
@@ -30,5 +30,5 @@ class MOSAIC_API DefaultSink final : public core::Sink
     void critical(const std::string& _message) const override;
 };
 
-} // namespace core
+} // namespace tools
 } // namespace mosaic

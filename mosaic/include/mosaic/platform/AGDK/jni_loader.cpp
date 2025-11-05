@@ -4,7 +4,7 @@
 
 JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved)
 {
-    mosaic::core::LoggerManager::initialize();
+    mosaic::tools::Logger::initialize();
 
     auto helper = mosaic::platform::agdk::JNIHelper::getInstance();
 
@@ -32,7 +32,6 @@ JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved)
 
         helper->getStaticMethodID("com/mosaic/engine_bridge/SystemUI", "showErrorDialog",
                                   "(Ljava/lang/String;Ljava/lang/String;)V");
-
     }
 
     // Load methods for com/mosaic/engine_bridge/SystemServices
@@ -51,7 +50,6 @@ JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved)
 
         helper->getStaticMethodID("com/mosaic/engine_bridge/SystemServices", "getClipboard",
                                   "()Ljava/lang/String;");
-
     }
 
     return JNI_VERSION_1_6;
@@ -61,5 +59,5 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM* vm, void* /*reserved*/)
 {
     mosaic::platform::agdk::JNIHelper::getInstance()->shutdown();
 
-    mosaic::core::LoggerManager::shutdown();
+    mosaic::tools::Logger::shutdown();
 }

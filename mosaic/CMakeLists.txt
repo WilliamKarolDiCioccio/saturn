@@ -4,16 +4,17 @@
 
 set(FRAMEWORK_SRC
     # Core
-    "src/core/logger.cpp"
     "src/core/logger_default_sink.cpp"
     "src/core/application.cpp"
     "src/core/platform.cpp"
     "src/core/sys_info.cpp"
     "src/core/sys_console.cpp"
     "src/core/sys_ui.cpp"
-    "src/core/tracer.cpp"
     "src/core/timer.cpp"
     "src/core/cmd_line_parser.cpp"
+    # Tools
+    "src/tools/logger.cpp"
+    "src/tools/tracer.cpp"
     # Execution
     "src/exec/thread_pool.cpp"
     # Window

@@ -309,7 +309,7 @@ def generate_cpp_file(class_methods: Dict[str, List[Tuple[str, str]]], output_pa
         
         f.write("JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved)\n")
         f.write("{\n")
-        f.write("    mosaic::core::LoggerManager::initialize();\n\n")
+        f.write("    mosaic::tools::Logger::initialize();\n\n")
         
         f.write(f"    auto helper = {helper_class}::getInstance();\n\n")
         
@@ -341,7 +341,7 @@ def generate_cpp_file(class_methods: Dict[str, List[Tuple[str, str]]], output_pa
         f.write("\nJNIEXPORT void JNICALL JNI_OnUnload(JavaVM* vm, void* /*reserved*/)\n")
         f.write("{\n")
         f.write("    mosaic::platform::agdk::JNIHelper::getInstance()->shutdown();\n\n")
-        f.write("    mosaic::core::LoggerManager::shutdown();\n")
+        f.write("    mosaic::tools::Logger::shutdown();\n")
         f.write("}\n")
 
 def main():

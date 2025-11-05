@@ -2,7 +2,8 @@
 
 #include <gtest/gtest.h>
 
-#include <mosaic/core/logger.hpp>
+#include <mosaic/tools/logger.hpp>
+#include <mosaic/core/cmd_line_parser.hpp>
 
 bool initializeWin32Platform()
 {
@@ -23,20 +24,22 @@ bool initializeWin32Platform()
 
 void shutdownWin32Platform() { CoUninitialize(); }
 
-int main(int _argc, char **_argv)
+int main(int _argc, char** _argv)
 {
-    using namespace mosaic::core;
-
 #ifdef MOSAIC_PLATFORM_WINDOWS
     if (!initializeWin32Platform()) return -1;
 #endif
 
-    LoggerManager::initialize();
+    mosaic::core::CommandLineParser::initialize();
+
+    mosaic::tools::Logger::initialize();
 
     ::testing::InitGoogleTest(&_argc, _argv);
     int result = RUN_ALL_TESTS();
 
-    LoggerManager::shutdown();
+    mosaic::tools::Logger::shutdown();
+
+    mosaic::core::CommandLineParser::shutdown();
 
     return result;
 }

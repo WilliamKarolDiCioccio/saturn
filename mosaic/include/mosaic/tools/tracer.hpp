@@ -19,7 +19,7 @@ MOSAIC_POP_WARNINGS
 
 namespace mosaic
 {
-namespace core
+namespace tools
 {
 
 enum class TraceCategory
@@ -114,11 +114,11 @@ class MOSAIC_API ScopedTrace final
 /**
  * @brief Manages tracing functionality, including trace storage, metadata, and configuration.
  */
-class MOSAIC_API TracerManager final
+class MOSAIC_API Tracer final
 {
    public:
     /**
-     * @brief Configuration for the TracerManager.
+     * @brief Configuration for the Tracer.
      *
      * This struct holds the configuration options for the tracer, including
      * whether tracing is enabled, auto-flush settings, flush intervals, maximum
@@ -165,7 +165,7 @@ class MOSAIC_API TracerManager final
     };
 
    private:
-    static TracerManager* s_instance;
+    static Tracer* s_instance;
 
     // Actual trace storage
 
@@ -189,8 +189,8 @@ class MOSAIC_API TracerManager final
     Config m_config;
 
    private:
-    TracerManager() : m_fileCounter(0), m_nextTraceId(1) {};
-    ~TracerManager() = default;
+    Tracer() : m_fileCounter(0), m_nextTraceId(1) {};
+    ~Tracer() = default;
 
    public:
     static bool initialize(const Config& _config = Config()) noexcept;
@@ -258,7 +258,7 @@ class MOSAIC_API TracerManager final
     [[nodiscard]] size_t getCompletedTraceCount() const noexcept;
     [[nodiscard]] double getTracingOverheadMs() const noexcept;
 
-    [[nodiscard]] static TracerManager* getInstance() noexcept { return s_instance; }
+    [[nodiscard]] static Tracer* getInstance() noexcept { return s_instance; }
 
    private:
     void flushToFile() noexcept;
@@ -268,44 +268,44 @@ class MOSAIC_API TracerManager final
     int64_t getCurrentTimestamp() const noexcept;
 };
 
-} // namespace core
+} // namespace tools
 } // namespace mosaic
 
 #if defined(MOSAIC_DEBUG_BUILD) || defined(MOSAIC_DEV_BUILD)
 
 #define MOSAIC_TRACE_FUNCTION() \
-    mosaic::core::ScopedTrace _trace(__FUNCTION__, mosaic::core::TraceCategory::function)
+    mosaic::tools::ScopedTrace _trace(__FUNCTION__, mosaic::tools::TraceCategory::function)
 
 #define MOSAIC_TRACE_SCOPE(_Name) \
-    mosaic::core::ScopedTrace _trace(_Name, mosaic::core::TraceCategory::scope)
+    mosaic::tools::ScopedTrace _trace(_Name, mosaic::tools::TraceCategory::scope)
 
 #define MOSAIC_TRACE_BEGIN(_Name, _Category) \
-    mosaic::core::TracerManager::getInstance()->beginTrace(_Name, _Category)
+    mosaic::tools::Tracer::getInstance()->beginTrace(_Name, _Category)
 
-#define MOSAIC_TRACE_END() mosaic::core::TracerManager::getInstance()->endTrace()
+#define MOSAIC_TRACE_END() mosaic::tools::Tracer::getInstance()->endTrace()
 
 #define MOSAIC_TRACE_INSTANT(_Name, _Category) \
-    mosaic::core::TracerManager::getInstance()->instantTrace(_Name, _Category)
+    mosaic::tools::Tracer::getInstance()->instantTrace(_Name, _Category)
 
 #define MOSAIC_TRACE_COUNTER(_Name, _Value) \
-    mosaic::core::TracerManager::getInstance()->counterTrace(_Name, _Value)
+    mosaic::tools::Tracer::getInstance()->counterTrace(_Name, _Value)
 
 #define MOSAIC_TRACE_METADATA(_Name, _Value) \
-    mosaic::core::TracerManager::getInstance()->metadataTrace(_Name, _Value)
+    mosaic::tools::Tracer::getInstance()->metadataTrace(_Name, _Value)
 
 #define MOSAIC_TRACE_OBJECT_CREATED(_Name, _Args) \
-    mosaic::core::TracerManager::getInstance()->objectCreated(_Name, _Args)
+    mosaic::tools::Tracer::getInstance()->objectCreated(_Name, _Args)
 #define MOSAIC_TRACE_OBJECT_SNAPSHOT(_Name, _Args) \
-    mosaic::core::TracerManager::getInstance()->objectSnapshot(_Name, _Args)
+    mosaic::tools::Tracer::getInstance()->objectSnapshot(_Name, _Args)
 #define MOSAIC_TRACE_OBJECT_DESTROYED(_Name, _Args) \
-    mosaic::core::TracerManager::getInstance()->objectDestroyed(_Name, _Args)
+    mosaic::tools::Tracer::getInstance()->objectDestroyed(_Name, _Args)
 
 #define MOSAIC_TRACE_FLOW_BEGIN(_Name, _Category) \
-    mosaic::core::TracerManager::getInstance()->beginFlowTrace(_Name, _Category)
+    mosaic::tools::Tracer::getInstance()->beginFlowTrace(_Name, _Category)
 #define MOSAIC_TRACE_FLOW_STEP(_FlowID, _Name) \
-    mosaic::core::TracerManager::getInstance()->stepFlowTrace(_FlowID, _Name)
+    mosaic::tools::Tracer::getInstance()->stepFlowTrace(_FlowID, _Name)
 #define MOSAIC_TRACE_FLOW_END(_FlowID, _Name) \
-    mosaic::core::TracerManager::getInstance()->endFlowTrace(_FlowID, _Name)
+    mosaic::tools::Tracer::getInstance()->endFlowTrace(_FlowID, _Name)
 
 #else
 

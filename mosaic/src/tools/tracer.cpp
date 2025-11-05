@@ -1,4 +1,4 @@
-#include "mosaic/core/tracer.hpp"
+#include "mosaic/tools/tracer.hpp"
 
 #include <sstream>
 #include <iomanip>
@@ -14,21 +14,21 @@
 #include <nlohmann/json_fwd.hpp>
 
 #include "mosaic/defines.hpp"
-#include "mosaic/core/logger.hpp"
+#include "mosaic/tools/logger.hpp"
 #include "mosaic/version.h"
 #include "mosaic/core/cmd_line_parser.hpp"
 
 namespace mosaic
 {
-namespace core
+namespace tools
 {
 
-TracerManager* TracerManager::s_instance = nullptr;
+Tracer* Tracer::s_instance = nullptr;
 
 ScopedTrace::ScopedTrace(const std::string& _name, TraceCategory _category) noexcept
     : m_valid(false)
 {
-    if (auto* manager = TracerManager::getInstance())
+    if (auto* manager = Tracer::getInstance())
     {
         manager->beginTrace(_name, _category);
         m_valid = true;
@@ -39,13 +39,13 @@ ScopedTrace::~ScopedTrace() noexcept
 {
     if (!m_valid) return;
 
-    if (auto* manager = TracerManager::getInstance()) manager->endTrace();
+    if (auto* manager = Tracer::getInstance()) manager->endTrace();
 }
 
-bool TracerManager::initialize(const Config& _config) noexcept
+bool Tracer::initialize(const Config& _config) noexcept
 {
-    assert(s_instance == nullptr && "TracerManager already exists!");
-    s_instance = new TracerManager();
+    assert(s_instance == nullptr && "Tracer already exists!");
+    s_instance = new Tracer();
 
     auto& instance = *s_instance;
 
@@ -80,7 +80,7 @@ bool TracerManager::initialize(const Config& _config) noexcept
         metadata["startTime"] = std::chrono::system_clock::to_time_t(systemStartTime);
         metadata["processId"] = 0;
         metadata["threadName"] = nlohmann::json::object();
-        metadata["processName"] = CommandLineParser::getInstance()->getExecutableName();
+        metadata["processName"] = core::CommandLineParser::getInstance()->getExecutableName();
 
         std::ofstream testFile(instance.m_currentFile);
         if (!testFile.is_open())
@@ -102,9 +102,9 @@ bool TracerManager::initialize(const Config& _config) noexcept
     }
 }
 
-void TracerManager::shutdown() noexcept
+void Tracer::shutdown() noexcept
 {
-    assert(s_instance != nullptr && "TracerManager does not exist!");
+    assert(s_instance != nullptr && "Tracer does not exist!");
 
     auto& instance = *s_instance;
 
@@ -114,8 +114,8 @@ void TracerManager::shutdown() noexcept
     s_instance = nullptr;
 }
 
-void TracerManager::beginTrace(const std::string& _name, TraceCategory _category,
-                               const std::string& _args) noexcept
+void Tracer::beginTrace(const std::string& _name, TraceCategory _category,
+                        const std::string& _args) noexcept
 {
     if (!m_config.enabled || !m_config.categoryEnabled[static_cast<int>(_category)]) return;
 
@@ -138,7 +138,7 @@ void TracerManager::beginTrace(const std::string& _name, TraceCategory _category
     }
 }
 
-void TracerManager::endTrace() noexcept
+void Tracer::endTrace() noexcept
 {
     if (!m_config.enabled) return;
 
@@ -170,8 +170,8 @@ void TracerManager::endTrace() noexcept
     }
 }
 
-void TracerManager::instantTrace(const std::string& _name, TraceCategory _category,
-                                 const std::string& _args) noexcept
+void Tracer::instantTrace(const std::string& _name, TraceCategory _category,
+                          const std::string& _args) noexcept
 {
     if (!m_config.enabled || !m_config.categoryEnabled[static_cast<int>(_category)]) return;
 
@@ -196,8 +196,7 @@ void TracerManager::instantTrace(const std::string& _name, TraceCategory _catego
     }
 }
 
-void TracerManager::counterTrace(const std::string& _name, double _value,
-                                 TraceCategory _category) noexcept
+void Tracer::counterTrace(const std::string& _name, double _value, TraceCategory _category) noexcept
 {
     if (!m_config.enabled || !m_config.categoryEnabled[static_cast<int>(_category)]) return;
 
@@ -225,8 +224,8 @@ void TracerManager::counterTrace(const std::string& _name, double _value,
     }
 }
 
-void TracerManager::metadataTrace(const std::string& _name, const std::string& _value,
-                                  TraceCategory _category) noexcept
+void Tracer::metadataTrace(const std::string& _name, const std::string& _value,
+                           TraceCategory _category) noexcept
 {
     if (!m_config.enabled || !m_config.categoryEnabled[static_cast<int>(_category)]) return;
 
@@ -254,8 +253,8 @@ void TracerManager::metadataTrace(const std::string& _name, const std::string& _
     }
 }
 
-void TracerManager::objectCreated(const std::string& _name, const std::string& _args,
-                                  TraceCategory _category) noexcept
+void Tracer::objectCreated(const std::string& _name, const std::string& _args,
+                           TraceCategory _category) noexcept
 {
     if (!m_config.enabled || !m_config.categoryEnabled[static_cast<int>(_category)]) return;
 
@@ -280,8 +279,8 @@ void TracerManager::objectCreated(const std::string& _name, const std::string& _
     }
 }
 
-void TracerManager::objectSnapshot(const std::string& _name, const std::string& _args,
-                                   TraceCategory _category) noexcept
+void Tracer::objectSnapshot(const std::string& _name, const std::string& _args,
+                            TraceCategory _category) noexcept
 {
     if (!m_config.enabled || !m_config.categoryEnabled[static_cast<int>(_category)]) return;
 
@@ -306,8 +305,8 @@ void TracerManager::objectSnapshot(const std::string& _name, const std::string& 
     }
 }
 
-void TracerManager::objectDestroyed(const std::string& _name, const std::string& _args,
-                                    TraceCategory _category) noexcept
+void Tracer::objectDestroyed(const std::string& _name, const std::string& _args,
+                             TraceCategory _category) noexcept
 {
     if (!m_config.enabled || !m_config.categoryEnabled[static_cast<int>(_category)]) return;
 
@@ -332,7 +331,7 @@ void TracerManager::objectDestroyed(const std::string& _name, const std::string&
     }
 }
 
-uint64_t TracerManager::beginFlowTrace(const std::string& _name, TraceCategory _category) noexcept
+uint64_t Tracer::beginFlowTrace(const std::string& _name, TraceCategory _category) noexcept
 {
     if (!m_config.enabled || !m_config.categoryEnabled[static_cast<int>(_category)]) return 0;
 
@@ -361,7 +360,7 @@ uint64_t TracerManager::beginFlowTrace(const std::string& _name, TraceCategory _
     }
 }
 
-void TracerManager::stepFlowTrace(uint64_t _flowId, const std::string& _name) noexcept
+void Tracer::stepFlowTrace(uint64_t _flowId, const std::string& _name) noexcept
 {
     if (!m_config.enabled || _flowId == 0) return;
 
@@ -386,7 +385,7 @@ void TracerManager::stepFlowTrace(uint64_t _flowId, const std::string& _name) no
     }
 }
 
-void TracerManager::endFlowTrace(uint64_t _flowId, const std::string& _name) noexcept
+void Tracer::endFlowTrace(uint64_t _flowId, const std::string& _name) noexcept
 {
     if (!m_config.enabled || _flowId == 0) return;
 
@@ -411,13 +410,13 @@ void TracerManager::endFlowTrace(uint64_t _flowId, const std::string& _name) noe
     }
 }
 
-void TracerManager::flush() noexcept
+void Tracer::flush() noexcept
 {
     std::lock_guard<std::mutex> lock(m_completedMutex);
     flushToFile();
 }
 
-void TracerManager::clear() noexcept
+void Tracer::clear() noexcept
 {
     std::lock_guard<std::mutex> completedLock(m_completedMutex);
     std::lock_guard<std::mutex> traceLock(m_tracesMutex);
@@ -426,7 +425,7 @@ void TracerManager::clear() noexcept
     m_activeTraces.clear();
 }
 
-size_t TracerManager::getActiveTraceCount() const noexcept
+size_t Tracer::getActiveTraceCount() const noexcept
 {
     try
     {
@@ -444,18 +443,18 @@ size_t TracerManager::getActiveTraceCount() const noexcept
     }
 }
 
-size_t TracerManager::getCompletedTraceCount() const noexcept
+size_t Tracer::getCompletedTraceCount() const noexcept
 {
     std::lock_guard<std::mutex> lock(m_completedMutex);
     return m_completedTraces.size();
 }
 
-double TracerManager::getTracingOverheadMs() const noexcept
+double Tracer::getTracingOverheadMs() const noexcept
 {
     return 0.001; // 1 microsecond conservative estimate per trace
 }
 
-void TracerManager::flushToFile() noexcept
+void Tracer::flushToFile() noexcept
 {
     if (m_completedTraces.empty()) return;
 
@@ -494,13 +493,13 @@ void TracerManager::flushToFile() noexcept
     }
 }
 
-void TracerManager::rotateFile() noexcept
+void Tracer::rotateFile() noexcept
 {
     m_currentFile = generateFileName();
     m_fileCounter++;
 }
 
-std::string TracerManager::generateFileName() noexcept
+std::string Tracer::generateFileName() noexcept
 {
     try
     {
@@ -525,7 +524,7 @@ std::string TracerManager::generateFileName() noexcept
     }
 }
 
-nlohmann::json TracerManager::traceToJson(const Trace& _trace) const noexcept
+nlohmann::json Tracer::traceToJson(const Trace& _trace) const noexcept
 {
     try
     {
@@ -562,11 +561,11 @@ nlohmann::json TracerManager::traceToJson(const Trace& _trace) const noexcept
     }
 }
 
-int64_t TracerManager::getCurrentTimestamp() const noexcept
+int64_t Tracer::getCurrentTimestamp() const noexcept
 {
     auto now = std::chrono::high_resolution_clock::now();
     return std::chrono::time_point_cast<std::chrono::microseconds>(now).time_since_epoch().count();
 }
 
-} // namespace core
+} // namespace tools
 } // namespace mosaic

@@ -17,7 +17,7 @@
 
 namespace mosaic
 {
-namespace core
+namespace tools
 {
 
 constexpr uint16_t k_logHistorySize = 1024;
@@ -67,11 +67,11 @@ constexpr std::array<const char*, 6> c_levelNames = {
 /**
  * @brief Manages logging functionality, including sink management, history, and configuration.
  */
-class LoggerManager final
+class Logger final
 {
    public:
     /**
-     * @brief Configuration for the LoggerManager.
+     * @brief Configuration for the Logger.
      *
      * This struct allows customization of logging behavior, such as enabling/disabling log levels,
      * showing thread IDs, timestamps, and stack traces, as well as setting the history size
@@ -119,7 +119,7 @@ class LoggerManager final
     };
 
    private:
-    MOSAIC_API static LoggerManager* s_instance;
+    MOSAIC_API static Logger* s_instance;
 
     std::unordered_map<std::string, std::shared_ptr<Sink>> m_sinks;
     std::mutex m_sinksMutex;
@@ -129,8 +129,8 @@ class LoggerManager final
     Config m_config;
 
    private:
-    LoggerManager() = default;
-    ~LoggerManager() = default;
+    Logger() = default;
+    ~Logger() = default;
 
    public:
     MOSAIC_API static bool initialize(const Config& _config = Config()) noexcept;
@@ -232,7 +232,7 @@ class LoggerManager final
     {
         try
         {
-            if (!s_instance) throw std::runtime_error("LoggerManager is not initialized");
+            if (!s_instance) throw std::runtime_error("Logger is not initialized");
 
             if (!m_config.levelEnabled[static_cast<int>(_level)]) return;
 
@@ -247,36 +247,36 @@ class LoggerManager final
         }
     }
 
-    [[nodiscard]] static inline LoggerManager* getInstance() { return s_instance; }
+    [[nodiscard]] static inline Logger* getInstance() { return s_instance; }
 
    private:
     MOSAIC_API void logInternal(LogLevel _level, std::string _message) noexcept;
 };
 
-} // namespace core
+} // namespace tools
 } // namespace mosaic
 
 #if defined(MOSAIC_DEBUG_BUILD) || defined(MOSAIC_DEV_BUILD)
-#define MOSAIC_TRACE(_Msg, ...)                                                    \
-    mosaic::core::LoggerManager::getInstance()->log(mosaic::core::LogLevel::trace, \
-                                                    _Msg __VA_OPT__(, __VA_ARGS__))
-#define MOSAIC_DEBUG(_Msg, ...)                                                    \
-    mosaic::core::LoggerManager::getInstance()->log(mosaic::core::LogLevel::debug, \
-                                                    _Msg __VA_OPT__(, __VA_ARGS__))
+#define MOSAIC_TRACE(_Msg, ...)                                               \
+    mosaic::tools::Logger::getInstance()->log(mosaic::tools::LogLevel::trace, \
+                                              _Msg __VA_OPT__(, __VA_ARGS__))
+#define MOSAIC_DEBUG(_Msg, ...)                                               \
+    mosaic::tools::Logger::getInstance()->log(mosaic::tools::LogLevel::debug, \
+                                              _Msg __VA_OPT__(, __VA_ARGS__))
 #else
 #define MOSAIC_TRACE(_Msg, ...) ((void)0)
 #define MOSAIC_DEBUG(_Msg, ...) ((void)0)
 #endif
 
-#define MOSAIC_INFO(_Msg, ...)                                                    \
-    mosaic::core::LoggerManager::getInstance()->log(mosaic::core::LogLevel::info, \
-                                                    _Msg __VA_OPT__(, __VA_ARGS__))
-#define MOSAIC_WARN(_Msg, ...)                                                    \
-    mosaic::core::LoggerManager::getInstance()->log(mosaic::core::LogLevel::warn, \
-                                                    _Msg __VA_OPT__(, __VA_ARGS__))
-#define MOSAIC_ERROR(_Msg, ...)                                                    \
-    mosaic::core::LoggerManager::getInstance()->log(mosaic::core::LogLevel::error, \
-                                                    _Msg __VA_OPT__(, __VA_ARGS__))
-#define MOSAIC_CRITICAL(_Msg, ...)                                                    \
-    mosaic::core::LoggerManager::getInstance()->log(mosaic::core::LogLevel::critical, \
-                                                    _Msg __VA_OPT__(, __VA_ARGS__))
+#define MOSAIC_INFO(_Msg, ...)                                               \
+    mosaic::tools::Logger::getInstance()->log(mosaic::tools::LogLevel::info, \
+                                              _Msg __VA_OPT__(, __VA_ARGS__))
+#define MOSAIC_WARN(_Msg, ...)                                               \
+    mosaic::tools::Logger::getInstance()->log(mosaic::tools::LogLevel::warn, \
+                                              _Msg __VA_OPT__(, __VA_ARGS__))
+#define MOSAIC_ERROR(_Msg, ...)                                               \
+    mosaic::tools::Logger::getInstance()->log(mosaic::tools::LogLevel::error, \
+                                              _Msg __VA_OPT__(, __VA_ARGS__))
+#define MOSAIC_CRITICAL(_Msg, ...)                                               \
+    mosaic::tools::Logger::getInstance()->log(mosaic::tools::LogLevel::critical, \
+                                              _Msg __VA_OPT__(, __VA_ARGS__))

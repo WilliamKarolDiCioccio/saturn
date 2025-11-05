@@ -1,4 +1,4 @@
-#include "mosaic/core/logger.hpp"
+#include "mosaic/tools/logger.hpp"
 
 #include <string>
 #include <chrono>
@@ -20,26 +20,26 @@
 
 namespace mosaic
 {
-namespace core
+namespace tools
 {
 
-LoggerManager* LoggerManager::s_instance = nullptr;
+Logger* Logger::s_instance = nullptr;
 
-bool LoggerManager::initialize(const Config& _config) noexcept
+bool Logger::initialize(const Config& _config) noexcept
 {
-    assert(s_instance == nullptr && "LoggerManager already exists!");
-    s_instance = new LoggerManager();
+    assert(s_instance == nullptr && "Logger already exists!");
+    s_instance = new Logger();
     return true;
 }
 
-void LoggerManager::shutdown() noexcept
+void Logger::shutdown() noexcept
 {
-    assert(s_instance != nullptr && "LoggerManager does not exist!");
+    assert(s_instance != nullptr && "Logger does not exist!");
     delete s_instance;
     s_instance = nullptr;
 }
 
-void LoggerManager::logInternal(LogLevel _level, std::string _formattedMessage) noexcept
+void Logger::logInternal(LogLevel _level, std::string _formattedMessage) noexcept
 {
     // Prepend log level if requested
     if (m_config.showLevel)
@@ -121,5 +121,5 @@ void LoggerManager::logInternal(LogLevel _level, std::string _formattedMessage) 
     m_history.at(tid).emplace_back(_formattedMessage);
 }
 
-} // namespace core
+} // namespace tools
 } // namespace mosaic

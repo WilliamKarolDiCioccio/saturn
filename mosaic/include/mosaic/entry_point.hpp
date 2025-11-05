@@ -4,9 +4,9 @@
 
 #include <mosaic/core/sys_ui.hpp>
 #include <mosaic/core/sys_console.hpp>
-#include <mosaic/core/logger.hpp>
-#include <mosaic/core/logger_default_sink.hpp>
-#include <mosaic/core/tracer.hpp>
+#include <mosaic/tools/logger.hpp>
+#include <mosaic/tools/logger_default_sink.hpp>
+#include <mosaic/tools/tracer.hpp>
 #include <mosaic/core/cmd_line_parser.hpp>
 #include <mosaic/core/platform.hpp>
 #include <mosaic/core/application.hpp>
@@ -40,13 +40,13 @@ int runApp(const std::vector<std::string>& _cmdLineArgs, Args&&... _appConstucto
 
     core::SystemConsole::create();
 
-    core::LoggerManager::initialize();
+    tools::Logger::initialize();
 
-    auto logger = core::LoggerManager::getInstance();
+    auto logger = tools::Logger::getInstance();
 
     logger->addSink<core::DefaultSink>("default", core::DefaultSink());
 
-    core::TracerManager::initialize();
+    tools::Tracer::initialize();
 
     // This scope guard ensures all resources have been disposed before shutting down the logger and
     // tracer.
@@ -68,8 +68,8 @@ int runApp(const std::vector<std::string>& _cmdLineArgs, Args&&... _appConstucto
         platform->shutdown();
     }
 
-    core::TracerManager::shutdown();
-    core::LoggerManager::shutdown();
+    tools::Tracer::shutdown();
+    tools::Logger::shutdown();
     core::CommandLineParser::shutdown();
 
     core::SystemConsole::destroy();
@@ -283,7 +283,7 @@ extern "C"
     {                                                                                          \
         void android_main(struct android_app* _pApp)                                           \
         {                                                                                      \
-            mosaic::core::LoggerManager::getInstance()->addSink<mosaic::core::DefaultSink>(    \
+            mosaic::tools::Logger::getInstance()->addSink<mosaic::core::DefaultSink>(          \
                 "default", mosaic::core::DefaultSink());                                       \
                                                                                                \
             auto app = std::make_unique<AppType>(__VA_ARGS__);                                 \
