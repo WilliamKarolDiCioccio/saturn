@@ -1,5 +1,7 @@
 #pragma once
 
+#include <new>
+
 // Platform detection
 #if defined(__EMSCRIPTEN__)
 #define MOSAIC_PLATFORM_EMSCRIPTEN
@@ -138,7 +140,15 @@
 
 // Cache line size definition (assumed 64 bytes for most modern architectures, used to prevent
 // false sharing in multithreaded code)
-#define MOSAIC_CACHE_LINE_SIZE 64
+
+#if defined(__cpp_lib_hardware_interference_size)
+static constexpr std::size_t k_cacheLine = std::hardware_destructive_interference_size;
+#else
+// fallback - define MOSAIC_CACHE_LINE_SIZE elsewhere or pick 64
+static constexpr std::size_t k_cacheLine = 64;
+#endif
+
+#define MOSAIC_CACHE_LINE_SIZE k_cacheLine
 
 // SI (decimal) unit definitions
 #define BYTES_PER_KB 1000UL
