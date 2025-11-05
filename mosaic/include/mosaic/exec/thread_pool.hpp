@@ -210,7 +210,7 @@ class MOSAIC_API ThreadPool
     /// @brief Get a worker by its debug name.
     [[nodiscard]] ThreadWorker* getWorkerByDebugName(const std::string& _debugName) const noexcept;
 
-    [[nodiscard]] static inline ThreadPool* getGlobalInstance()
+    [[nodiscard]] static inline ThreadPool* getInstance()
     {
         if (!g_instance) MOSAIC_ERROR("ThreadPool has not been created yet!");
 

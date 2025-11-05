@@ -70,7 +70,7 @@ class MOSAIC_API InputSystem final : public core::EngineSystem
 
     InputContext* getContext(const window::Window* _window) const;
 
-    [[nodiscard]] static inline InputSystem* getGlobalInstance()
+    [[nodiscard]] static inline InputSystem* getInstance()
     {
         if (!g_instance) MOSAIC_ERROR("InputSystem has not been created yet!");
 

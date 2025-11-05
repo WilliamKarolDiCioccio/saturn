@@ -56,7 +56,7 @@ class MOSAIC_API RenderSystem : public core::EngineSystem
 
     inline RenderContext* getContext(const window::Window* _window) const;
 
-    [[nodiscard]] static inline RenderSystem* getGlobalInstance()
+    [[nodiscard]] static inline RenderSystem* getInstance()
     {
         if (!g_instance) MOSAIC_ERROR("RenderSystem has not been created yet!");
 

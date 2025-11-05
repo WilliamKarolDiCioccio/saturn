@@ -24,7 +24,7 @@ int runApp(const std::vector<std::string>& _cmdLineArgs, Args&&... _appConstucto
 
     core::CommandLineParser::initialize();
 
-    auto cmdLineParser = core::CommandLineParser::getGlobalInstance();
+    auto cmdLineParser = core::CommandLineParser::getInstance();
 
     auto parseResult = cmdLineParser->parseCommandLine(_cmdLineArgs);
 
@@ -41,8 +41,10 @@ int runApp(const std::vector<std::string>& _cmdLineArgs, Args&&... _appConstucto
     core::SystemConsole::create();
 
     core::LoggerManager::initialize();
-    core::LoggerManager::getGlobalInstance()->addSink<core::DefaultSink>("default",
-                                                                         core::DefaultSink());
+
+    auto logger = core::LoggerManager::getInstance();
+
+    logger->addSink<core::DefaultSink>("default", core::DefaultSink());
 
     core::TracerManager::initialize();
 

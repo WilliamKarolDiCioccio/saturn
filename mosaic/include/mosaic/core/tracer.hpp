@@ -145,17 +145,22 @@ class MOSAIC_API TracerManager final
             for (auto& e : categoryEnabled) e.store(true);
         }
 
-        Config(const Config& other)
-            : enabled(other.enabled.load()),
-              autoFlush(other.autoFlush.load()),
-              flushIntervalMs(other.flushIntervalMs.load()),
-              maxTraces(other.maxTraces.load()),
-              maxFileSizeMb(other.maxFileSizeMb.load())
+        Config& operator=(const Config& other)
         {
+            if (this == &other) return *this;
+
+            enabled.store(other.enabled.load());
+            autoFlush.store(other.autoFlush.load());
+            flushIntervalMs.store(other.flushIntervalMs.load());
+            maxTraces.store(other.maxTraces.load());
+            maxFileSizeMb.store(other.maxFileSizeMb.load());
+
             for (size_t i = 0; i < categoryEnabled.size(); ++i)
             {
                 categoryEnabled[i].store(other.categoryEnabled[i].load());
             }
+
+            return *this;
         }
     };
 
@@ -172,7 +177,6 @@ class MOSAIC_API TracerManager final
     // Metadata for the trace session
 
     nlohmann::json m_metadata;
-    std::string m_tracesPath;
     std::string m_currentFile;
     uint32_t m_fileCounter;
 
@@ -185,11 +189,11 @@ class MOSAIC_API TracerManager final
     Config m_config;
 
    private:
-    TracerManager(const Config& _config);
+    TracerManager() : m_fileCounter(0), m_nextTraceId(1) {};
+    ~TracerManager() = default;
 
    public:
-    static bool initialize(const std::string& _tracesDir = "./traces",
-                           const Config& _config = Config()) noexcept;
+    static bool initialize(const Config& _config = Config()) noexcept;
     static void shutdown() noexcept;
 
     // Configurable options

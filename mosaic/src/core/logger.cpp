@@ -9,6 +9,7 @@
 #include <ctime>
 #include <sstream>
 #include <vector>
+#include <cassert>
 #include <stacktrace>
 
 #include <fmt/format.h>
@@ -24,21 +25,16 @@ namespace core
 
 LoggerManager* LoggerManager::s_instance = nullptr;
 
-LoggerManager::LoggerManager(const Config& _config) : m_config(_config) {}
-
 bool LoggerManager::initialize(const Config& _config) noexcept
 {
-    if (s_instance) return false;
-
-    s_instance = new LoggerManager(_config);
-
+    assert(s_instance == nullptr && "LoggerManager already exists!");
+    s_instance = new LoggerManager();
     return true;
 }
 
 void LoggerManager::shutdown() noexcept
 {
-    if (!s_instance) return;
-
+    assert(s_instance != nullptr && "LoggerManager does not exist!");
     delete s_instance;
     s_instance = nullptr;
 }

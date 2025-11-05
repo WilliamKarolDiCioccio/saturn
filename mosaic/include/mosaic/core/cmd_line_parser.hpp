@@ -108,9 +108,21 @@ class CommandLineParser
     std::unordered_map<std::string, std::string> m_shortToLong;
 
    public:
-    CommandLineParser(const Config& _config)
-        : m_config(_config), m_executableName(""), m_executablePath(""), m_shouldTerminate(false) {
-          };
+    CommandLineParser()
+        : m_executableName(""),
+          m_executablePath(""),
+          m_args(),
+          m_shouldTerminate(false),
+          m_options(),
+          m_shortToLong() {};
+    ~CommandLineParser() = default;
+
+   public:
+    CommandLineParser(const CommandLineParser&) = delete;
+    CommandLineParser& operator=(const CommandLineParser&) = delete;
+
+    CommandLineParser(CommandLineParser&&) = delete;
+    CommandLineParser& operator=(CommandLineParser&&) = delete;
 
    public:
     MOSAIC_API static bool initialize(const Config& _config = Config()) noexcept;
@@ -206,7 +218,7 @@ class CommandLineParser
      */
     MOSAIC_API [[nodiscard]] std::vector<std::string> getRegisteredOptions();
 
-    [[nodiscard]] static inline CommandLineParser* getGlobalInstance() { return s_instance; }
+    [[nodiscard]] static inline CommandLineParser* getInstance() { return s_instance; }
 
    private:
     const Option* findOption(const std::string& _option);

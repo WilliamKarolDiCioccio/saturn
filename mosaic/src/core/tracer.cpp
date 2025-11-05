@@ -42,48 +42,47 @@ ScopedTrace::~ScopedTrace() noexcept
     if (auto* manager = TracerManager::getInstance()) manager->endTrace();
 }
 
-TracerManager::TracerManager(const Config& _config)
-    : m_config(_config), m_fileCounter(0), m_nextTraceId(1)
+bool TracerManager::initialize(const Config& _config) noexcept
 {
-    m_startTime = std::chrono::steady_clock::now();
-    m_lastFlush = m_startTime;
+    assert(s_instance == nullptr && "TracerManager already exists!");
+    s_instance = new TracerManager();
 
-    m_metadata = nlohmann::json::object();
-    m_metadata["version"] = "1.0";
-    m_metadata["engineVersion"] = MOSAIC_VERSION;
-
-    // Store as time_t for nlohmann::json compatibility
-    auto now = std::chrono::system_clock::now();
-    auto duration = m_startTime - std::chrono::steady_clock::time_point();
-    auto systemStartTime =
-        now + std::chrono::duration_cast<std::chrono::system_clock::duration>(duration);
-
-    m_metadata["startTime"] = std::chrono::system_clock::to_time_t(systemStartTime);
-    m_metadata["processId"] = 0;
-    m_metadata["threadName"] = nlohmann::json::object();
-    m_metadata["processName"] = CommandLineParser::getGlobalInstance()->getExecutableName();
-}
-
-bool TracerManager::initialize(const std::string& _tracesDir, const Config& _config) noexcept
-{
-    if (s_instance) return false;
+    auto& instance = *s_instance;
 
     try
     {
-        if (_tracesDir.empty()) return false;
-
-        std::filesystem::path tracesDir(_tracesDir);
+        std::filesystem::path tracesDir("./traces");
         if (!std::filesystem::exists(tracesDir))
         {
             if (!std::filesystem::create_directories(tracesDir)) return false;
         }
 
-        s_instance = new TracerManager(_config);
+        // Store configuration
 
-        s_instance->m_tracesPath = _tracesDir;
-        s_instance->m_currentFile = s_instance->generateFileName();
+        instance.m_config = _config;
+        instance.m_startTime = std::chrono::steady_clock::now();
+        instance.m_lastFlush = instance.m_startTime;
+        instance.m_currentFile = instance.generateFileName();
 
-        std::ofstream testFile(s_instance->m_currentFile);
+        // Initialize traces with metadata
+
+        auto& metadata = instance.m_metadata;
+
+        metadata = nlohmann::json::object();
+        metadata["version"] = "1.0";
+        metadata["engineVersion"] = MOSAIC_VERSION;
+
+        auto duration = instance.m_startTime - std::chrono::steady_clock::time_point();
+        auto systemStartTime =
+            std::chrono::system_clock::now() +
+            std::chrono::duration_cast<std::chrono::system_clock::duration>(duration);
+
+        metadata["startTime"] = std::chrono::system_clock::to_time_t(systemStartTime);
+        metadata["processId"] = 0;
+        metadata["threadName"] = nlohmann::json::object();
+        metadata["processName"] = CommandLineParser::getInstance()->getExecutableName();
+
+        std::ofstream testFile(instance.m_currentFile);
         if (!testFile.is_open())
         {
             delete s_instance;
@@ -99,22 +98,17 @@ bool TracerManager::initialize(const std::string& _tracesDir, const Config& _con
     catch (const std::exception& e)
     {
         MOSAIC_ERROR(e.what());
-
-        if (!s_instance)
-        {
-            delete s_instance;
-            s_instance = nullptr;
-        }
-
         return false;
     }
 }
 
 void TracerManager::shutdown() noexcept
 {
-    if (!s_instance) return;
+    assert(s_instance != nullptr && "TracerManager does not exist!");
 
-    s_instance->flush();
+    auto& instance = *s_instance;
+
+    instance.flush();
 
     delete s_instance;
     s_instance = nullptr;
@@ -514,7 +508,7 @@ std::string TracerManager::generateFileName() noexcept
         auto timestamp = std::chrono::system_clock::to_time_t(now);
 
         std::ostringstream oss;
-        oss << m_tracesPath << "/trace_" << timestamp;
+        oss << "./traces/trace_" << timestamp;
 
         if (m_fileCounter > 0)
         {
@@ -527,7 +521,7 @@ std::string TracerManager::generateFileName() noexcept
     catch (const std::exception& e)
     {
         MOSAIC_ERROR(e.what());
-        return m_tracesPath + "/trace_fallback.json";
+        return "./traces/trace_fallback.json";
     }
 }
 

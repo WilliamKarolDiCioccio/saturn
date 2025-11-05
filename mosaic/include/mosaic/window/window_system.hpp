@@ -74,7 +74,7 @@ class MOSAIC_API WindowSystem : public core::EngineSystem
 
     [[nodiscard]] inline size_t getWindowCount() const;
 
-    [[nodiscard]] static inline WindowSystem* getGlobalInstance()
+    [[nodiscard]] static inline WindowSystem* getInstance()
     {
         if (!g_instance) MOSAIC_ERROR("WindowSystem has not been created yet!");
 

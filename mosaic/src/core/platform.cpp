@@ -64,6 +64,7 @@ Platform::Platform(Application* _app) : m_impl(new Impl(_app))
 
 Platform::~Platform()
 {
+    assert(s_instance == this);
     s_instance = nullptr;
     delete m_impl;
 }

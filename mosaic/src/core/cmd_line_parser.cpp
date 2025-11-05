@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <cassert>
 
 #include "mosaic/core/sys_console.hpp"
 
@@ -24,17 +25,14 @@ CommandLineParser* CommandLineParser::s_instance = nullptr;
 
 bool CommandLineParser::initialize(const Config& _config) noexcept
 {
-    if (s_instance) return false;
-
-    s_instance = new CommandLineParser(_config);
-
+    assert(s_instance == nullptr && "CommandLineParser already exists!");
+    s_instance = new CommandLineParser();
     return true;
 }
 
 void CommandLineParser::shutdown() noexcept
 {
-    if (!s_instance) return;
-
+    assert(s_instance != nullptr && "CommandLineParser does not exist!");
     delete s_instance;
     s_instance = nullptr;
 }
