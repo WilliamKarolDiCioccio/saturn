@@ -7,7 +7,7 @@
 #include <pieces/core/result.hpp>
 #include <pieces/utils/enum_flags.hpp>
 
-#include "mosaic/core/logger.hpp"
+#include "mosaic/tools/logger.hpp"
 
 #include "task_future.hpp"
 

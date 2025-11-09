@@ -6,7 +6,7 @@
 #include <pieces/core/result.hpp>
 #include <pieces/containers/circular_buffer.hpp>
 
-#include "mosaic/core/logger.hpp"
+#include "mosaic/tools/logger.hpp"
 #include "mosaic/input/constants.hpp"
 #include "mosaic/input/events.hpp"
 #include "mosaic/input/mappings.hpp"

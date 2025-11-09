@@ -2,7 +2,7 @@
 
 #include "mosaic/defines.hpp"
 
-#include "mosaic/core/logger.hpp"
+#include "mosaic/tools/logger.hpp"
 
 #include <functional>
 #include <unordered_map>

@@ -7,7 +7,7 @@
 #include <stb_image.h>
 #include <stb_image_resize2.h>
 
-#include "mosaic/core/logger.hpp"
+#include "mosaic/tools/logger.hpp"
 
 namespace mosaic
 {

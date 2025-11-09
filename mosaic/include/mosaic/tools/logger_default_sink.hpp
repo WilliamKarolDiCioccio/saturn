@@ -19,7 +19,7 @@ class MOSAIC_API DefaultSink final : public Sink
    public:
     ~DefaultSink() override = default;
 
-    pieces::RefResult<core::Sink, std::string> initialize() override;
+    pieces::RefResult<Sink, std::string> initialize() override;
     void shutdown() override;
 
     void trace(const std::string& _message) const override;

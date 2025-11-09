@@ -9,4 +9,4 @@
 #include <webgpu/wgpu.h>
 #endif
 
-#include "mosaic/core/logger.hpp"
+#include "mosaic/tools/logger.hpp"

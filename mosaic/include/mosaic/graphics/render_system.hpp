@@ -6,7 +6,7 @@
 
 #include "mosaic/defines.hpp"
 #include "mosaic/window/window.hpp"
-#include "mosaic/core/logger.hpp"
+#include "mosaic/tools/logger.hpp"
 #include "mosaic/core/system.hpp"
 
 #include "render_context.hpp"

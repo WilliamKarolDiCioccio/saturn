@@ -13,7 +13,7 @@
 
 #include <pieces/core/result.hpp>
 
-#include "mosaic/core/logger.hpp"
+#include "mosaic/tools/logger.hpp"
 #include "mosaic/input/action.hpp"
 #include "mosaic/input/mappings.hpp"
 #include "mosaic/window/window.hpp"

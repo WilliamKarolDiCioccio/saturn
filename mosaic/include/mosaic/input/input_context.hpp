@@ -2,7 +2,7 @@
 
 #include "action.hpp"
 
-#include "mosaic/core/logger.hpp"
+#include "mosaic/tools/logger.hpp"
 #include "sources/input_source.hpp"
 #include "sources/mouse_input_source.hpp"
 #include "sources/keyboard_input_source.hpp"

@@ -6,7 +6,7 @@
 
 #include <pieces/core/result.hpp>
 
-#include "mosaic/core/logger.hpp"
+#include "mosaic/tools/logger.hpp"
 #include "mosaic/core/system.hpp"
 
 #include "window.hpp"

@@ -5,7 +5,7 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include <mosaic/core/logger.hpp>
+#include <mosaic/tools/logger.hpp>
 #include <mosaic/core/timer.hpp>
 #include <mosaic/graphics/render_system.hpp>
 #include <mosaic/input/input_system.hpp>

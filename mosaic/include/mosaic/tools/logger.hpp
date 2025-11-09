@@ -184,7 +184,7 @@ class Logger final
 
         if (result.isErr())
         {
-            SystemConsole::printError(
+            core::SystemConsole::printError(
                 fmt::format("Failed to initialize sink '{}': {}", _name, result.error()));
             return false;
         }
@@ -243,7 +243,7 @@ class Logger final
         }
         catch (const std::exception& e)
         {
-            SystemConsole::printError(e.what());
+            core::SystemConsole::printError(e.what());
         }
     }
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "mosaic/core/logger.hpp"
+#include "mosaic/tools/logger.hpp"
 #include "mosaic/window/window.hpp"
 
 #include <volk.h>

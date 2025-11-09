@@ -12,7 +12,7 @@
 
 #include <pieces/core/result.hpp>
 
-#include "mosaic/core/logger.hpp"
+#include "mosaic/tools/logger.hpp"
 
 namespace mosaic
 {
