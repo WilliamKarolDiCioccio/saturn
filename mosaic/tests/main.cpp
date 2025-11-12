@@ -1,9 +1,10 @@
-#include <windows.h>
-
 #include <gtest/gtest.h>
 
 #include <mosaic/tools/logger.hpp>
 #include <mosaic/core/cmd_line_parser.hpp>
+
+#ifdef MOSAIC_PLATFORM_WINDOWS
+#include <windows.h>
 
 bool initializeWin32Platform()
 {
@@ -24,6 +25,8 @@ bool initializeWin32Platform()
 
 void shutdownWin32Platform() { CoUninitialize(); }
 
+#endif
+
 int main(int _argc, char** _argv)
 {
 #ifdef MOSAIC_PLATFORM_WINDOWS
@@ -40,6 +43,10 @@ int main(int _argc, char** _argv)
     mosaic::tools::Logger::shutdown();
 
     mosaic::core::CommandLineParser::shutdown();
+
+#ifdef MOSAIC_PLATFORM_WINDOWS
+    shutdownWin32Platform();
+#endif
 
     return result;
 }

@@ -94,14 +94,14 @@ void WindowSystem::destroyWindow(const std::string& _windowId)
     }
 }
 
-inline void WindowSystem::destroyAllWindows()
+void WindowSystem::destroyAllWindows()
 {
     for (auto& [window, context] : m_impl->windows) context->shutdown();
 
     m_impl->windows.clear();
 }
 
-[[nodiscard]] inline Window* WindowSystem::getWindow(const std::string& _windowId) const
+[[nodiscard]] Window* WindowSystem::getWindow(const std::string& _windowId) const
 {
     auto& windows = m_impl->windows;
 
@@ -110,7 +110,7 @@ inline void WindowSystem::destroyAllWindows()
     return nullptr;
 }
 
-[[nodiscard]] inline size_t WindowSystem::getWindowCount() const { return m_impl->windows.size(); }
+[[nodiscard]] size_t WindowSystem::getWindowCount() const { return m_impl->windows.size(); }
 
 } // namespace window
 } // namespace mosaic

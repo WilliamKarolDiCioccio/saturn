@@ -4,6 +4,7 @@
 #include <type_traits>
 #include <stdexcept>
 #include <memory>
+#include <cstring>
 
 #include "pieces/core/templates.hpp"
 

@@ -9,6 +9,8 @@
 
 #if defined(MOSAIC_PLATFORM_WINDOWS)
 #include "platform/Win32/win32_sys_ui.hpp"
+#elif defined(MOSAIC_PLATFORM_LINUX)
+#include "platform/POSIX/posix_sys_ui.hpp"
 #elif defined(MOSAIC_PLATFORM_EMSCRIPTEN)
 #include "platform/Emscripten/emscripten_sys_ui.hpp"
 #elif defined(MOSAIC_PLATFORM_ANDROID)
@@ -23,6 +25,9 @@ namespace core
 #if defined(MOSAIC_PLATFORM_WINDOWS)
 std::unique_ptr<SystemUI::SystemUIImpl> SystemUI::impl =
     std::make_unique<platform::win32::Win32SystemUI>();
+#elif defined(MOSAIC_PLATFORM_LINUX)
+std::unique_ptr<SystemUI::SystemUIImpl> SystemUI::impl =
+    std::make_unique<platform::posix::POSIXSystemUI>();
 #elif defined(MOSAIC_PLATFORM_EMSCRIPTEN)
 std::unique_ptr<SystemUI::SystemUIImpl> SystemUI::impl =
     std::make_unique<platform::emscripten::EmscriptenSystemUI>();

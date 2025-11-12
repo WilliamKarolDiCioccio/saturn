@@ -27,7 +27,7 @@ for ext in "${extensions[@]}"; do
             ((skipped_count++))
         else
             echo "Compiling $file -> $outputFile"
-            glslangValidator -V "$file" -o "$outputFile"
+            glslc "$file" -o "$outputFile"
             if [ $? -eq 0 ]; then
                 ((compiled_count++))
             fi

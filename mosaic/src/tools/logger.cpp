@@ -5,12 +5,16 @@
 #include <unordered_map>
 #include <mutex>
 #include <thread>
-#include <corecrt.h>
-#include <ctime>
 #include <sstream>
 #include <vector>
 #include <cassert>
 #include <stacktrace>
+
+#ifdef MOSAIC_COMPILER_MSVC
+#include <corecrt.h>
+#else
+#include <time.h>
+#endif
 
 #include <fmt/format.h>
 
@@ -66,7 +70,11 @@ void Logger::logInternal(LogLevel _level, std::string _formattedMessage) noexcep
         const std::time_t now_c = std::chrono::system_clock::to_time_t(now);
         std::tm now_tm;
 
+#ifdef MOSAIC_COMPILER_MSVC
         localtime_s(&now_tm, &now_c);
+#else
+        localtime_r(&now_c, &now_tm);
+#endif
 
         char timeBuffer[100];
         std::strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", &now_tm);

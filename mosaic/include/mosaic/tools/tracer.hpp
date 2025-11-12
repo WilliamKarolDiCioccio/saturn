@@ -76,7 +76,7 @@ struct Trace
           pid(_pid),
           timestamp(_timestamp),
           duration(_duration),
-          id(_id) {};
+          id(_id){};
 };
 
 /**
@@ -189,7 +189,7 @@ class MOSAIC_API Tracer final
     Config m_config;
 
    private:
-    Tracer() : m_fileCounter(0), m_nextTraceId(1) {};
+    Tracer() : m_fileCounter(0), m_nextTraceId(1){};
     ~Tracer() = default;
 
    public:

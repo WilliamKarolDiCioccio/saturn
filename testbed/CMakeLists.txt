@@ -104,7 +104,7 @@ endif()
 # Copy Runtime DLLs (for Windows)
 # ----------------------------------------
 
-if(NOT EMSCRIPTEN AND NOT ANDROID)
+if(WIN32)
   add_custom_command(
     TARGET testbed
     POST_BUILD

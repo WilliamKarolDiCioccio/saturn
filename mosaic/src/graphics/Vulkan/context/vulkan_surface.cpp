@@ -32,6 +32,24 @@ VkResult createWin32Surface(VkInstance instance, const VkWin32SurfaceCreateInfoK
     }
 }
 
+#elif defined(MOSAIC_PLATFORM_LINUX)
+
+VkResult createXlibSurface(VkInstance instance, const VkXlibSurfaceCreateInfoKHR* pCreateInfo,
+                           const VkAllocationCallbacks* pAllocator, VkSurfaceKHR* pSurface)
+{
+    auto func = reinterpret_cast<PFN_vkCreateXlibSurfaceKHR>(
+        vkGetInstanceProcAddr(instance, "vkCreateXlibSurfaceKHR"));
+
+    if (func != nullptr)
+    {
+        return func(instance, pCreateInfo, pAllocator, pSurface);
+    }
+    else
+    {
+        return VK_ERROR_EXTENSION_NOT_PRESENT;
+    }
+}
+
 #elif defined(MOSAIC_PLATFORM_ANDROID)
 
 VkResult createAndroidSurface(VkInstance instance, const VkAndroidSurfaceCreateInfoKHR* pCreateInfo,
@@ -67,6 +85,22 @@ void createSurface(Surface& _surface, const Instance& _instance, void* _nativeWi
         VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create Win32 Vulkan surface!");
+    }
+
+#elif defined(MOSAIC_PLATFORM_LINUX)
+
+    const VkXlibSurfaceCreateInfoKHR surfaceCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR,
+        .pNext = nullptr,
+        .dpy = glfwGetX11Display(),
+        .window =
+            static_cast<Window>(glfwGetX11Window(static_cast<GLFWwindow*>(_nativeWindowHandle))),
+    };
+
+    if (createXlibSurface(_instance.instance, &surfaceCreateInfo, nullptr, &_surface.surface) !=
+        VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to create Xlib Vulkan surface!");
     }
 
 #elif defined(MOSAIC_PLATFORM_ANDROID)

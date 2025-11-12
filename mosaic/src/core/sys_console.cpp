@@ -7,6 +7,8 @@
 
 #if defined(MOSAIC_PLATFORM_WINDOWS)
 #include "platform/Win32/win32_sys_console.hpp"
+#elif defined(MOSAIC_PLATFORM_LINUX)
+#include "platform/POSIX/posix_sys_console.hpp"
 #elif defined(MOSAIC_PLATFORM_EMSCRIPTEN)
 #include "platform/Emscripten/emscripten_sys_console.hpp"
 #elif defined(MOSAIC_PLATFORM_ANDROID)
@@ -21,6 +23,9 @@ namespace core
 #if defined(MOSAIC_PLATFORM_WINDOWS)
 std::unique_ptr<SystemConsole::SystemConsoleImpl> SystemConsole::impl =
     std::make_unique<platform::win32::Win32SystemConsole>();
+#elif defined(MOSAIC_PLATFORM_LINUX)
+std::unique_ptr<SystemConsole::SystemConsoleImpl> SystemConsole::impl =
+    std::make_unique<platform::posix::POSIXSystemConsole>();
 #elif defined(MOSAIC_PLATFORM_EMSCRIPTEN)
 std::unique_ptr<SystemConsole::SystemConsoleImpl> SystemConsole::impl =
     std::make_unique<platform::emscripten::EmscriptenSystemConsole>();

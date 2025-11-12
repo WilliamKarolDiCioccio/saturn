@@ -6,6 +6,8 @@
 
 #if defined(MOSAIC_PLATFORM_WINDOWS)
 #include "platform/Win32/win32_platform.hpp"
+#elif defined(MOSAIC_PLATFORM_LINUX)
+#include "platform/POSIX/posix_platform.hpp"
 #elif defined(MOSAIC_PLATFORM_EMSCRIPTEN)
 #include "platform/emscripten/emscripten_platform.hpp"
 #elif defined(MOSAIC_PLATFORM_ANDROID)
@@ -42,7 +44,7 @@ struct Platform::Impl
     std::unique_ptr<PlatformContext> platformContext;
     std::vector<PlatformContextChangedEvent> m_platformContextListeners;
 
-    Impl(Application* _app) : app(_app), platformContext(PlatformContext::create()) {};
+    Impl(Application* _app) : app(_app), platformContext(PlatformContext::create()){};
 };
 
 std::unique_ptr<PlatformContext> PlatformContext::create()
@@ -73,6 +75,8 @@ std::unique_ptr<Platform> Platform::create(Application* _app)
 {
 #if defined(MOSAIC_PLATFORM_WINDOWS)
     return std::make_unique<platform::win32::Win32Platform>(_app);
+#elif defined(MOSAIC_PLATFORM_LINUX)
+    return std::make_unique<platform::posix::POSIXPlatform>(_app);
 #elif defined(MOSAIC_PLATFORM_EMSCRIPTEN)
     return std::make_unique<platform::emscripten::EmscriptenPlatform>(_app);
 #elif defined(MOSAIC_PLATFORM_ANDROID)

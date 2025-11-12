@@ -50,11 +50,11 @@ class MOSAIC_API RenderSystem : public core::EngineSystem
     pieces::Result<RenderContext*, std::string> createContext(const window::Window* _window);
     void destroyContext(const window::Window* _window);
 
-    inline void destroyAllContexts();
+    void destroyAllContexts();
 
-    inline pieces::RefResult<core::System, std::string> update() override;
+    pieces::RefResult<core::System, std::string> update() override;
 
-    inline RenderContext* getContext(const window::Window* _window) const;
+    RenderContext* getContext(const window::Window* _window) const;
 
     [[nodiscard]] static inline RenderSystem* getInstance()
     {

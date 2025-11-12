@@ -55,13 +55,22 @@ class CommandLineParser
      */
     struct Config
     {
-        bool allowUnknownOptions = false;
-        bool caseSensitive = true;
-        bool enableSpellCheck = true;
-        uint8_t maxSpellCheckDistance = 3;
-        bool printErrors = true;
-        bool autoHelp = true;
-        uint8_t maxArguments = 64;
+        bool allowUnknownOptions;
+        bool caseSensitive;
+        bool enableSpellCheck;
+        uint8_t maxSpellCheckDistance;
+        bool printErrors;
+        bool autoHelp;
+        uint8_t maxArguments;
+
+        Config() noexcept
+            : allowUnknownOptions(false),
+              caseSensitive(true),
+              enableSpellCheck(true),
+              maxSpellCheckDistance(3),
+              printErrors(true),
+              autoHelp(true),
+              maxArguments(64){};
     };
 
    private:
@@ -94,7 +103,7 @@ class CommandLineParser
               handler(std::move(_handler)),
               validator(std::move(_validator)),
               required(_required),
-              parsed(false) {};
+              parsed(false){};
     };
 
     MOSAIC_API static CommandLineParser* s_instance;
@@ -114,7 +123,7 @@ class CommandLineParser
           m_args(),
           m_shouldTerminate(false),
           m_options(),
-          m_shortToLong() {};
+          m_shortToLong(){};
     ~CommandLineParser() = default;
 
    public:

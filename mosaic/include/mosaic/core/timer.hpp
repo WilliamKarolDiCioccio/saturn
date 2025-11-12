@@ -25,7 +25,7 @@ struct ScheduledCallback
     std::function<void()> callback;
 
     ScheduledCallback(size_t _id, double _triggerTime, const std::function<void()>& _callback)
-        : id(_id), triggerTime(_triggerTime), cancelled(false), callback(_callback) {};
+        : id(_id), triggerTime(_triggerTime), cancelled(false), callback(_callback){};
 };
 
 /**

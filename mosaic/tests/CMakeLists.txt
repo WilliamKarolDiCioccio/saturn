@@ -14,12 +14,14 @@ target_link_libraries(
 
 add_test(NAME mosaic_tests COMMAND test_mosaic)
 
-add_custom_command(
-  TARGET mosaic_tests
-  POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:mosaic_tests>
-          $<TARGET_FILE_DIR:mosaic_tests>
-  COMMAND_EXPAND_LISTS)
+if(WIN32)
+  add_custom_command(
+    TARGET mosaic_tests
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:mosaic_tests>
+            $<TARGET_FILE_DIR:mosaic_tests>
+    COMMAND_EXPAND_LISTS)
+endif()
 
 include("${CMAKE_SOURCE_DIR}/cmake/ConfigureForBuildType.cmake")
 

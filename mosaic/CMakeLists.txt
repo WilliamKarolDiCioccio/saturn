@@ -54,6 +54,14 @@ else()
       "src/platform/Win32/win32_sys_info.cpp"
       "src/platform/Win32/win32_sys_console.cpp"
       "src/platform/Win32/win32_sys_ui.cpp")
+  elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
+    list(
+      APPEND
+      FRAMEWORK_SRC
+      "src/platform/POSIX/posix_platform.cpp"
+      "src/platform/POSIX/posix_sys_info.cpp"
+      "src/platform/POSIX/posix_sys_console.cpp"
+      "src/platform/POSIX/posix_sys_ui.cpp")
   elseif(EMSCRIPTEN)
     list(
       APPEND
@@ -79,19 +87,19 @@ if(NOT EMSCRIPTEN)
     APPEND
     FRAMEWORK_SRC
     # Vulkan Backend
-    "src/graphics/vulkan/vulkan_render_context.cpp"
-    "src/graphics/vulkan/vulkan_render_system.cpp"
-    "src/graphics/vulkan/context/vulkan_instance.cpp"
-    "src/graphics/vulkan/context/vulkan_device.cpp"
-    "src/graphics/vulkan/context/vulkan_surface.cpp"
-    "src/graphics/vulkan/pipelines/vulkan_shader_module.cpp"
-    "src/graphics/vulkan/pipelines/vulkan_pipeline.cpp"
-    "src/graphics/vulkan/commands/vulkan_command_pool.cpp"
-    "src/graphics/vulkan/commands/vulkan_command_buffer.cpp"
-    "src/graphics/vulkan/commands/vulkan_render_pass.cpp"
-    "src/graphics/vulkan/vulkan_allocator.cpp"
-    "src/graphics/vulkan/vulkan_framebuffers.cpp"
-    "src/graphics/vulkan/vulkan_swapchain.cpp"
+    "src/graphics/Vulkan/vulkan_render_context.cpp"
+    "src/graphics/Vulkan/vulkan_render_system.cpp"
+    "src/graphics/Vulkan/context/vulkan_instance.cpp"
+    "src/graphics/Vulkan/context/vulkan_device.cpp"
+    "src/graphics/Vulkan/context/vulkan_surface.cpp"
+    "src/graphics/Vulkan/pipelines/vulkan_shader_module.cpp"
+    "src/graphics/Vulkan/pipelines/vulkan_pipeline.cpp"
+    "src/graphics/Vulkan/commands/vulkan_command_pool.cpp"
+    "src/graphics/Vulkan/commands/vulkan_command_buffer.cpp"
+    "src/graphics/Vulkan/commands/vulkan_render_pass.cpp"
+    "src/graphics/Vulkan/vulkan_allocator.cpp"
+    "src/graphics/Vulkan/vulkan_framebuffers.cpp"
+    "src/graphics/Vulkan/vulkan_swapchain.cpp"
     "src/external/vma.cpp")
 endif()
 
@@ -219,6 +227,10 @@ elseif(ANDROID)
     mosaic PUBLIC log android jnigraphics game-activity::game-activity
                   volk::volk GPUOpen::VulkanMemoryAllocator)
 else()
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_link_libraries(mosaic PRIVATE stdc++_libbacktrace)
+  endif()
+
   find_path(COLORCONSOLE_INCLUDE_DIRS "colorconsole.hpp")
   target_include_directories(mosaic PRIVATE ${COLORCONSOLE_INCLUDE_DIRS})
   target_link_libraries(mosaic PRIVATE glfw glfw3webgpu webgpu volk::volk

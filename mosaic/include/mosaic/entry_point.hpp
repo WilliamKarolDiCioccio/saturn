@@ -44,7 +44,7 @@ int runApp(const std::vector<std::string>& _cmdLineArgs, Args&&... _appConstucto
 
     auto logger = tools::Logger::getInstance();
 
-    logger->addSink<core::DefaultSink>("default", core::DefaultSink());
+    logger->addSink<tools::DefaultSink>("default", tools::DefaultSink());
 
     tools::Tracer::initialize();
 

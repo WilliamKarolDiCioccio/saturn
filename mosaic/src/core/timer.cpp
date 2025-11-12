@@ -1,6 +1,5 @@
 #include "mosaic/core/timer.hpp"
 
-#include <corecrt.h>
 #include <algorithm>
 #include <atomic>
 #include <chrono>
