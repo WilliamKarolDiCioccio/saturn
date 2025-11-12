@@ -13,7 +13,7 @@ AGDKPlatformContext::AGDKPlatformContext()
       m_currentWindow(nullptr),
       m_pendingWindow(nullptr),
       m_windowChanged(false),
-      m_surfaceDestroyed(false) {};
+      m_surfaceDestroyed(false){};
 
 void AGDKPlatformContext::setApp(android_app* _app)
 {

@@ -212,8 +212,7 @@ void checkDeviceExtensionsSupport(Device& _device)
     for (const auto& requiredExtension : _device.requiredExtensions)
     {
         bool found = std::find_if(extensions.begin(), extensions.end(),
-                                  [&](const VkExtensionProperties& extension)
-                                  {
+                                  [&](const VkExtensionProperties& extension) {
                                       return strncmp(requiredExtension, extension.extensionName,
                                                      VK_MAX_EXTENSION_NAME_SIZE);
                                   }) != extensions.end();
@@ -231,8 +230,7 @@ void checkDeviceExtensionsSupport(Device& _device)
     for (const auto& optionalExtension : _device.optionalExtensions)
     {
         bool found = std::find_if(extensions.begin(), extensions.end(),
-                                  [&](const VkExtensionProperties& extension)
-                                  {
+                                  [&](const VkExtensionProperties& extension) {
                                       return strncmp(optionalExtension, extension.extensionName,
                                                      VK_MAX_EXTENSION_NAME_SIZE);
                                   }) != extensions.end();
@@ -260,8 +258,7 @@ void checkDeviceLayersSupport(Device& _device)
     for (const auto& requiredLayer : _device.requiredLayers)
     {
         bool found = std::find_if(layers.begin(), layers.end(),
-                                  [&](const VkLayerProperties& layer)
-                                  {
+                                  [&](const VkLayerProperties& layer) {
                                       return strncmp(requiredLayer, layer.layerName,
                                                      VK_MAX_EXTENSION_NAME_SIZE) == 0;
                                   }) != layers.end();

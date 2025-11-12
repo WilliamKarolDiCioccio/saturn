@@ -19,7 +19,7 @@ VulkanRenderContext::VulkanRenderContext(const window::Window* _window,
       m_instance(nullptr),
       m_device(nullptr),
       m_currentFrame(0),
-      m_framebufferResized(false) {};
+      m_framebufferResized(false){};
 
 pieces::RefResult<RenderContext, std::string> VulkanRenderContext::initialize(
     RenderSystem* _renderSystem)

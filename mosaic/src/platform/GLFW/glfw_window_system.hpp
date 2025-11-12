@@ -20,7 +20,7 @@ class GLFWWindowSystem : public window::WindowSystem
     pieces::RefResult<core::System, std::string> initialize() override;
     void shutdown() override;
 
-    pieces::RefResult<core::System, std::string> update()  override;
+    pieces::RefResult<core::System, std::string> update() override;
 };
 
 } // namespace glfw

@@ -66,7 +66,7 @@ struct CursorProperties
           currentMode(CursorMode::normal),
           srcPaths(),
           isVisible(true),
-          isClipped(false) {};
+          isClipped(false){};
 };
 
 /**
@@ -93,7 +93,7 @@ struct WindowProperties
           isMaximized(false),
           isResizeable(true),
           isVSync(false),
-          cursorProperties() {};
+          cursorProperties(){};
 };
 
 template <typename Fn>
@@ -104,7 +104,7 @@ struct WindowEventCallback
     size_t id;
 
     WindowEventCallback(size_t _id, const Fn& _callback)
-        : id(_id), callback(std::move(_callback)) {};
+        : id(_id), callback(std::move(_callback)){};
 };
 
 // Callback type definitions

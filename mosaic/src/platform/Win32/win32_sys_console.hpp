@@ -1,8 +1,5 @@
 #include "mosaic/core/sys_console.hpp"
 
-#include <windows.h>
-#include <iostream>
-
 namespace mosaic
 {
 namespace platform

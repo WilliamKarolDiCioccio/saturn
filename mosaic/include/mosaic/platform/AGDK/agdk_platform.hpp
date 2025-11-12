@@ -53,7 +53,7 @@ class AGDKPlatformContext : public core::PlatformContext
 class AGDKPlatform : public core::Platform
 {
    public:
-    AGDKPlatform(core::Application* _app) : Platform(_app) {};
+    AGDKPlatform(core::Application* _app) : Platform(_app){};
     ~AGDKPlatform() override = default;
 
    public:

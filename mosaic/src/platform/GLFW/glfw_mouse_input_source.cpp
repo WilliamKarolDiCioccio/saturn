@@ -11,7 +11,7 @@ GLFWMouseInputSource::GLFWMouseInputSource(window::Window* _window)
     : input::MouseInputSource(_window),
       m_nativeHandle(nullptr),
       m_focusCallbackId(0),
-      m_wheelOffsetBuffer(0.0f, 0.0f) {};
+      m_wheelOffsetBuffer(0.0f, 0.0f){};
 
 pieces::RefResult<input::InputSource, std::string> GLFWMouseInputSource::initialize()
 {

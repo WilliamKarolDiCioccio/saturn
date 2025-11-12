@@ -32,7 +32,7 @@ struct Swapchain
           surfaceFormat({}),
           presentMode(),
           extent({}),
-          exclusiveFullscreenAvailable(false) {};
+          exclusiveFullscreenAvailable(false){};
 };
 
 void createSwapchain(Swapchain& _swapchain, const Device& _device, const Surface& _surface,

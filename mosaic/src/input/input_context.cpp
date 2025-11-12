@@ -42,7 +42,7 @@ struct InputContext::Impl
     // Cache
     std::unordered_map<std::string, bool> triggeredActionsCache;
 
-    Impl(const window::Window* _window) : window(_window) {};
+    Impl(const window::Window* _window) : window(_window){};
 };
 
 InputContext::InputContext(const window::Window* _window) : m_impl(new Impl(_window)) {}

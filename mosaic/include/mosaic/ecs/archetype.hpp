@@ -41,7 +41,7 @@ class Archetype final
      */
     Archetype(ComponentSignature _signature, size_t _stride,
               std::unordered_map<ComponentID, size_t> _componentOffsets)
-        : m_signature(_signature), m_storage(_stride), m_componentOffsets(_componentOffsets) {};
+        : m_signature(_signature), m_storage(_stride), m_componentOffsets(_componentOffsets){};
 
    public:
     /**

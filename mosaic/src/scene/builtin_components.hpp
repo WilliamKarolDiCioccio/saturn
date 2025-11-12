@@ -16,7 +16,7 @@ struct TagComponent
     std::array<char, 32> tag;
     bool active;
 
-    TagComponent() : tag{}, active(true) {};
+    TagComponent() : tag{}, active(true){};
 
     TagComponent(const std::string& _tag, bool _active = true) : active(_active)
     {
@@ -35,10 +35,10 @@ struct TransformComponent
     mutable bool dirty;
 
     TransformComponent()
-        : position(0.0f), rotation(1.0f, 0.0f, 0.0f, 0.0f), scale(1.0f), dirty(true) {};
+        : position(0.0f), rotation(1.0f, 0.0f, 0.0f, 0.0f), scale(1.0f), dirty(true){};
 
     TransformComponent(const glm::vec3& pos, const glm::quat& rot, const glm::vec3& scl)
-        : position(pos), rotation(rot), scale(scl), dirty(true) {};
+        : position(pos), rotation(rot), scale(scl), dirty(true){};
 };
 
 struct CameraComponent
@@ -51,7 +51,7 @@ struct CameraComponent
     CameraComponent() : fov(45.0f), nearPlane(0.1f), farPlane(100.0f), primary(true) {}
 
     CameraComponent(float _fov, float _near, float _far, bool _primary = true)
-        : fov(_fov), nearPlane(_near), farPlane(_far), primary(_primary) {};
+        : fov(_fov), nearPlane(_near), farPlane(_far), primary(_primary){};
 };
 
 struct MeshComponent
@@ -95,7 +95,7 @@ struct LightComponent
     LightComponent() : color(1.0f), intensity(1.0f), type(Type::point) {}
 
     LightComponent(const glm::vec3& _color, float _intensity, Type _type)
-        : color(_color), intensity(_intensity), type(_type) {};
+        : color(_color), intensity(_intensity), type(_type){};
 };
 
 } // namespace scene

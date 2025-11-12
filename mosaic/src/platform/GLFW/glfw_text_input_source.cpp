@@ -8,7 +8,7 @@ namespace glfw
 {
 
 GLFWTextInputSource::GLFWTextInputSource(window::Window* window)
-    : input::TextInputSource(window), m_nativeHandle(nullptr), m_charCallbackId(0) {};
+    : input::TextInputSource(window), m_nativeHandle(nullptr), m_charCallbackId(0){};
 
 pieces::RefResult<input::InputSource, std::string> GLFWTextInputSource::initialize()
 {

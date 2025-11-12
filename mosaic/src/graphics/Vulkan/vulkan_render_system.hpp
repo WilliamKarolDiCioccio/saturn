@@ -19,7 +19,7 @@ class VulkanRenderSystem : public RenderSystem
     Device m_device;
 
    public:
-    VulkanRenderSystem() : RenderSystem(RendererAPIType::vulkan) {};
+    VulkanRenderSystem() : RenderSystem(RendererAPIType::vulkan){};
     ~VulkanRenderSystem() override = default;
 
    public:

@@ -105,7 +105,7 @@ class EntityRegistry final
          * @param _com The component registry for component type information.
          */
         EntityView(const std::vector<Archetype*>& _archetypes, const ComponentRegistry* _com)
-            : m_archetypes(std::move(_archetypes)), m_componentRegistry(_com) {};
+            : m_archetypes(std::move(_archetypes)), m_componentRegistry(_com){};
 
        public:
         /**
@@ -243,7 +243,7 @@ class EntityRegistry final
      * @param _componentRegistry The component registry for component type information.
      */
     EntityRegistry(const ComponentRegistry* _componentRegistry)
-        : m_componentRegistry(_componentRegistry) {};
+        : m_componentRegistry(_componentRegistry){};
 
    public:
     /**

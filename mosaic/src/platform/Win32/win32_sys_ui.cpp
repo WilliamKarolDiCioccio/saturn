@@ -1,5 +1,7 @@
 #include "win32_sys_ui.hpp"
 
+#include <windows.h>
+
 namespace mosaic
 {
 namespace platform

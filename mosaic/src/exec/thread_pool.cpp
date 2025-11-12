@@ -92,7 +92,7 @@ class ThreadWorker final
           m_idx(_idx),
           m_debugName(_debugName),
           m_sharingMode(_sharingMode),
-          m_tid(0) {};
+          m_tid(0){};
 
     void operator()()
     {

@@ -1,5 +1,9 @@
 #include "win32_sys_console.hpp"
 
+#include <iostream>
+
+#include <windows.h>
+
 #include <colorconsole.hpp>
 
 namespace mosaic

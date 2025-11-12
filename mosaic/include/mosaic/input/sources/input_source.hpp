@@ -34,7 +34,7 @@ class InputSource
     window::Window* m_window;
 
    public:
-    InputSource(window::Window* _window) : m_isActive(false), m_pollCount(0), m_window(_window) {};
+    InputSource(window::Window* _window) : m_isActive(false), m_pollCount(0), m_window(_window){};
     virtual ~InputSource() = default;
 
    public:

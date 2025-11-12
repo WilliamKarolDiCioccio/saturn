@@ -15,7 +15,7 @@ struct RenderContextSettings
     uint32_t backbufferCount;
 
     RenderContextSettings(bool _enableDebugLayers, uint32_t _backbufferCount)
-        : enableDebugLayers(_enableDebugLayers), backbufferCount(_backbufferCount) {};
+        : enableDebugLayers(_enableDebugLayers), backbufferCount(_backbufferCount){};
 };
 
 class RenderSystem;

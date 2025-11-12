@@ -28,11 +28,11 @@ struct Action
     std::string description;
     std::function<bool(InputContext*)> trigger;
 
-    Action() : name(""), description(""), trigger([](const InputContext*) { return false; }) {};
+    Action() : name(""), description(""), trigger([](const InputContext*) { return false; }){};
 
     Action(const std::string& name, const std::string& description,
            std::function<bool(InputContext*)> trigger)
-        : name(name), description(description), trigger(trigger) {};
+        : name(name), description(description), trigger(trigger){};
 };
 
 } // namespace input

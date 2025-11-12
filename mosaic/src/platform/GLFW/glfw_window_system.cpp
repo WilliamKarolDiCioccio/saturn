@@ -24,7 +24,7 @@ void GLFWWindowSystem::shutdown()
     glfwTerminate();
 }
 
-pieces::RefResult<core::System, std::string> GLFWWindowSystem::update() 
+pieces::RefResult<core::System, std::string> GLFWWindowSystem::update()
 {
     glfwPollEvents();
 

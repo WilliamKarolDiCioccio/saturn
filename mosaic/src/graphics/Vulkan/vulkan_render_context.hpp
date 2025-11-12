@@ -35,7 +35,7 @@ class VulkanRenderContext : public RenderContext
               renderFinishedSemaphore(nullptr),
               inFlightFence(nullptr),
               commandBuffer(nullptr),
-              imageIndex(0) {};
+              imageIndex(0){};
     };
 
     const Instance* m_instance;

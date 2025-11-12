@@ -27,12 +27,12 @@ class MOSAIC_API MouseInputSource : public InputSource
         std::chrono::time_point<std::chrono::high_resolution_clock> timestamp;
 
         MouseWheelScrollSample()
-            : offset(0.0f, 0.0f), timestamp(std::chrono::high_resolution_clock::now()) {};
+            : offset(0.0f, 0.0f), timestamp(std::chrono::high_resolution_clock::now()){};
 
         MouseWheelScrollSample(
             const glm::vec2& _offset,
             std::chrono::time_point<std::chrono::high_resolution_clock> _timestamp)
-            : offset(_offset), timestamp(_timestamp) {};
+            : offset(_offset), timestamp(_timestamp){};
     };
 
     struct MouseCursorPosSample
@@ -41,11 +41,11 @@ class MOSAIC_API MouseInputSource : public InputSource
         std::chrono::time_point<std::chrono::high_resolution_clock> timestamp;
 
         MouseCursorPosSample()
-            : position(0.0f, 0.0f), timestamp(std::chrono::high_resolution_clock::now()) {};
+            : position(0.0f, 0.0f), timestamp(std::chrono::high_resolution_clock::now()){};
 
         MouseCursorPosSample(const glm::vec2& _position,
                              std::chrono::time_point<std::chrono::high_resolution_clock> _timestamp)
-            : position(_position), timestamp(_timestamp) {};
+            : position(_position), timestamp(_timestamp){};
     };
 
     // Events

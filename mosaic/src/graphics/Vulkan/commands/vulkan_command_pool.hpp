@@ -13,7 +13,7 @@ struct CommandPool
 {
     VkCommandPool commandPool;
 
-    CommandPool() : commandPool(VK_NULL_HANDLE) {};
+    CommandPool() : commandPool(VK_NULL_HANDLE){};
 };
 
 void createCommandPool(CommandPool& _commandPool, const Device& _device, const Surface& _surface);

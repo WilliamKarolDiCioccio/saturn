@@ -18,7 +18,7 @@ namespace win32
 class Win32Platform : public core::Platform
 {
    public:
-    Win32Platform(core::Application* _app) : core::Platform(_app) {};
+    Win32Platform(core::Application* _app) : core::Platform(_app){};
     ~Win32Platform() override = default;
 
    public:

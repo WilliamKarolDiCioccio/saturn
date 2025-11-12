@@ -65,7 +65,7 @@ class Win32SystemInfo : public core::SystemInfo::SystemInfoImpl
 
    public:
     Win32SystemInfo();
-    virtual ~Win32SystemInfo() = default;
+    ~Win32SystemInfo() override = default;
 
     core::OSInfo getOSInfo() override;
     core::CPUInfo getCPUInfo() override;

@@ -96,7 +96,9 @@ std::vector<core::StorageDeviceInfo> AGDKSystemInfo::getStorageDevices()
     deviceInfo.name = "Internal Storage";
     deviceInfo.type = core::StorageDeviceInfo::StorageType::SSD; // Assuming internal storage is SSD
 
-    struct statvfs stat{};
+    struct statvfs stat
+    {
+    };
     if (statvfs(deviceInfo.mountPoint.c_str(), &stat) == 0)
     {
         size_t blockSize = stat.f_frsize;

@@ -58,7 +58,7 @@ struct DrawCall
           vertexOffset(0),
           firstInstance(0),
           sortKey(0),
-          debugName(_debugName) {};
+          debugName(_debugName){};
 };
 
 } // namespace graphics

@@ -25,7 +25,7 @@ class WebGPURenderContext : public RenderContext
             : surfaceTexture({}),
               targetView(nullptr),
               renderPass(nullptr),
-              commandEncoder(nullptr) {};
+              commandEncoder(nullptr){};
     } m_frameData;
 
     WGPUInstance m_instance;

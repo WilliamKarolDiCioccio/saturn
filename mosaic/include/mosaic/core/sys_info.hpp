@@ -19,7 +19,7 @@ struct StorageMetrics
     size_t usedStorageKB;  // Used storage in kilobytes
     size_t freeStorageKB;  // Free storage in kilobytes
 
-    StorageMetrics() : totalStorageKB(0), usedStorageKB(0), freeStorageKB(0) {};
+    StorageMetrics() : totalStorageKB(0), usedStorageKB(0), freeStorageKB(0){};
 };
 
 // Represents a storage device in the system
@@ -38,7 +38,7 @@ struct StorageDeviceInfo
 
     StorageMetrics metrics; // Storage metrics for the device
 
-    StorageDeviceInfo() : mountPoint("."), name("Unknown"), type(StorageType::HDD), metrics() {};
+    StorageDeviceInfo() : mountPoint("."), name("Unknown"), type(StorageType::HDD), metrics(){};
 };
 
 // Represents memory metrics of the system
@@ -48,7 +48,7 @@ struct MemoryMetrics
     size_t usedMemoryKB;  // Used memory in kilobytes
     size_t freeMemoryKB;  // Free memory in kilobytes
 
-    MemoryMetrics() : totalMemoryKB(0), usedMemoryKB(0), freeMemoryKB(0) {};
+    MemoryMetrics() : totalMemoryKB(0), usedMemoryKB(0), freeMemoryKB(0){};
 };
 
 struct CPUInfo
@@ -92,7 +92,7 @@ struct CPUInfo
               avx10_2(false),
               neon(false),
               apx(false),
-              fp16(false) {};
+              fp16(false){};
     } isaSupport;
 
     CPUInfo()
@@ -103,7 +103,7 @@ struct CPUInfo
           logicalCores(0),
           physicalCores(0),
           clockSpeedGHz(0.0f),
-          isaSupport() {};
+          isaSupport(){};
 };
 
 struct MonitorInfo
@@ -164,7 +164,7 @@ struct MonitorInfo
           isTouchEnabled(false),
           orientation(Orientation::Landscape),
           colorDepth(ColorDepth::Bit8),
-          colorSpace(ColorSpace::sRGB) {};
+          colorSpace(ColorSpace::sRGB){};
 };
 
 struct OSInfo
@@ -174,7 +174,7 @@ struct OSInfo
     std::string kernelVersion; // Kernel version (e.g., "5.4.0-42-generic")
     std::string build;         // OS build number (e.g., "19042")
 
-    OSInfo() : name("Unknown"), version("Unknown"), kernelVersion("Unknown"), build("Unknown") {};
+    OSInfo() : name("Unknown"), version("Unknown"), kernelVersion("Unknown"), build("Unknown"){};
 };
 
 struct LocaleInfo
@@ -224,7 +224,7 @@ struct LocaleInfo
           dateTimeFormat("YYYY-MM-DD HH:mm:ss"),
           decimalSeparator('.'),
           thousandsSeparator(','),
-          firstDayOfWeek(Weekday::Monday) {};
+          firstDayOfWeek(Weekday::Monday){};
 };
 
 /**

@@ -15,7 +15,7 @@ namespace webgpu
 class WebGPURenderSystem : public RenderSystem
 {
    public:
-    WebGPURenderSystem() : RenderSystem(RendererAPIType::web_gpu) {};
+    WebGPURenderSystem() : RenderSystem(RendererAPIType::web_gpu){};
     ~WebGPURenderSystem() override = default;
 
    public:

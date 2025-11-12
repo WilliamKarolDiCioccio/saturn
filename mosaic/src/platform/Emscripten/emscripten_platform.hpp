@@ -18,7 +18,7 @@ namespace emscripten
 class EmscriptenPlatform : public core::Platform
 {
    public:
-    EmscriptenPlatform(core::Application* _app) : core::Platform(_app) {};
+    EmscriptenPlatform(core::Application* _app) : core::Platform(_app){};
     ~EmscriptenPlatform() override = default;
 
    public:

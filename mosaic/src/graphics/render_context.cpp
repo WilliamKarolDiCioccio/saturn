@@ -13,11 +13,11 @@ struct RenderContext::Impl
     RenderContextSettings m_settings;
 
     Impl(const window::Window* _window, const RenderContextSettings& _settings)
-        : m_window(_window), m_settings(_settings) {};
+        : m_window(_window), m_settings(_settings){};
 };
 
 RenderContext::RenderContext(const window::Window* _window, const RenderContextSettings& _settings)
-    : m_impl(new Impl(_window, _settings)) {};
+    : m_impl(new Impl(_window, _settings)){};
 
 RenderContext::~RenderContext() { delete m_impl; }
 

@@ -8,7 +8,7 @@ namespace glfw
 {
 
 GLFWKeyboardInputSource::GLFWKeyboardInputSource(window::Window* _window)
-    : input::KeyboardInputSource(_window), m_nativeHandle(nullptr), m_focusCallbackId(0) {};
+    : input::KeyboardInputSource(_window), m_nativeHandle(nullptr), m_focusCallbackId(0){};
 
 pieces::RefResult<input::InputSource, std::string> GLFWKeyboardInputSource::initialize()
 {

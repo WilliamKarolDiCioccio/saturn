@@ -118,7 +118,7 @@ void AGDKSystemUI::showSoftwareKeyboard(const std::string& _text, uint32_t _sele
 {
     auto platform = AGDKPlatform::getInstance();
     auto context = static_cast<AGDKPlatformContext*>(platform->getPlatformContext());
-    
+
     GameTextInputState initialState = {};
     initialState.text_UTF8 = _text.c_str();
     initialState.selection.start = _selectionStart;
