@@ -39,6 +39,9 @@
         "type": "equals",
         "lhs": "${hostSystemName}",
         "rhs": "Linux"
+      },
+      "environment": {
+        "VCPKG_ROOT": "/home/willy/dev/vcpkg" // Can't figure out how to make this user-specific only in CMakeUserPresets.json
       }
     },
     {
