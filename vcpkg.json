@@ -2,36 +2,78 @@
   "name": "mosaic",
   "version": "1.0.0",
   "dependencies": [
-    "benchmark",
-    "bfgroup-lyra",
-    "color-console",
-    "fmt",
+    {
+      "name": "benchmark",
+      "version>=": "1.9.4#0"
+    },
+    {
+      "name": "bfgroup-lyra",
+      "version>=": "1.7.0"
+    },
+    {
+      "name": "color-console",
+      "version>=": "2022-03-20#0"
+    },
+    {
+      "name": "concurrentqueue",
+      "version>=": "1.0.4#0"
+    },
+    {
+      "name": "fmt",
+      "version>=": "12.1.0"
+    },
     {
       "name": "glfw3",
-      "platform": "!android"
+      "platform": "!android",
+      "version>=": "3.4#1"
     },
-    "glm",
-    "gtest",
-    "nlohmann-json",
-    "stb",
-    "tree-sitter",
-    "utfcpp",
+    {
+      "name": "glm",
+      "version>=": "1.0.2"
+    },
+    {
+      "name": "gtest",
+      "version>=": "1.17.0#1"
+    },
+    {
+      "name": "nlohmann-json",
+      "version>=": "3.12.0#0"
+    },
+    {
+      "name": "stb",
+      "version>=": "2024-07-29#1"
+    },
+    {
+      "name": "tree-sitter",
+      "version>=": "0.26.2"
+    },
+    {
+      "name": "utfcpp",
+      "version>=": "4.0.6"
+    },
     {
       "name": "volk",
-      "platform": "!emscripten"
+      "platform": "!emscripten",
+      "version>=": "1.4.309.0#0"
     },
     {
       "name": "vulkan",
-      "platform": "!android & !emscripten"
+      "platform": "!android &!emscripten",
+      "version>=": "2023-12-17"
     },
     {
       "name": "vulkan-memory-allocator",
-      "platform": "!emscripten"
+      "platform": "!emscripten",
+      "version>=": "3.3.0#0"
     },
     {
       "name": "vulkan-utility-libraries",
-      "platform": "!emscripten"
+      "platform": "!emscripten",
+      "version>=": "1.4.328.0"
     },
-    "concurrentqueue"
+    {
+      "name": "readerwriterqueue",
+      "version>=": "1.0.7#0"
+    }
   ]
 }
