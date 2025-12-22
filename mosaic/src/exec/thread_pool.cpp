@@ -15,8 +15,6 @@
 
 #include <concurrentqueue/moodycamel/concurrentqueue.h>
 
-#include "mosaic/core/sys_info.hpp"
-
 namespace mosaic
 {
 namespace exec
@@ -252,11 +250,10 @@ ThreadPool::~ThreadPool()
     if (g_instance == this) g_instance = nullptr;
 }
 
-pieces::RefResult<ThreadPool, std::string> ThreadPool::initialize() noexcept
+pieces::RefResult<ThreadPool, std::string> ThreadPool::initialize(
+    const mosaic::core::CPUInfo& _cpuInfo) noexcept
 {
-    auto cpuInfo = core::SystemInfo::getCPUInfo();
-
-    int logical = static_cast<int>(cpuInfo.logicalCores);
+    int logical = static_cast<int>(_cpuInfo.logicalCores);
 
     // -1 to leave one thread for main flow
     uint32_t workersCount =

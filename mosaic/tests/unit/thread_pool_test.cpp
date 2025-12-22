@@ -26,8 +26,13 @@ class ThreadPoolTest : public ::testing::Test
 
     void SetUp() override
     {
+        mosaic::core::CPUInfo mockCPUInfo;
+        mockCPUInfo.logicalCores = 8;
+        mockCPUInfo.physicalCores = 4;
+
         pool = std::make_unique<ThreadPool>();
-        auto result = pool->initialize();
+        auto result = pool->initialize(mockCPUInfo);
+
         ASSERT_TRUE(result.isOk()) << "Failed to initialize thread pool";
     }
 

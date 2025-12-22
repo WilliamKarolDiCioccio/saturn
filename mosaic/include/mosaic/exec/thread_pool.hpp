@@ -8,6 +8,7 @@
 #include <pieces/utils/enum_flags.hpp>
 
 #include "mosaic/tools/logger.hpp"
+#include "mosaic/core/sys_info.hpp"
 
 #include "task_future.hpp"
 
@@ -86,7 +87,8 @@ class MOSAIC_API ThreadPool
     ThreadPool& operator=(const ThreadPool&) = delete;
 
    public:
-    pieces::RefResult<ThreadPool, std::string> initialize() noexcept;
+    pieces::RefResult<ThreadPool, std::string> initialize(
+        const mosaic::core::CPUInfo& _cpuInfo) noexcept;
     void shutdown() noexcept;
 
     /**
