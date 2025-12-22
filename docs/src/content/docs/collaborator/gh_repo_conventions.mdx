@@ -1,0 +1,257 @@
+---
+title: GitHub Repository Conventions
+description: Standards and workflows for contributing to Mosaic on GitHub.
+---
+
+Building a sustainable engine isn’t just about how we write code—it’s also about **how we collaborate around that code**. Issues, branches, commits, pull requests, and automation form the connective tissue of the project. If those are messy, the codebase will eventually follow.
+
+These conventions define how we use GitHub in Mosaic. They exist to keep collaboration predictable, reduce cognitive overhead, and make it easier for both newcomers and long-term contributors to work effectively without stepping on each other’s toes.
+
+As with our C++ conventions, these rules are not theoretical. They’re shaped by real friction points we want to avoid as the project grows.
+
+---
+
+## The Philosophy Behind Our Workflow
+
+GitHub is not just a hosting platform—it’s a **shared communication layer**. Every commit message, branch name, label, and PR description is part of how contributors understand intent, scope, and impact.
+
+Our guiding principles are:
+
+- **Clarity over cleverness**
+- **Consistency over personal preference**
+- **Automation where it removes human error**
+- **Low barrier to entry for new contributors**
+
+If something can be inferred automatically, we structure our workflow so tools can infer it. If something needs human judgment, we make that judgment explicit and visible.
+
+---
+
+## Commits and Branches: Structured Intent
+
+We follow two complementary standards:
+
+- **Conventional Commits**  
+  https://www.conventionalcommits.org/en/v1.0.0/#summary
+- **Conventional Branch Names**  
+  https://conventional-branch.github.io/
+
+### Why This Matters
+
+Structured commits and branches allow us to:
+- Understand *what changed* and *why* without reading diffs
+- Generate changelogs automatically
+- Reason about breaking changes
+- Keep history readable months or years later
+
+### Commit Messages
+
+Every commit message must follow the Conventional Commits format:
+
+```
+
+type(scope): short description
+
+```
+
+Examples:
+```
+
+feat(renderer): add bindless texture support
+fix(ecs): prevent dangling entity handles
+docs(engine): clarify renderer initialization order
+
+```
+
+Breaking changes **must** be explicitly marked according to the specification.
+
+### Branch Names
+
+Branches follow the same intent-driven structure:
+
+```
+
+type/scope/short-description
+
+```
+
+Examples:
+```
+
+feat/graphics/shadow-mapping
+fix/core/thread-race
+docs/architecture/ecs-overview
+
+```
+
+This makes it immediately obvious what a branch is about *before* opening a PR.
+
+---
+
+## Issues and Labels: Making State Explicit
+
+Labels are how we encode meaning at scale. They communicate **ownership**, **priority**, **status**, **platform impact**, and **intent** without requiring long explanations.
+
+Below is the canonical label set used in Mosaic.
+
+### Visual Legend
+
+Each label is shown with its actual GitHub color for easy recognition.
+
+---
+
+### 🔧 Technical Scope
+
+<div style={{display: "flex", flexWrap: "wrap", gap: "8px"}}>
+  <span style={{background:"#000000",color:"white",padding:"4px 8px",borderRadius:"6px"}}>dart</span>
+  <span style={{background:"#000000",color:"white",padding:"4px 8px",borderRadius:"6px"}}>github_actions</span>
+  <span style={{background:"#0366d6",color:"white",padding:"4px 8px",borderRadius:"6px"}}>dependencies</span>
+</div>
+
+- **dart** — Pull requests that update Dart code
+- **github_actions** — Changes to GitHub Actions workflows
+- **dependencies** — Dependency updates (manual or automated)
+
+---
+
+### 🧱 Departments (Ownership & Responsibility)
+
+<div style={{display: "flex", flexWrap: "wrap", gap: "8px"}}>
+  {[
+    "CI/CD",
+    "Core Systems",
+    "Documentation",
+    "ECS",
+    "Graphics",
+    "Testing",
+    "Tooling",
+  ].map(label => (
+    <span style={{background:"#0075CA",color:"white",padding:"4px 8px",borderRadius:"6px"}}>
+      {`Department: ${label}`}
+    </span>
+  ))}
+</div>
+
+Department labels identify **which subsystem or team area** is affected.  
+They help route issues, reviews, and long-term ownership.
+
+---
+
+### 📚 Documentation & Meta
+
+<div style={{display: "flex", flexWrap: "wrap", gap: "8px"}}>
+  <span style={{background:"#0075ca",color:"white",padding:"4px 8px",borderRadius:"6px"}}>documentation</span>
+  <span style={{background:"#cfd3d7",color:"black",padding:"4px 8px",borderRadius:"6px"}}>duplicate</span>
+  <span style={{background:"#e4e669",color:"black",padding:"4px 8px",borderRadius:"6px"}}>invalid</span>
+  <span style={{background:"#d876e3",color:"white",padding:"4px 8px",borderRadius:"6px"}}>question</span>
+</div>
+
+- **documentation** — Improvements or additions to docs
+- **duplicate** — Already reported elsewhere
+- **invalid** — Not a valid issue (outdated, incorrect, or off-scope)
+- **question** — Further clarification is needed
+
+---
+
+### ✨ Features & Contribution Entry Points
+
+<div style={{display: "flex", flexWrap: "wrap", gap: "8px"}}>
+  <span style={{background:"#a2eeef",color:"black",padding:"4px 8px",borderRadius:"6px"}}>enhancement</span>
+  <span style={{background:"#7057ff",color:"white",padding:"4px 8px",borderRadius:"6px"}}>good first issue</span>
+  <span style={{background:"#006B75",color:"white",padding:"4px 8px",borderRadius:"6px"}}>help wanted</span>
+</div>
+
+- **enhancement** — New features or improvements
+- **good first issue** — Specifically curated for newcomers
+- **help wanted** — Maintainers want external help here
+
+---
+
+### 🖥 Platform Targets
+
+<div style={{display: "flex", flexWrap: "wrap", gap: "8px"}}>
+  {["Android","Linux","Web","Windows"].map(p => (
+    <span style={{background:"#ddb6e5",color:"black",padding:"4px 8px",borderRadius:"6px"}}>
+      {`Platform: ${p}`}
+    </span>
+  ))}
+</div>
+
+Platform labels indicate where an issue or PR is relevant or affected.
+
+---
+
+### 🚦 Priority
+
+<div style={{display: "flex", flexWrap: "wrap", gap: "8px"}}>
+  <span style={{background:"#FF0000",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Priority: Critical</span>
+  <span style={{background:"#FF6500",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Priority: High</span>
+  <span style={{background:"#FFBF00",color:"black",padding:"4px 8px",borderRadius:"6px"}}>Priority: Medium</span>
+  <span style={{background:"#099A50",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Priority: Low</span>
+</div>
+
+Priority reflects **impact and urgency**, not personal interest.
+
+---
+
+### 📌 Status Tracking
+
+<div style={{display: "flex", flexWrap: "wrap", gap: "8px"}}>
+  <span style={{background:"#050505",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Status: Abandoned</span>
+  <span style={{background:"#099A50",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Status: Accepted</span>
+  <span style={{background:"#80FFA3",color:"black",padding:"4px 8px",borderRadius:"6px"}}>Status: Available</span>
+  <span style={{background:"#FF0000",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Status: Blocked</span>
+</div>
+
+Status labels describe **lifecycle state**, not priority.
+
+---
+
+## Issue and Pull Request Templates
+
+We **strongly recommend** using the provided **issue and pull request templates**, especially if you’re new to the project.
+
+Templates exist to:
+- Ask the right questions up front
+- Reduce back-and-forth clarification
+- Make issues actionable
+- Keep reviews focused on substance, not missing context
+
+If you’re experienced, templates still save time. If you’re new, they act as guardrails.
+
+---
+
+## Automation and Dependency Management
+
+### Dependabot
+
+Mosaic uses **Dependabot** to keep dependencies up to date for:
+
+- **VCPKG** (C++ dependencies)
+- **pub.dev** (Dart / Flutter tooling)
+
+Automated PRs are labeled appropriately and should be reviewed like any other change. We don’t blindly merge dependency updates—**we verify integration and impact**.
+
+---
+
+### Claude Code Integration
+
+The repository includes a **Claude Code integration** to assist with:
+- Code exploration
+- Refactoring assistance
+- Understanding unfamiliar subsystems
+
+This tool is intended to **augment contributor productivity**, not replace engineering judgment. Generated suggestions must be reviewed with the same care as human-written code.
+
+---
+
+## The Long View
+
+A GitHub repository is a living system. The more contributors it attracts, the more important structure becomes. These conventions ensure that Mosaic remains:
+
+- Approachable for newcomers
+- Predictable for maintainers
+- Scalable as complexity increases
+
+The goal isn’t bureaucracy—it’s **reducing friction so energy goes into building the engine, not managing chaos**.
+
+As the project evolves, these conventions may evolve too. When they do, they will change for the same reason they exist now: to make collaboration smoother, clearer, and more sustainable.

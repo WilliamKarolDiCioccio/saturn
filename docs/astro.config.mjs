@@ -78,6 +78,14 @@ export default defineConfig({
               translations: { en: "C++ Conventions", it: "Convenzioni C++" },
               slug: "collaborator/cpp_conventions",
             },
+            {
+              label: "GitHub Repository Conventions",
+              translations: {
+                en: "GitHub Repository Conventions",
+                it: "Convenzioni GitHub",
+              },
+              slug: "collaborator/gh_repo_conventions",
+            },
           ],
         },
         {
