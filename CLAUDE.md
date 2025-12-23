@@ -4,8 +4,71 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## General Instructions
 
-- - In all interactions and commit messages, be extremely concise and sacrifice grammar for the sake of concision.
+- In all interactions and commit messages, be extremely concise and sacrifice grammar for the sake of concision.
 - At the end of each plan, me a list of unresolved questions to answer, if any. Make the questions extremely concise. Sacrifice grammar for the sake of concision.
+
+## Hierarchical Context System
+
+**This repository uses package-level CLAUDE.md files for deep, localized context.**
+
+### Rules for Claude
+
+**ALWAYS:**
+1. When working in a subdirectory with a CLAUDE.md, load and consult that file FIRST
+2. Treat package-level files as **authoritative** for local decisions (invariants, constraints, modification rules)
+3. Use package-level "Owns/Does NOT Own" sections to determine responsibility boundaries
+4. Check package-level "Invariants" before making ANY changes to that package
+5. Follow package-level "Modification Rules" for scope determination
+
+**Precedence:**
+- Package-level CLAUDE.md > Root CLAUDE.md (for local decisions)
+- Root CLAUDE.md > Package-level (for global patterns, build system, cross-cutting concerns)
+- In conflicts: Package-level invariants override general guidance
+
+**Fallback to Root:**
+- Build system (CMake, vcpkg, compilation)
+- Cross-package architecture
+- Platform-specific build notes
+- Global coding patterns (Result<T,E>, logging, testing)
+- Development workflow
+
+### Package-Level CLAUDE.md Locations
+
+**Top-Level Modules:**
+- `pieces/CLAUDE.md` — Header-only utility library (zero dependencies)
+- `codex/CLAUDE.md` — C++ parser tool
+- `docsgen/CLAUDE.md` — Documentation generator
+
+**Engine Subsystems (`mosaic/`):**
+- `mosaic/core/CLAUDE.md` — Application lifecycle, system registry
+- `mosaic/ecs/CLAUDE.md` — Entity-Component-System (archetypal, type-erased)
+- `mosaic/exec/CLAUDE.md` — Multi-threaded execution (ThreadPool, TaskFuture)
+- `mosaic/graphics/CLAUDE.md` — Rendering (Vulkan/WebGPU backends)
+- `mosaic/input/CLAUDE.md` — Input system (three-layer architecture)
+- `mosaic/platform/CLAUDE.md` — Platform abstraction (Win32/POSIX/AGDK/Emscripten/GLFW)
+- `mosaic/window/CLAUDE.md` — Window management
+- `mosaic/scene/CLAUDE.md` — Scene graph (in development - stub files)
+
+### When to Consult Package Files
+
+**Before modifying code:**
+- Check if file is in a package with CLAUDE.md
+- Read "Invariants (NEVER violate)" section
+- Review "Modification Rules" → "Safe to Change" vs "Requires Coordination"
+
+**When adding features:**
+- Check "Owns/Does NOT Own" to verify responsibility
+- Review "Architectural Constraints" → "Dependency Rules"
+- Follow "How Claude Should Help" guidance
+
+**When debugging:**
+- Consult "Common Pitfalls" section for known footguns
+- Check "Performance Traps" if issue is performance-related
+
+**When unsure:**
+- Package-level "Almost Never Change" lists load-bearing code
+- "Expected Tasks" clarifies what Claude should assist with
+- "Conservative Approach Required" highlights danger zones
 
 ## Project Overview
 
