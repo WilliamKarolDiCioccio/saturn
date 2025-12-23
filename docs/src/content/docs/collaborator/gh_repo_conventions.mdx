@@ -87,33 +87,40 @@ This makes it immediately obvious what a branch is about *before* opening a PR.
 
 ---
 
-## Issues and Labels: Making State Explicit
+## Issues and Labels: A Shared Vocabulary
 
-Labels are how we encode meaning at scale. They communicate **ownership**, **priority**, **status**, **platform impact**, and **intent** without requiring long explanations.
+Labels are the backbone of how we reason about work in Mosaic. They encode **what something is**, **where it belongs**, **its urgency**, **its state**, and **its scope**—all at a glance.
 
-Below is the canonical label set used in Mosaic.
-
-### Visual Legend
-
-Each label is shown with its actual GitHub color for easy recognition.
+We deliberately use a **rich but structured label taxonomy**. This avoids overloading single labels with too much meaning and allows automation, filtering, and triage to scale as the project grows.
 
 ---
 
-### 🔧 Technical Scope
+### 📦 Packages
+
+Package labels identify **which deliverable or artifact** is affected. These are especially important because Mosaic is a multi-package repository.
 
 <div style={{display: "flex", flexWrap: "wrap", gap: "8px"}}>
-  <span style={{background:"#000000",color:"white",padding:"4px 8px",borderRadius:"6px"}}>dart</span>
-  <span style={{background:"#000000",color:"white",padding:"4px 8px",borderRadius:"6px"}}>github_actions</span>
-  <span style={{background:"#0366d6",color:"white",padding:"4px 8px",borderRadius:"6px"}}>dependencies</span>
+  {[
+    "Codex",
+    "docsgen",
+    "metagen",
+    "Editor",
+    "Testbed",
+    "Mosaic Engine",
+  ].map(p => (
+    <span style={{background:"#D8D1FB",color:"black",padding:"4px 8px",borderRadius:"6px"}}>
+      {`Package: ${p}`}
+    </span>
+  ))}
 </div>
 
-- **dart** — Pull requests that update Dart code
-- **github_actions** — Changes to GitHub Actions workflows
-- **dependencies** — Dependency updates (manual or automated)
+Use **exactly one** package label whenever possible. If an issue truly spans multiple packages, that should be explicitly justified in the description.
 
 ---
 
-### 🧱 Departments (Ownership & Responsibility)
+### 🧱 Departments (Subsystem Ownership)
+
+Department labels indicate **which technical area owns the work**. They are used for routing, review assignment, and long-term accountability.
 
 <div style={{display: "flex", flexWrap: "wrap", gap: "8px"}}>
   {[
@@ -124,49 +131,23 @@ Each label is shown with its actual GitHub color for easy recognition.
     "Graphics",
     "Testing",
     "Tooling",
-  ].map(label => (
+    "Translations",
+    "Dependencies",
+  ].map(d => (
     <span style={{background:"#0075CA",color:"white",padding:"4px 8px",borderRadius:"6px"}}>
-      {`Department: ${label}`}
+      {`Department: ${d}`}
     </span>
   ))}
 </div>
 
-Department labels identify **which subsystem or team area** is affected.  
-They help route issues, reviews, and long-term ownership.
+Department labels answer the question:
+**“Who should care about this?”**
 
 ---
 
-### 📚 Documentation & Meta
+### 🖥 Platforms
 
-<div style={{display: "flex", flexWrap: "wrap", gap: "8px"}}>
-  <span style={{background:"#0075ca",color:"white",padding:"4px 8px",borderRadius:"6px"}}>documentation</span>
-  <span style={{background:"#cfd3d7",color:"black",padding:"4px 8px",borderRadius:"6px"}}>duplicate</span>
-  <span style={{background:"#e4e669",color:"black",padding:"4px 8px",borderRadius:"6px"}}>invalid</span>
-  <span style={{background:"#d876e3",color:"white",padding:"4px 8px",borderRadius:"6px"}}>question</span>
-</div>
-
-- **documentation** — Improvements or additions to docs
-- **duplicate** — Already reported elsewhere
-- **invalid** — Not a valid issue (outdated, incorrect, or off-scope)
-- **question** — Further clarification is needed
-
----
-
-### ✨ Features & Contribution Entry Points
-
-<div style={{display: "flex", flexWrap: "wrap", gap: "8px"}}>
-  <span style={{background:"#a2eeef",color:"black",padding:"4px 8px",borderRadius:"6px"}}>enhancement</span>
-  <span style={{background:"#7057ff",color:"white",padding:"4px 8px",borderRadius:"6px"}}>good first issue</span>
-  <span style={{background:"#006B75",color:"white",padding:"4px 8px",borderRadius:"6px"}}>help wanted</span>
-</div>
-
-- **enhancement** — New features or improvements
-- **good first issue** — Specifically curated for newcomers
-- **help wanted** — Maintainers want external help here
-
----
-
-### 🖥 Platform Targets
+Platform labels specify **where the issue manifests or applies**. They are critical for cross-platform correctness and regression tracking.
 
 <div style={{display: "flex", flexWrap: "wrap", gap: "8px"}}>
   {["Android","Linux","Web","Windows"].map(p => (
@@ -176,11 +157,13 @@ They help route issues, reviews, and long-term ownership.
   ))}
 </div>
 
-Platform labels indicate where an issue or PR is relevant or affected.
+If a problem is platform-agnostic, no platform label is required.
 
 ---
 
 ### 🚦 Priority
+
+Priority expresses **urgency and impact**, not personal interest or convenience.
 
 <div style={{display: "flex", flexWrap: "wrap", gap: "8px"}}>
   <span style={{background:"#FF0000",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Priority: Critical</span>
@@ -189,20 +172,91 @@ Platform labels indicate where an issue or PR is relevant or affected.
   <span style={{background:"#099A50",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Priority: Low</span>
 </div>
 
-Priority reflects **impact and urgency**, not personal interest.
+Priority should be assigned during triage, not guessed by default.
 
 ---
 
-### 📌 Status Tracking
+### 📌 Status (Lifecycle Tracking)
+
+Status labels describe **where an issue or PR is in its lifecycle**. Only one status label should be active at a time.
 
 <div style={{display: "flex", flexWrap: "wrap", gap: "8px"}}>
   <span style={{background:"#050505",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Status: Abandoned</span>
   <span style={{background:"#099A50",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Status: Accepted</span>
   <span style={{background:"#80FFA3",color:"black",padding:"4px 8px",borderRadius:"6px"}}>Status: Available</span>
   <span style={{background:"#FF0000",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Status: Blocked</span>
+  <span style={{background:"#009B97",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Status: Completed</span>
+  <span style={{background:"#D5D5D5",color:"black",padding:"4px 8px",borderRadius:"6px"}}>Status: In Progress</span>
+  <span style={{background:"#FF0000",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Status: On Hold</span>
+  <span style={{background:"#FFFB80",color:"black",padding:"4px 8px",borderRadius:"6px"}}>Status: Pending</span>
+  <span style={{background:"#000000",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Status: Refused</span>
+  <span style={{background:"#FFBF00",color:"black",padding:"4px 8px",borderRadius:"6px"}}>Status: Review Needed</span>
+  <span style={{background:"#FF0000",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Status: Revision Needed</span>
+  <span style={{background:"#6B1375",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Status: Triaged</span>
 </div>
 
-Status labels describe **lifecycle state**, not priority.
+Status labels answer:
+**“What is happening with this right now?”**
+
+---
+
+### 🧭 Type (Intent of the Work)
+
+Type labels classify **what kind of work** an issue or PR represents.
+
+<div style={{display: "flex", flexWrap: "wrap", gap: "8px"}}>
+  <span style={{background:"#FF0000",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Type: Bug</span>
+  <span style={{background:"#4B26C9",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Type: Development</span>
+  <span style={{background:"#A2EEEF",color:"black",padding:"4px 8px",borderRadius:"6px"}}>Type: Enhancement</span>
+  <span style={{background:"#33CB51",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Type: Feature</span>
+  <span style={{background:"#FFBF00",color:"black",padding:"4px 8px",borderRadius:"6px"}}>Type: Maintenance</span>
+  <span style={{background:"#D876E3",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Type: Question</span>
+</div>
+
+Type labels answer:
+**“What kind of change is this?”**
+
+---
+
+### 🌱 Contribution-Friendly Defaults
+
+These labels have **special meaning on GitHub** and are intentionally preserved.
+
+<div style={{display: "flex", flexWrap: "wrap", gap: "8px"}}>
+  <span style={{background:"#7057ff",color:"white",padding:"4px 8px",borderRadius:"6px"}}>good first issue</span>
+  <span style={{background:"#006B75",color:"white",padding:"4px 8px",borderRadius:"6px"}}>help wanted</span>
+</div>
+
+* **good first issue** — Curated for newcomers, with clear scope and guidance
+* **help wanted** — Maintainers actively welcome external contributions
+
+---
+
+### 🤖 Automation & Dependabot
+
+The following labels are **used automatically** by Dependabot and related tooling:
+
+<div style={{display: "flex", flexWrap: "wrap", gap: "8px"}}>
+  <span style={{background:"#000000",color:"white",padding:"4px 8px",borderRadius:"6px"}}>github_actions</span>
+  <span style={{background:"#000000",color:"white",padding:"4px 8px",borderRadius:"6px"}}>dart</span>
+</div>
+
+Do not remove or repurpose these labels—they are part of the automation pipeline.
+
+---
+
+### Labeling Philosophy (Important)
+
+Not every issue needs every label.
+
+**Typical minimum set:**
+
+* 1 × `Type`
+* 1 × `Status`
+* 1 × `Package`
+* Optional: `Department`, `Platform`, `Priority`
+
+Labels are not decoration—they are **structured metadata**. When used consistently, they make large-scale maintenance and triage possible without meetings or spreadsheets.
 
 ---
 
