@@ -1,0 +1,27 @@
+repos:
+  # Pre-commit hooks for general code hygiene
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+
+  # Ruff for Python linting and formatting
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.10
+    hooks:
+      - id: ruff-check
+        files: ^scripts/
+        args: [--fix] # Automatically fix issues
+      - id: ruff-format
+        files: ^scripts/
+
+  # Clang-format and Clang-tidy for C/C++ code
+  - repo: https://github.com/cpp-linter/cpp-linter-hooks
+    rev: v1.1.11
+    hooks:
+      - id: clang-format
+        files: ^(mosaic|testbed|pieces|codex|docsgen)/
+        args: [--style=file, -i]
