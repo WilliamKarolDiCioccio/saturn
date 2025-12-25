@@ -7,6 +7,41 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - In all interactions and commit messages, be extremely concise and sacrifice grammar for the sake of concision.
 - At the end of each plan, me a list of unresolved questions to answer, if any. Make the questions extremely concise. Sacrifice grammar for the sake of concision.
 
+## Agent Delegation Strategy
+
+**DEFAULT: Delegate all engine-related tasks to `engine-architect` (LEAD agent). It coordinates specialist team.**
+
+### Team Structure
+
+**LEAD Agent (default for all engine work):**
+- `engine-architect` — Conservative C++23 systems engineer. Coordinates specialist team. Authority over planning, implementation, cross-package refactors.
+
+**Specialist Team (coordinated by LEAD):**
+- `performance-specialist` — Performance analysis, profiling, bottleneck identification (analysis only, NO code modification)
+- `test-ci-agent` — Unit tests, integration tests, CI/GTest infrastructure (tests YES, production code NO)
+- `doc-context-manager` — CLAUDE.md files, documentation, comments, Astro website (docs YES, runtime code NO)
+- `dart-flutter-tooling-agent` — Flutter tooling, Dart packages, native integrations (tooling YES, engine internals NO)
+
+### Default Delegation Rules
+
+**For any task involving:**
+- C++ engine code (mosaic/, pieces/, codex/)
+- Architecture planning/implementation
+- Core systems (ECS, rendering, exec, input, platform)
+- Cross-package changes
+
+**→ Delegate to `engine-architect` immediately. Let it coordinate specialists.**
+
+### Direct Specialist Delegation (bypass LEAD)
+
+Only delegate directly to specialists when:
+- **Standalone documentation work** → `doc-context-manager`
+- **Standalone test work (no engine changes)** → `test-ci-agent`
+- **Performance analysis only (no implementation)** → `performance-specialist`
+- **Flutter/Dart tooling only** → `dart-flutter-tooling-agent`
+
+**If task touches engine code + docs/tests/perf → Use `engine-architect` to coordinate.**
+
 ## Hierarchical Context System
 
 **This repository uses package-level CLAUDE.md files for deep, localized context.**
