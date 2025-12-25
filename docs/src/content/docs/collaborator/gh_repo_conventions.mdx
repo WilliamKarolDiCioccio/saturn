@@ -30,9 +30,9 @@ If something can be inferred automatically, we structure our workflow so tools c
 
 We follow two complementary standards:
 
-- **Conventional Commits**  
+- **Conventional Commits**
   https://www.conventionalcommits.org/en/v1.0.0/#summary
-- **Conventional Branch Names**  
+- **Conventional Branch Names**
   https://conventional-branch.github.io/
 
 ### Why This Matters
@@ -295,6 +295,155 @@ The repository includes a **Claude Code integration** to assist with:
 - Understanding unfamiliar subsystems
 
 This tool is intended to **augment contributor productivity**, not replace engineering judgment. Generated suggestions must be reviewed with the same care as human-written code.
+
+---
+
+## Pre-Commit Hooks: Automated Code Quality Checks
+
+Mosaic uses **pre-commit hooks** to enforce code quality standards automatically before commits are created. This removes the burden of manual formatting and style checks, freeing contributors to focus on logic and design.
+
+### Why We Use Pre-Commit Hooks
+
+Pre-commit hooks:
+- **Catch formatting issues early** — Before they're committed and picked up in reviews
+- **Enforce consistency** — Same standards applied everywhere, regardless of IDE or personal preference
+- **Save CI/CD time** — Issues are fixed locally, not discovered in pipelines
+- **Reduce review friction** — Reviewers focus on substance, not whitespace
+- **Lower barrier to entry** — New contributors get automatic guidance without configuration
+
+Think of pre-commit hooks as a **helpful gatekeeper**—they ensure basic hygiene while letting your engineering judgment flow freely.
+
+### Setting Up Pre-Commit Hooks
+
+#### Installation
+
+Pre-commit hooks require the `pre-commit` framework to be installed:
+
+```bash
+pip install pre-commit
+```
+
+(Or if using `uv` for package management: `uv pip install pre-commit`)
+
+#### Activating Hooks in Your Repository
+
+Run this command once in your local Mosaic clone:
+
+```bash
+pre-commit install
+```
+
+This installs git hooks into your `.git/hooks/` directory. From now on, `pre-commit` runs automatically before every commit.
+
+#### Verifying Installation
+
+To manually check that hooks are installed and working:
+
+```bash
+pre-commit run --all-files
+```
+
+This runs all hooks against every file in the repository (useful after installation to see if any existing violations need fixing).
+
+### Hook Categories
+
+#### 1. General Code Hygiene
+
+These hooks catch universal code quality issues across all files.
+
+| Hook | Purpose | Files | Auto-Fix |
+|------|---------|-------|----------|
+| `trailing-whitespace` | Remove trailing spaces at end of lines | All files | Yes |
+| `end-of-file-fixer` | Ensure files end with exactly one newline | All files | Yes |
+| `check-yaml` | Validate YAML syntax in config files | `*.yaml`, `*.yml` | No |
+| `check-added-large-files` | Prevent accidentally committing large binaries | All files | No |
+
+**What to do if a check fails:** For auto-fix hooks (trailing-whitespace, end-of-file-fixer), re-stage the corrected files and commit again. For validation hooks (check-yaml, check-added-large-files), read the error message and fix the underlying issue.
+
+#### 2. Python Linting and Formatting (Ruff)
+
+These hooks enforce Python code quality in the `scripts/` directory using **Ruff**, a fast, modern Python linter and formatter.
+
+| Hook | Purpose | Files | Auto-Fix |
+|------|---------|-------|----------|
+| `ruff-check` | Lint Python code for errors and style issues | `scripts/**/*.py` | Yes (with `--fix`) |
+| `ruff-format` | Auto-format Python code consistently | `scripts/**/*.py` | Yes |
+
+**What happens:** When you commit Python files in `scripts/`, both hooks run. `ruff-check --fix` automatically fixes fixable issues (import sorting, unused variables, etc.). `ruff-format` ensures consistent indentation and spacing. Both are non-blocking if issues remain unfixed.
+
+**Troubleshooting:** If `ruff-check` fails with unfixable issues, the error message will specify the problem. Consult the Ruff documentation for your specific rule code.
+
+#### 3. C/C++ Formatting (Clang-Format)
+
+This hook enforces consistent C/C++ formatting across the engine using **Clang-Format**, configured to match Mosaic's style guide.
+
+| Hook | Purpose | Files | Auto-Fix |
+|------|---------|-------|----------|
+| `clang-format` | Auto-format C/C++ code according to `.clang-format` config | `mosaic/`, `testbed/`, `pieces/`, `codex/`, `docsgen/` | Yes |
+
+**Formatting Style:** Mosaic's `.clang-format` enforces:
+- **Indent:** 4 spaces (no tabs)
+- **Column limit:** 100 characters
+- **Allman braces:** Opening braces on new lines for functions, classes, namespaces
+- **Google-based style** with C++20 standard
+- Pointer alignment to the left: `int* ptr` not `int *ptr`
+
+**What happens:** When you commit C++ files in the engine directories, `clang-format` automatically reformats your code. Changes are written back to your files, and you need to re-stage them before committing.
+
+**Example workflow:**
+```bash
+git add src/my_feature.cpp
+git commit -m "feat(core): add async task cancellation"
+# clang-format hook runs and fixes formatting
+# Git prevents commit and tells you files were modified
+
+git add src/my_feature.cpp  # Re-stage with formatting applied
+git commit -m "feat(core): add async task cancellation"  # Now succeeds
+```
+
+**Skipping hooks (use sparingly):** If you genuinely need to bypass hooks (e.g., for a complex merge or special formatting requirement), use:
+
+```bash
+git commit --no-verify
+```
+
+**This should be rare.** Hooks exist to keep the codebase consistent. If you're tempted to skip frequently, talk to the team about why.
+
+### Common Hook Scenarios
+
+#### Scenario: I committed, but clang-format fixed my code. What do I do?
+
+1. Review the formatting changes: `git diff HEAD`
+2. If they look correct, re-stage: `git add .`
+3. Amend the commit: `git commit --amend --no-edit`
+4. Push as normal
+
+#### Scenario: A hook is reporting a false positive or blocking legitimately.
+
+Open an issue with details (the file, the hook, the output). The team can adjust hook configuration if needed.
+
+#### Scenario: I want to run hooks manually without committing.
+
+```bash
+pre-commit run --all-files           # Run all hooks
+pre-commit run clang-format          # Run specific hook
+pre-commit run --files src/foo.cpp   # Run on specific file
+```
+
+#### Scenario: A hook is slow or failing mysteriously.
+
+Check the pre-commit cache: `pre-commit clean` then `pre-commit run --all-files`.
+
+### Disabling or Updating Hooks
+
+Hooks are configured in `.pre-commit-config.yaml` at the repository root. Changes to this file require coordination with the team—don't modify it without discussion.
+
+If you believe a hook rule is incorrect or counterproductive, open an issue describing:
+- Which hook
+- Why it's problematic
+- What you propose instead
+
+The team reviews these requests and updates the configuration collectively.
 
 ---
 
