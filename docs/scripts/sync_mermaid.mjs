@@ -3,14 +3,24 @@ import path from "node:path";
 import { execSync } from "node:child_process";
 
 const INPUT_DIR = "./src/mmds";
-// Moving to public makes them accessible via simple URLs in your React component
 const OUTPUT_DIR = "./src/assets/mmds";
 
-if (!fs.existsSync(OUTPUT_DIR)) fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+// Ensure Input Directory exists
+if (!fs.existsSync(INPUT_DIR)) {
+  console.warn(
+    `⚠️ Input directory "${INPUT_DIR}" not found. Skipping Mermaid sync.`
+  );
+  process.exit(0);
+}
+
+// Ensure Output Directory exists
+if (!fs.existsSync(OUTPUT_DIR)) {
+  fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+}
 
 const mmdFiles = fs.readdirSync(INPUT_DIR).filter((f) => f.endsWith(".mmd"));
 
-// Create a Set of all expected SVG filenames (both light and dark)
+// Create a Set of all expected SVG filenames
 const expectedSvgs = new Set();
 mmdFiles.forEach((file) => {
   const base = file.replace(".mmd", "");
@@ -18,11 +28,12 @@ mmdFiles.forEach((file) => {
   expectedSvgs.add(`${base}_dark.svg`);
 });
 
-// Generation Phase: Create/Update SVGs
+// Generation Phase
 mmdFiles.forEach((file) => {
   const inputPath = path.join(INPUT_DIR, file);
   const baseName = file.replace(".mmd", "");
 
+  // Define the two variants
   const variants = [
     { suffix: "_light", theme: "default" },
     { suffix: "_dark", theme: "dark" },
@@ -30,6 +41,8 @@ mmdFiles.forEach((file) => {
 
   variants.forEach(({ suffix, theme }) => {
     const outputPath = path.join(OUTPUT_DIR, `${baseName}${suffix}.svg`);
+
+    // Check if we need to regenerate (missing file or source is newer)
     const shouldGenerate =
       !fs.existsSync(outputPath) ||
       fs.statSync(inputPath).mtime > fs.statSync(outputPath).mtime;
@@ -48,11 +61,10 @@ mmdFiles.forEach((file) => {
   });
 });
 
-// Cleanup Phase: Remove orphaned SVGs
+// Cleanup Phase
 const actualSvgs = fs.readdirSync(OUTPUT_DIR).filter((f) => f.endsWith(".svg"));
 
 actualSvgs.forEach((svgFile) => {
-  // If the SVG found in /public/diagrams isn't in our "expected" set, delete it
   if (!expectedSvgs.has(svgFile)) {
     const stalePath = path.join(OUTPUT_DIR, svgFile);
     console.log(`🗑️ Removing orphaned SVG: ${svgFile}`);
@@ -61,3 +73,5 @@ actualSvgs.forEach((svgFile) => {
 });
 
 console.log("✅ Mermaid sync (Dual-Theme) complete.");
+
+process.exit(0);
