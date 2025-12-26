@@ -18,6 +18,21 @@ repos:
       - id: ruff-format
         files: ^scripts/
 
+  # Prettier and ESLint for Astro + React documentation site
+  - repo: local
+    hooks:
+      - id: docs-prettier
+        name: Prettier (docs)
+        entry: bash -c "cd docs && npm run prettier --if-present -- --write ."
+        language: system
+        files: ^docs/
+      - id: docs-eslint
+        name: ESLint (docs)
+        entry: bash -c "cd docs && npm run lint --if-present -- --ext .js,.jsx,.ts,.tsx,.astro . --fix"
+        language: system
+        files: ^docs/
+        pass_filenames: false
+
   # Clang-format and Clang-tidy for C/C++ code
   - repo: https://github.com/cpp-linter/cpp-linter-hooks
     rev: v1.1.11
