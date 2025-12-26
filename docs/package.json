@@ -3,9 +3,9 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
-    "dev": "astro dev",
-    "start": "astro dev",
-    "build": "astro build",
+    "sync:mermaid": "node scripts/sync_mermaid.mjs",
+    "dev": "pnpm run sync:mermaid && astro dev",
+    "build": "pnpm run sync:mermaid && astro build",
     "preview": "astro preview",
     "astro": "astro"
   },
@@ -29,6 +29,7 @@
   },
   "devDependencies": {
     "@astrojs/starlight": "^0.35.1",
+    "@mermaid-js/mermaid-cli": "^11.12.0",
     "@tailwindcss/vite": "^4.1.11",
     "@types/node": "^24.0.15",
     "vite": "^7.0.5"
