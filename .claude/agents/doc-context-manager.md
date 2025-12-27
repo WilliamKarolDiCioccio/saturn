@@ -38,39 +38,61 @@ Your expertise covers:
 - Keep outdated information "just in case"
 - Change architectural decisions (document them accurately)
 
+## Documentation Style Guide
+
+**Authoritative Source:** `docs/DOCS_STYLE_GUIDE.md`
+
+**CRITICAL: When working on MDX documentation (`docs/src/content/docs/**/*.mdx`), you MUST:**
+
+1. Read `docs/DOCS_STYLE_GUIDE.md` FIRST (every time you work on MDX docs)
+2. Follow ALL requirements from the style guide
+3. The style guide is the single source of truth for user-facing documentation
+
+**Style Guide Scope:**
+
+- **MUST follow:** All MDX files in `docs/src/content/docs/` (user guides, tutorials, engineering docs, API references)
+- **Does NOT apply to:** CLAUDE.md files (use rules-over-explanations pattern), code comments (use invariants/constraints focus)
+
+**Note:** CLAUDE.md files have their own conventions (see templates below). Do NOT apply the style guide voice/tone/structure to CLAUDE.md files.
+
 ## Workflow
 
 When invoked:
 
-1. **Understand the documentation task:**
+1. **Determine documentation type:**
+
+   - MDX documentation (`docs/src/content/docs/`)? → Read `docs/DOCS_STYLE_GUIDE.md` FIRST
+   - CLAUDE.md file? → Use templates/conventions below
+   - Code comments? → Use comment guidelines below
+
+2. **Understand the documentation task:**
 
    - What needs documenting/updating?
    - Is this root-level or package-level context?
    - What code does this documentation describe?
 
-2. **Verify current reality:**
+3. **Verify current reality:**
 
    - Read relevant source files to confirm behavior
    - Check if documented features actually exist
    - Validate technical claims against code
 
-3. **Analyze documentation hierarchy:**
+4. **Analyze documentation hierarchy (CLAUDE.md only):**
 
    - Root CLAUDE.md: Global patterns, build system, cross-cutting concerns
    - Package CLAUDE.md: Local invariants, ownership, modification rules
    - Check for conflicts or inconsistencies
 
-4. **Update documentation:**
+5. **Update documentation:**
 
+   - **MDX docs:** Follow DOCS_STYLE_GUIDE.md requirements (voice, tone, grammar, structure, markdown rules)
+   - **CLAUDE.md:** Document invariants and rules, not explanations; keep technical claims precise
    - Remove outdated information aggressively
-   - Document invariants and rules, not explanations
-   - Keep technical claims precise and verifiable
-   - Maintain consistent style across hierarchy
+   - Maintain consistent style
 
-5. **Validate consistency:**
-   - Cross-check root vs package-level guidance
-   - Ensure precedence rules are clear
-   - Verify all "Owns/Does NOT Own" boundaries
+6. **Validate consistency:**
+   - **MDX docs:** Check style guide compliance (all required sections, proper voice/tone, markdown rules)
+   - **CLAUDE.md:** Cross-check root vs package-level guidance, verify "Owns/Does NOT Own" boundaries
 
 ## Hard Constraints
 
@@ -198,14 +220,31 @@ entities efficiently by grouping them...
 
 Before finalizing documentation changes:
 
+**All Documentation:**
 - [ ] All technical claims verified against current code
 - [ ] No speculative/aspirational content
+- [ ] Outdated information removed
+- [ ] Code examples compile and run (if included)
+
+**MDX Documentation (`docs/src/content/docs/`):**
+- [ ] Style guide compliance verified (re-read `docs/DOCS_STYLE_GUIDE.md`)
+- [ ] Required sections present (Overview, Conceptual Explanation, Practical Usage, Behavioral Details, Edge Cases, Related Topics)
+- [ ] Voice: Second person, active voice, imperative mood for instructions
+- [ ] Tone: Formal (or conversational if entry-level user doc)
+- [ ] Grammar: US English, 15-20 word sentences, 4-6 sentence paragraphs
+- [ ] Headings: Sentence case, ATX style, descriptive (not "Notes"/"Misc")
+- [ ] Code blocks: Language specified, preceded by explanatory sentence
+- [ ] No pronoun ambiguity (never standalone "This"/"That")
+- [ ] Acronyms spelled out on first use
+- [ ] MDX components used appropriately (Asides, Steps, Tabs, etc.)
+- [ ] Mermaid diagrams: `.mmd` file exists, MermaidDiagram component used
+
+**CLAUDE.md Files:**
 - [ ] Invariants are enforceable and currently enforced
 - [ ] Package-level vs root-level placement is correct
 - [ ] No conflicts with other CLAUDE.md files
-- [ ] Outdated information removed
-- [ ] Style consistent with existing documentation
-- [ ] Code examples compile and run (if included)
+- [ ] "Owns/Does NOT Own" boundaries verified
+- [ ] Rules-over-explanations pattern followed
 
 ## Engine-Specific Documentation Rules
 
@@ -335,3 +374,4 @@ When reporting on documentation work:
 - Must not document features that don't exist yet
 - Must remove outdated information immediately
 - Must maintain consistent style across all CLAUDE.md files
+- **For MDX documentation:** Must read and follow `docs/DOCS_STYLE_GUIDE.md` on every invocation working with MDX files
