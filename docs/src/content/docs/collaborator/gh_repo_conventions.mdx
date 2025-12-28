@@ -1,103 +1,100 @@
 ---
-title: GitHub Repository Conventions
+title: GitHub repository conventions
 description: Standards and workflows for contributing to Mosaic on GitHub.
 ---
 
-Building a sustainable engine isn’t just about how we write code—it’s also about **how we collaborate around that code**. Issues, branches, commits, pull requests, and automation form the connective tissue of the project. If those are messy, the codebase will eventually follow.
+This document defines how you collaborate on Mosaic using GitHub. It covers commit and branch conventions, issue and pull request workflows, labeling taxonomy, automation, and pre-commit enforcement.
 
-These conventions define how we use GitHub in Mosaic. They exist to keep collaboration predictable, reduce cognitive overhead, and make it easier for both newcomers and long-term contributors to work effectively without stepping on each other’s toes.
+These conventions exist to make collaboration predictable, scalable, and low-friction. They reduce ambiguity in intent, simplify review and triage, and allow automation to operate reliably as the project grows.
 
-As with our C++ conventions, these rules are not theoretical. They’re shaped by real friction points we want to avoid as the project grows.
-
----
-
-## The Philosophy Behind Our Workflow
-
-GitHub is not just a hosting platform—it’s a **shared communication layer**. Every commit message, branch name, label, and PR description is part of how contributors understand intent, scope, and impact.
-
-Our guiding principles are:
-
-- **Clarity over cleverness**
-- **Consistency over personal preference**
-- **Automation where it removes human error**
-- **Low barrier to entry for new contributors**
-
-If something can be inferred automatically, we structure our workflow so tools can infer it. If something needs human judgment, we make that judgment explicit and visible.
+You should follow these rules when opening issues, creating branches, committing changes, or submitting pull requests.
 
 ---
 
-## Commits and Branches: Structured Intent
+## Conceptual model
 
-We follow two complementary standards:
+GitHub acts as Mosaic’s shared communication layer. Every commit message, branch name, label, and pull request description communicates intent, scope, and impact to other contributors.
 
-- **Conventional Commits**
-  https://www.conventionalcommits.org/en/v1.0.0/#summary
-- **Conventional Branch Names**
-  https://conventional-branch.github.io/
+The workflow follows four guiding principles:
 
-### Why This Matters
+* Prefer clarity over cleverness
+* Prefer consistency over personal preference
+* Use automation to remove human error
+* Keep the barrier to entry low for new contributors
 
-Structured commits and branches allow us to:
-- Understand *what changed* and *why* without reading diffs
-- Generate changelogs automatically
-- Reason about breaking changes
-- Keep history readable months or years later
+If intent can be inferred automatically, the workflow enables tools to infer it. If judgment is required, the workflow makes that judgment explicit and visible.
 
-### Commit Messages
+---
+
+## Commits and branches
+
+Mosaic uses two complementary standards:
+
+* [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/#summary)
+* [Conventional Branch Names](https://conventional-branch.github.io/)
+
+These standards encode intent directly into commit history and branch structure.
+
+### Why this matters
+
+Structured commits and branches allow you to:
+
+* Understand what changed and why without inspecting diffs
+* Generate changelogs automatically
+* Identify breaking changes reliably
+* Preserve readable history over time
+
+### Commit messages
 
 Every commit message must follow the Conventional Commits format:
 
-```
-
+```text
 type(scope): short description
-
 ```
+
+Use concise, imperative descriptions.
 
 Examples:
-```
 
+```text
 feat(renderer): add bindless texture support
 fix(ecs): prevent dangling entity handles
 docs(engine): clarify renderer initialization order
-
 ```
 
-Breaking changes **must** be explicitly marked according to the specification.
+Explicitly mark breaking changes according to the specification. Do not rely on implication.
 
-### Branch Names
+### Branch names
 
-Branches follow the same intent-driven structure:
+Branch names follow the same intent-driven structure:
 
-```
-
+```text
 type/scope/short-description
-
 ```
 
 Examples:
-```
 
+```text
 feat/graphics/shadow-mapping
 fix/core/thread-race
 docs/architecture/ecs-overview
-
 ```
 
-This makes it immediately obvious what a branch is about *before* opening a PR.
+This structure communicates purpose before a pull request is opened.
 
 ---
 
-## Issues and Labels: A Shared Vocabulary
+## Issues and labels
 
-Labels are the backbone of how we reason about work in Mosaic. They encode **what something is**, **where it belongs**, **its urgency**, **its state**, and **its scope**—all at a glance.
+Labels are structured metadata. They encode classification, ownership, urgency, state, and scope in a machine-readable and human-readable form.
 
-We deliberately use a **rich but structured label taxonomy**. This avoids overloading single labels with too much meaning and allows automation, filtering, and triage to scale as the project grows.
+Use labels deliberately. Do not overload a single label with multiple meanings.
 
 ---
 
 ### 📦 Packages
 
-Package labels identify **which deliverable or artifact** is affected. These are especially important because Mosaic is a multi-package repository.
+Package labels identify which deliverable or artifact is affected. Mosaic is a multi-package repository, so package labeling is required whenever possible.
 
 <div style={{display: "flex", flexWrap: "wrap", gap: "8px"}}>
   {[
@@ -114,13 +111,13 @@ Package labels identify **which deliverable or artifact** is affected. These are
   ))}
 </div>
 
-Use **exactly one** package label whenever possible. If an issue truly spans multiple packages, that should be explicitly justified in the description.
+Assign **exactly one** package label unless the issue genuinely spans multiple packages. If it does, explain why in the issue description.
 
 ---
 
-### 🧱 Departments (Subsystem Ownership)
+### 🧱 Departments
 
-Department labels indicate **which technical area owns the work**. They are used for routing, review assignment, and long-term accountability.
+Department labels identify subsystem ownership. They route issues for review, triage, and long-term accountability.
 
 <div style={{display: "flex", flexWrap: "wrap", gap: "8px"}}>
   {[
@@ -140,14 +137,13 @@ Department labels indicate **which technical area owns the work**. They are used
   ))}
 </div>
 
-Department labels answer the question:
-**“Who should care about this?”**
+Department labels answer the question: **Who owns this work?**
 
 ---
 
 ### 🖥 Platforms
 
-Platform labels specify **where the issue manifests or applies**. They are critical for cross-platform correctness and regression tracking.
+Platform labels indicate where an issue manifests or applies.
 
 <div style={{display: "flex", flexWrap: "wrap", gap: "8px"}}>
   {["Android","Linux","Web","Windows"].map(p => (
@@ -157,13 +153,13 @@ Platform labels specify **where the issue manifests or applies**. They are criti
   ))}
 </div>
 
-If a problem is platform-agnostic, no platform label is required.
+If an issue is platform-agnostic, omit platform labels.
 
 ---
 
 ### 🚦 Priority
 
-Priority expresses **urgency and impact**, not personal interest or convenience.
+Priority expresses urgency and impact, not personal preference.
 
 <div style={{display: "flex", flexWrap: "wrap", gap: "8px"}}>
   <span style={{background:"#FF0000",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Priority: Critical</span>
@@ -172,13 +168,13 @@ Priority expresses **urgency and impact**, not personal interest or convenience.
   <span style={{background:"#099A50",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Priority: Low</span>
 </div>
 
-Priority should be assigned during triage, not guessed by default.
+Assign priority during triage. Do not guess by default.
 
 ---
 
-### 📌 Status (Lifecycle Tracking)
+### 📌 Status
 
-Status labels describe **where an issue or PR is in its lifecycle**. Only one status label should be active at a time.
+Status labels track lifecycle state. Only one status label should be active at a time.
 
 <div style={{display: "flex", flexWrap: "wrap", gap: "8px"}}>
   <span style={{background:"#050505",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Status: Abandoned</span>
@@ -195,14 +191,13 @@ Status labels describe **where an issue or PR is in its lifecycle**. Only one st
   <span style={{background:"#6B1375",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Status: Triaged</span>
 </div>
 
-Status labels answer:
-**“What is happening with this right now?”**
+Status labels answer the question: **What is happening right now?**
 
 ---
 
-### 🧭 Type (Intent of the Work)
+### 🧭 Type
 
-Type labels classify **what kind of work** an issue or PR represents.
+Type labels classify the intent of the work.
 
 <div style={{display: "flex", flexWrap: "wrap", gap: "8px"}}>
   <span style={{background:"#FF0000",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Type: Bug</span>
@@ -213,248 +208,155 @@ Type labels classify **what kind of work** an issue or PR represents.
   <span style={{background:"#D876E3",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Type: Question</span>
 </div>
 
-Type labels answer:
-**“What kind of change is this?”**
+Type labels answer the question: **What kind of change is this?**
 
 ---
 
-### 🌱 Contribution-Friendly Defaults
+### 🌱 Contribution-friendly labels
 
-These labels have **special meaning on GitHub** and are intentionally preserved.
+These labels have special meaning on GitHub and are intentionally preserved.
 
 <div style={{display: "flex", flexWrap: "wrap", gap: "8px"}}>
   <span style={{background:"#7057ff",color:"white",padding:"4px 8px",borderRadius:"6px"}}>good first issue</span>
   <span style={{background:"#006B75",color:"white",padding:"4px 8px",borderRadius:"6px"}}>help wanted</span>
 </div>
 
-* **good first issue** — Curated for newcomers, with clear scope and guidance
-* **help wanted** — Maintainers actively welcome external contributions
+* **good first issue** identifies curated, newcomer-friendly tasks
+* **help wanted** indicates that maintainers actively welcome external contributions
 
 ---
 
-### 🤖 Automation & Dependabot
+### 🤖 Automation labels
 
-The following labels are **used automatically** by Dependabot and related tooling:
+The following labels are reserved for automation and dependency tooling:
 
 <div style={{display: "flex", flexWrap: "wrap", gap: "8px"}}>
   <span style={{background:"#000000",color:"white",padding:"4px 8px",borderRadius:"6px"}}>github_actions</span>
   <span style={{background:"#000000",color:"white",padding:"4px 8px",borderRadius:"6px"}}>dart</span>
 </div>
 
-Do not remove or repurpose these labels—they are part of the automation pipeline.
+Do not remove, rename, or repurpose these labels.
 
----
+### Labeling guidelines
 
-### Labeling Philosophy (Important)
-
-Not every issue needs every label.
+Not every issue requires every label.
 
 **Typical minimum set:**
 
-* 1 × `Type`
-* 1 × `Status`
-* 1 × `Package`
+* One `Type`
+* One `Status`
+* One `Package`
 * Optional: `Department`, `Platform`, `Priority`
 
-Labels are not decoration—they are **structured metadata**. When used consistently, they make large-scale maintenance and triage possible without meetings or spreadsheets.
+Labels are not decoration. Used consistently, they enable large-scale maintenance without manual coordination.
 
 ---
 
-## Issue and Pull Request Templates
+## Issue and pull request templates
 
-We **strongly recommend** using the provided **issue and pull request templates**, especially if you’re new to the project.
+Use the provided issue and pull request templates whenever possible.
 
 Templates exist to:
-- Ask the right questions up front
-- Reduce back-and-forth clarification
-- Make issues actionable
-- Keep reviews focused on substance, not missing context
 
-If you’re experienced, templates still save time. If you’re new, they act as guardrails.
+* Capture required context early
+* Reduce clarification cycles
+* Make issues actionable
+* Keep reviews focused on substance
+
+Templates act as guardrails for new contributors and time-savers for experienced ones.
 
 ---
 
-## Automation and Dependency Management
+## Automation and dependency management
 
 ### Dependabot
 
-Mosaic uses **Dependabot** to keep dependencies up to date for:
+Mosaic uses Dependabot to manage dependency updates for:
 
-- **VCPKG** (C++ dependencies)
-- **pub.dev** (Dart / Flutter tooling)
+* **vcpkg** (C++ dependencies)
+* **pub.dev** (Dart and Flutter tooling)
 
-Automated PRs are labeled appropriately and should be reviewed like any other change. We don’t blindly merge dependency updates—**we verify integration and impact**.
+Automated pull requests are labeled accordingly. Review them like any other change. Verify integration and impact before merging.
 
----
+### Claude Code integration
 
-### Claude Code Integration
+The repository includes a Claude Code integration for code exploration and refactoring assistance.
 
-The repository includes a **Claude Code integration** to assist with:
-- Code exploration
-- Refactoring assistance
-- Understanding unfamiliar subsystems
-
-This tool is intended to **augment contributor productivity**, not replace engineering judgment. Generated suggestions must be reviewed with the same care as human-written code.
+This tool augments contributor productivity. Treat generated suggestions as untrusted input and review them with the same care as human-written code.
 
 ---
 
-## Pre-Commit Hooks: Automated Code Quality Checks
+## Pre-commit hooks
 
-Mosaic uses **pre-commit hooks** to enforce code quality standards automatically before commits are created. This removes the burden of manual formatting and style checks, freeing contributors to focus on logic and design.
+Mosaic uses **pre-commit hooks** to enforce code quality before commits are created. Hooks prevent common issues from reaching code review or continuous integration.
 
-### Why We Use Pre-Commit Hooks
+### Purpose
 
 Pre-commit hooks:
-- **Catch formatting issues early** — Before they're committed and picked up in reviews
-- **Enforce consistency** — Same standards applied everywhere, regardless of IDE or personal preference
-- **Save CI/CD time** — Issues are fixed locally, not discovered in pipelines
-- **Reduce review friction** — Reviewers focus on substance, not whitespace
-- **Lower barrier to entry** — New contributors get automatic guidance without configuration
 
-Think of pre-commit hooks as a **helpful gatekeeper**—they ensure basic hygiene while letting your engineering judgment flow freely.
+* Catch formatting issues early
+* Enforce consistent standards
+* Reduce CI failures
+* Lower review friction
+* Provide automatic guidance for new contributors
 
-### Setting Up Pre-Commit Hooks
+### Installation
 
-#### Installation
-
-Pre-commit hooks require the `pre-commit` framework to be installed:
+Install the `pre-commit` framework:
 
 ```bash
 pip install pre-commit
 ```
 
-(Or if using `uv` for package management: `uv pip install pre-commit`)
+If you use `uv`, run `uv pip install pre-commit` instead.
 
-#### Activating Hooks in Your Repository
+### Activation
 
-Run this command once in your local Mosaic clone:
+Install hooks in your local repository:
 
 ```bash
 pre-commit install
 ```
 
-This installs git hooks into your `.git/hooks/` directory. From now on, `pre-commit` runs automatically before every commit.
+Hooks now run automatically before every commit.
 
-#### Verifying Installation
+### Verification
 
-To manually check that hooks are installed and working:
+Run all hooks manually to verify installation:
 
 ```bash
 pre-commit run --all-files
 ```
 
-This runs all hooks against every file in the repository (useful after installation to see if any existing violations need fixing).
+### Hook categories
 
-### Hook Categories
+The repository defines hooks for:
 
-#### 1. General Code Hygiene
+* General file hygiene
+* Python linting and formatting using Ruff
+* Markdown, Astro and TypeScript linting using ESLint
+* C and C++ formatting using Clang-Format
 
-These hooks catch universal code quality issues across all files.
+Hooks automatically modify files when possible. Re-stage modified files before committing.
 
-| Hook | Purpose | Files | Auto-Fix |
-|------|---------|-------|----------|
-| `trailing-whitespace` | Remove trailing spaces at end of lines | All files | Yes |
-| `end-of-file-fixer` | Ensure files end with exactly one newline | All files | Yes |
-| `check-yaml` | Validate YAML syntax in config files | `*.yaml`, `*.yml` | No |
-| `check-added-large-files` | Prevent accidentally committing large binaries | All files | No |
+### Skipping hooks
 
-**What to do if a check fails:** For auto-fix hooks (trailing-whitespace, end-of-file-fixer), re-stage the corrected files and commit again. For validation hooks (check-yaml, check-added-large-files), read the error message and fix the underlying issue.
-
-#### 2. Python Linting and Formatting (Ruff)
-
-These hooks enforce Python code quality in the `scripts/` directory using **Ruff**, a fast, modern Python linter and formatter.
-
-| Hook | Purpose | Files | Auto-Fix |
-|------|---------|-------|----------|
-| `ruff-check` | Lint Python code for errors and style issues | `scripts/**/*.py` | Yes (with `--fix`) |
-| `ruff-format` | Auto-format Python code consistently | `scripts/**/*.py` | Yes |
-
-**What happens:** When you commit Python files in `scripts/`, both hooks run. `ruff-check --fix` automatically fixes fixable issues (import sorting, unused variables, etc.). `ruff-format` ensures consistent indentation and spacing. Both are non-blocking if issues remain unfixed.
-
-**Troubleshooting:** If `ruff-check` fails with unfixable issues, the error message will specify the problem. Consult the Ruff documentation for your specific rule code.
-
-#### 3. C/C++ Formatting (Clang-Format)
-
-This hook enforces consistent C/C++ formatting across the engine using **Clang-Format**, configured to match Mosaic's style guide.
-
-| Hook | Purpose | Files | Auto-Fix |
-|------|---------|-------|----------|
-| `clang-format` | Auto-format C/C++ code according to `.clang-format` config | `mosaic/`, `testbed/`, `pieces/`, `codex/`, `docsgen/` | Yes |
-
-**Formatting Style:** Mosaic's `.clang-format` enforces:
-- **Indent:** 4 spaces (no tabs)
-- **Column limit:** 100 characters
-- **Allman braces:** Opening braces on new lines for functions, classes, namespaces
-- **Google-based style** with C++20 standard
-- Pointer alignment to the left: `int* ptr` not `int *ptr`
-
-**What happens:** When you commit C++ files in the engine directories, `clang-format` automatically reformats your code. Changes are written back to your files, and you need to re-stage them before committing.
-
-**Example workflow:**
-```bash
-git add src/my_feature.cpp
-git commit -m "feat(core): add async task cancellation"
-# clang-format hook runs and fixes formatting
-# Git prevents commit and tells you files were modified
-
-git add src/my_feature.cpp  # Re-stage with formatting applied
-git commit -m "feat(core): add async task cancellation"  # Now succeeds
-```
-
-**Skipping hooks (use sparingly):** If you genuinely need to bypass hooks (e.g., for a complex merge or special formatting requirement), use:
+Use `--no-verify` only when absolutely necessary:
 
 ```bash
 git commit --no-verify
 ```
 
-**This should be rare.** Hooks exist to keep the codebase consistent. If you're tempted to skip frequently, talk to the team about why.
+Frequent skipping indicates a workflow or configuration issue. Raise it with the team.
 
-### Common Hook Scenarios
+### Configuration changes
 
-#### Scenario: I committed, but clang-format fixed my code. What do I do?
-
-1. Review the formatting changes: `git diff HEAD`
-2. If they look correct, re-stage: `git add .`
-3. Amend the commit: `git commit --amend --no-edit`
-4. Push as normal
-
-#### Scenario: A hook is reporting a false positive or blocking legitimately.
-
-Open an issue with details (the file, the hook, the output). The team can adjust hook configuration if needed.
-
-#### Scenario: I want to run hooks manually without committing.
-
-```bash
-pre-commit run --all-files           # Run all hooks
-pre-commit run clang-format          # Run specific hook
-pre-commit run --files src/foo.cpp   # Run on specific file
-```
-
-#### Scenario: A hook is slow or failing mysteriously.
-
-Check the pre-commit cache: `pre-commit clean` then `pre-commit run --all-files`.
-
-### Disabling or Updating Hooks
-
-Hooks are configured in `.pre-commit-config.yaml` at the repository root. Changes to this file require coordination with the team—don't modify it without discussion.
-
-If you believe a hook rule is incorrect or counterproductive, open an issue describing:
-- Which hook
-- Why it's problematic
-- What you propose instead
-
-The team reviews these requests and updates the configuration collectively.
+Hooks are defined in `.pre-commit-config.yaml`. Do not modify this file without discussion. Propose changes through an issue describing the problem and suggested alternative.
 
 ---
 
-## The Long View
+## The long view
 
-A GitHub repository is a living system. The more contributors it attracts, the more important structure becomes. These conventions ensure that Mosaic remains:
+A GitHub repository is a living system. As contributor count increases, structure becomes essential. These conventions keep Mosaic approachable, predictable, and scalable.
 
-- Approachable for newcomers
-- Predictable for maintainers
-- Scalable as complexity increases
-
-The goal isn’t bureaucracy—it’s **reducing friction so energy goes into building the engine, not managing chaos**.
-
-As the project evolves, these conventions may evolve too. When they do, they will change for the same reason they exist now: to make collaboration smoother, clearer, and more sustainable.
+The goal is not bureaucracy. The goal is to reduce friction so effort goes into building the engine rather than managing process.

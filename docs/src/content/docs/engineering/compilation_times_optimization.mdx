@@ -1,13 +1,17 @@
 ---
-title: Compilation Times Optimization
-description: Strategies and practices in Mosaic to reduce C++ compilation times without sacrificing maintainability.
+title: Compilation time optimization
+description: Strategies used in Mosaic to reduce C++ compilation times without sacrificing correctness or maintainability.
 ---
 
-In a large C++ codebase like Mosaic, **compilation time** is a critical concern. Slow builds disrupt workflow, hinder experimentation, and make incremental changes expensive. To mitigate this, we adopt several strategies focused on reducing header dependencies and improving compiler efficiency.
+Compilation time is a first-class engineering concern in Mosaic. Slow builds disrupt iteration, discourage experimentation, and make refactoring costly. As the codebase grows, unmanaged dependencies quickly turn incremental changes into full rebuilds.
 
-## Precompiled Headers (PCH)
+Mosaic addresses this problem by reducing header coupling, limiting transitive includes, and helping the compiler reuse work whenever possible. The strategies described here are mandatory guidelines for engine development and contributor code.
 
-Mosaic leverages **CMake precompiled headers** to reduce repetitive parsing of commonly used headers. Unlike traditional PCH, CMake's system automatically force-includes them via compiler options—you don’t need to include them manually in your source files.
+---
+
+## Precompiled headers (PCH)
+
+Mosaic uses **CMake precompiled headers** to reduce repeated parsing of large, frequently used headers. CMake injects these headers automatically through compiler options. You must not include them manually in source files.
 
 ```cmake
 target_precompile_headers(
@@ -22,40 +26,86 @@ target_precompile_headers(
   <functional>
   <memory>
   <array>
-  <chrono>)
-```
+  <chrono>
+)
+````
 
-**Guidelines for PCH usage:**
+Precompiled headers are most effective when they contain headers that are:
 
-* Only include **general-purpose headers** used across many source files.
-* Avoid project-specific or rarely used headers to prevent unnecessary recompilation.
-* Use PCH to accelerate parsing of STL headers and other large dependencies.
+* Expensive to parse
+* Widely used across translation units
+* Stable over time
 
-## Build Analysis
+### PCH usage rules
 
-We regularly use **Visual Studio 2022’s built-in code and build analysis tools** to monitor compilation performance. These tools help identify:
+Follow these rules when modifying PCH contents:
 
-* Large template instantiations
-* Heavily included headers
-* Files with excessive dependencies
+* Include only **general-purpose** headers used broadly across the engine
+* Avoid project-specific headers or implementation details
+* Avoid headers that change frequently
+* Prefer STL and platform headers with high parse cost
 
-By pinpointing these hotspots, we can make informed refactoring decisions and reduce build times where it matters most.
+Poorly chosen PCH contents increase rebuild times instead of reducing them.
 
-## Optional Includes via Opaque Handles
+---
 
-We are experimenting with **opaque handles** to make certain includes optional. This is particularly useful for large APIs like our Renderer API, where numerous data types could otherwise force large transitive inclusions.
+## Build-time analysis
 
-Opaque handles allow headers to forward-declare types, limiting what must be included in a given file. However, this pattern has trade-offs:
+Mosaic relies on **Visual Studio 2022 build analysis tools** to track compilation performance on Windows. These tools are used to identify:
 
-* **Pros**: Reduces header dependencies, speeds up incremental builds.
-* **Cons**: Introduces potential **ABI safety risks** and additional indirection in code.
+* Excessive template instantiations
+* Headers included transitively across many files
+* Translation units with disproportionate compile cost
 
-Care must be taken to balance compile-time performance against safety and maintainability.
+Use this data to guide refactoring. Optimization decisions must be driven by measured impact, not intuition.
 
-## Future Plans
+When a file or header becomes a compile-time hotspot, address the dependency structure rather than adding workarounds.
 
-To further improve compilation speed, Mosaic will eventually:
+---
 
-* **Split the engine into multiple sub-targets**: This allows tailored precompiled headers per subsystem and faster incremental builds.
-* Refine PCH usage based on subsystem dependencies rather than a single monolithic header set.
-* Experiment with the use of C++20 modules as they become more widely supported.
+## Reducing includes with opaque handles
+
+Mosaic selectively uses **opaque handles** to reduce header dependencies in large or widely used APIs. This pattern replaces concrete type exposure with forward-declared, incomplete types.
+
+This approach is especially useful in systems such as the renderer, where exposing full type definitions would otherwise force large transitive include chains.
+
+### Tradeoffs
+
+Opaque handles are not a free optimization.
+
+**Benefits:**
+
+* Reduced header coupling
+* Faster incremental builds
+* Cleaner public interfaces
+
+**Costs:**
+
+* Additional indirection
+* Reduced type visibility
+* Potential **ABI safety implications** if misused
+
+Use opaque handles deliberately. Favor clarity and correctness over compile-time savings when the tradeoff is unclear.
+
+---
+
+## Planned improvements
+
+Compilation time optimization is an ongoing effort. Planned improvements include:
+
+* **Splitting the engine into multiple CMake targets**
+  This allows subsystem-specific dependency graphs and tailored PCH sets.
+
+* **Subsystem-scoped PCH usage**
+  Each major subsystem will eventually define its own precompiled headers.
+
+* **Evaluation of C++20 modules**
+  Modules are not yet production-ready across all supported toolchains. Mosaic will adopt them only when support is stable and measurable benefits outweigh migration costs.
+
+---
+
+## Design principle
+
+Compilation speed is a **structural property** of the codebase, not a post-hoc optimization. Clean boundaries, minimal headers, and explicit dependencies matter more than any individual tool or flag.
+
+Every header you add today affects build times tomorrow.

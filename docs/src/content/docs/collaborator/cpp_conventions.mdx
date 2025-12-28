@@ -3,51 +3,73 @@ title: C++ Conventions
 description: Standards and good practices for writing C++ code in Mosaic.
 ---
 
-Building a game engine isn't just about writing code that works—it's about writing code that _lasts_. Code that your teammates can understand six months from now, code that newcomers can navigate without getting lost, and code that can evolve as your project grows. That's why we've established these conventions, which form the foundation of how we write C++ in this project.
+This document defines the standards and conventions you must follow when writing C++ code in Mosaic. These conventions exist to ensure long-term maintainability, readability, and predictable behavior across the entire engine. You should follow these rules for all engine code, tooling, and internal libraries.
 
-These guidelines aren't arbitrary rules imposed from above. They're battle-tested practices that have emerged from real development challenges, adapted from the [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html) but tailored to the specific needs of game engine development. Every convention here exists to solve a problem we've encountered or prevent one we want to avoid.
+These conventions are derived from real development constraints encountered while building a game engine. The rules are inspired by the Google C++ Style Guide but adapted to Mosaic’s architecture, performance requirements, and contributor workflow. Every guideline addresses either a known failure mode or a scalability concern.
 
-## The Philosophy Behind Our Approach
+---
 
-Game engines are complex beasts. They're systems of systems, with rendering pipelines talking to asset loaders, physics engines coordinating with scripting systems, and everything happening under tight performance constraints. In this environment, consistency isn't just nice to have—it's essential for maintaining sanity.
+## Conceptual explanation
 
-Our conventions prioritize **clarity over cleverness**. When you're debugging a frame rate drop at 2 AM, you want code that tells you exactly what it's doing without forcing you to decode someone's creative use of language features. We favor explicit naming, predictable patterns, and code that reads like it means what it does.
+Game engines are large, tightly coupled systems operating under strict performance and correctness constraints. You will routinely work across rendering, asset loading, ECS, platform abstraction, and tooling layers. In this environment, inconsistency introduces cognitive overhead and increases the likelihood of subtle bugs.
 
-## Code Formatting: Let the Tools Handle It
+Mosaic conventions prioritize clarity over expressiveness. You should write code that communicates intent directly and unambiguously. Explicit naming, predictable structure, and visible lifetimes matter more than clever language features. When debugging complex behavior under pressure, readable code reduces error recovery time.
 
-We've standardized on **Clang Format** because arguing about brace placement is a waste of everyone's time. The computer can format code better and more consistently than any human, so we let it do that job. Our formatting rules are captured in our [.clang-format](https://github.com/WilliamKarolDiCioccio/mosaic/blob/main/.clang-format) and [.clang-tidy](https://github.com/WilliamKarolDiCioccio/mosaic/blob/main/.clang-tidy) configurations.
+Consistency also enables collaboration. Contributors should be able to navigate unfamiliar code without reconstructing personal conventions. These rules establish a shared mental model for how Mosaic code is written and organized.
 
-:::tip
-We strongly recommend installing the **Clang Format extension** for your IDE of choice and enabling **format-on-save**. This way, you can format your code automatically on save, ensuring that your contributions always adhere to our style guidelines.
-:::
+---
 
-## Building and Dependencies: Pragmatic Choices
+## Code formatting
 
-Our build system centers on **CMake** because, despite its quirks, it's the most widely supported and flexible option available. CMake isn't perfect, but it's the devil we know, and it works across all our target platforms and development environments.
+Use automated tooling to enforce formatting rules. Manual formatting decisions are discouraged.
 
-For dependency management, we use **VCPKG** as our primary package manager. When VCPKG doesn't have what we need, dependencies get added as Git submodules in the `vendor` directory. This hybrid approach gives us the convenience of a package manager where possible while maintaining complete control over our dependency versions.
+Mosaic standardizes on **Clang Format** and **Clang Tidy**. Formatting and static analysis rules are defined in the project configuration files and apply uniformly across the codebase. You must not introduce formatting deviations.
 
-## Testing: The Safety Net That Actually Works
+Install a Clang Format integration for your IDE and enable format-on-save. This configuration ensures that all submitted code conforms automatically and avoids formatting-related review noise.
 
-Testing in game engines requires a different mindset than testing typical applications. You're dealing with graphics hardware, real-time constraints, and systems that are inherently interactive. We use **Google Test** because it's reliable, well-documented, and integrates cleanly with our build system.
+---
 
-### What We Test (And Why)
+## Build system and dependencies
 
-**Unit tests** focus on the algorithmic core of our systems—the math utilities that need to be precisely correct, the serialization logic that must handle edge cases gracefully, and the core engine systems where bugs can cascade through the entire application. These are the components where you can define clear inputs and expected outputs.
+Mosaic uses **CMake** as its build system. You should follow existing CMake patterns and avoid introducing custom abstractions unless strictly necessary. Despite its limitations, CMake provides broad platform support and integrates cleanly with Mosaic tooling.
 
-**Integration tests** verify that our systems work together correctly. Asset pipeline tests ensure that a model can travel from source file to GPU memory without corruption. ECS system tests verify that entity creation and destruction doesn't leave dangling references. These tests catch the bugs that emerge from system interactions.
+Mosaic uses **VCPKG** as the primary dependency manager. When a dependency is unavailable or unsuitable in VCPKG, you must add it as a Git submodule under the `vendor` directory. This approach balances convenience with explicit version control and reproducibility.
 
-### What We Don't Test (And Why That's Smart)
+You should not introduce alternative package managers or ad-hoc dependency fetching mechanisms.
 
-We don't test rendering output pixel-by-pixel because graphics drivers are too variable, and these tests create more false positives than real bug catches. We don't test third-party code because that's not our responsibility—we test our integration with third-party code, but we trust that mature libraries handle their own correctness.
+---
 
-We avoid testing non-deterministic systems unless we can make them deterministic through seeding or mocking. Random behavior is useful in games, but it's the enemy of reliable tests.
+## Testing strategy
 
-The testing philosophy is pragmatic: test what can break in ways you can catch, and don't waste time on tests that provide false confidence.
+Testing in Mosaic focuses on correctness where deterministic validation is possible. You should treat tests as a safety net for logic that can fail silently or propagate errors across systems.
 
-## Class Structure: Organization That Scales
+Mosaic uses **Google Test** for both unit and integration tests. You should integrate all tests into the standard build pipeline.
 
-When classes grow beyond a handful of methods, organization becomes critical. We group related functionality with comments because it makes navigation faster and communicates intent clearly:
+### Unit testing
+
+Write unit tests for algorithmic and logic-heavy components. This category includes math utilities, serialization code, data structures, and ECS primitives. These systems have clear inputs and expected outputs and benefit most from strict validation.
+
+Unit tests should be deterministic and isolated. Avoid dependencies on platform state, timing, or external resources.
+
+### Integration testing
+
+Use integration tests to validate interactions between systems. Examples include asset pipeline validation, ECS lifecycle behavior, and renderer initialization paths. These tests detect failures caused by incorrect assumptions between subsystems.
+
+Integration tests should verify behavior, not implementation details.
+
+### Non-goals
+
+Do not test rendering output at the pixel level. Driver variability and hardware differences make such tests unreliable. Do not test third-party library internals. Instead, test Mosaic’s integration points and error handling.
+
+Avoid tests for non-deterministic systems unless determinism can be enforced through seeding or mocking.
+
+---
+
+## Class structure
+
+Organize class declarations to make large headers navigable and intention-revealing. When a class grows beyond trivial size, group related members explicitly.
+
+Use comment-based section headers to separate constructors, public methods, private helpers, and state. This structure improves scanability and reduces navigation time in large files.
 
 ```cpp
 class ExampleClass {
@@ -67,71 +89,68 @@ class ExampleClass {
 };
 ```
 
-This pattern scales well. When you're looking at a 200-line class definition, these section headers become navigation landmarks that help you find what you need quickly.
+You may optionally annotate high-level design patterns used by a class, such as `// Singleton` or `// Factory`. Use these annotations sparingly and only when they add clarity during refactoring or review.
 
-We're also considering to add comments to quickly identify the used patterns in the class, such as `// Singleton`, `// Factory`, or `// Observer`. This will help developers understand the design intent at a glance and make it easier to ensure consistency during large scale refactoring.
+---
 
-## Naming: Making Intent Obvious
+## Naming conventions
 
-Our naming conventions exist to eliminate ambiguity and make code self-documenting. Every name should tell you not just what something is, but what role it plays in the code.
+Naming rules exist to encode scope, lifetime, and intent directly into identifiers. You should treat naming as part of the API contract.
 
-### Functions and Parameters
+### Functions and parameters
 
-Functions use **camelCase** because it's readable and widely adopted in C++. Function parameters get an **underscore prefix** (`_inputData`) to distinguish them from local variables at a glance. This prevents the common bug where you accidentally use a parameter name for a local variable and wonder why your function isn't working correctly.
+Use **camelCase** for functions. Prefix function parameters with an underscore to distinguish them from local variables and member fields.
 
 ```cpp
 void processData(int _inputData) {
-    int processedData = _inputData * 2;  // Clear distinction
+  int processedData = _inputData * 2;
 }
 ```
 
-### Classes and Types
+This convention reduces shadowing errors and makes data flow visible during review.
 
-Classes and types use **PascalCase** because it visually distinguishes them from functions and variables. This makes it immediately clear when you're dealing with a type versus a function call or variable access.
+### Classes and types
 
-```cpp
-class MyClass {
- public:
-  void myMethod();
-};
-```
+Use **PascalCase** for classes, structs, and type aliases. This convention visually distinguishes types from functions and variables.
 
-This also applies to `using` directives. We avoid `using namespace` in headers to prevent name collisions, but we do use it in implementation files where the scope is limited.
+Avoid `using namespace` directives in headers. You may use them in implementation files when scope is limited and unambiguous.
 
-### Variables and Their Roles
+### Variables and scope prefixes
 
-Variable prefixes tell a story about scope and lifetime:
+Prefix variables to encode ownership and lifetime:
 
-- **Instance fields** get `m_` (member) because they live with the object
-- **Static fields** get `s_` (static) because they outlive any instance
-- **Global variables** get `g_` (global) because they're accessible everywhere
+* Instance fields use `m_`
+* Static fields use `s_`
+* Global variables use `g_`
 
 ```cpp
 class MyClass {
  private:
-  int m_id;                    // Lives with this instance
-  static int s_instanceCount;  // Shared across all instances
+  int m_id;
+  static int s_instanceCount;
 };
 
-int g_applicationState;        // Available everywhere
+int g_applicationState;
 ```
 
-This system makes variable lifetime and scope obvious at the point of use, which is crucial when debugging memory issues or understanding data flow.
+This convention makes lifetime explicit at the point of use and reduces ambiguity in complex systems.
 
-### Constants and Configuration
+### Constants and macros
 
-Constants use the `k_` prefix to distinguish compile-time values from runtime variables:
+Prefix compile-time constants with `k_`.
 
 ```cpp
-const int k_defaultTimeout = 30;      // Compile-time constant
-const float k_maxSpeed = 100.0f;      // Won't change during execution
+const int k_defaultTimeout = 30;
+const float k_maxSpeed = 100.0f;
 ```
 
-Macros use **ALL_CAPS** and are restricted to source files whenever possible to avoid polluting the global namespace. Macros are powerful but dangerous—they should be obvious when encountered.
+Use macros only when no language alternative exists. Restrict macros to source files whenever possible. Write macro names in **ALL_CAPS** to make them visually distinct.
 
-### Enums: Readable and Safe
+### Enums
 
-Enum values use **snake_case** avoiding the ALL_CAPS style that can clash with macros:
+Use `enum class` instead of unscoped enums. Scoped enums prevent name collisions and improve readability.
+
+Use **snake_case** for enum values.
 
 ```cpp
 enum class RenderMode {
@@ -141,145 +160,113 @@ enum class RenderMode {
 };
 ```
 
-Regardless of these naming preventive measures, we strongly recommend using **scoped enums** (`enum class`) instead of traditional enums. Scoped enums prevent name collisions and make the code more self-documenting. When you see `RenderMode::wireframe`, you know exactly what you're dealing with, without worrying about conflicting names in the global namespace.
+### Macro parameters
 
-### Macro Parameters: Clear and Consistent
-
-Macro parameters follow the same naming rules as function parameters, with one important twist: they start with an **uppercase letter**. This may seem redundant in simple macros, but it becomes crucial when macros generate larger code expressions. Using uppercase letters for macro parameters makes it immediately clear which identifiers are part of the generated code versus which are literals or fixed parts of the macro.
+Name macro parameters using the same rules as function parameters, but start each parameter with an uppercase letter. This convention distinguishes generated identifiers from fixed macro text.
 
 ```cpp
 DEFINE_CLASS_WITH_MEMBER(_Type, _Member, _Name)        \
 class _Name {                                          \
-  public:                                              \
-    _Type get##_Member() const { return m_##_Member; } \
-  private:                                             \
-    _Type m_##_Member;                                 \
+ public:                                               \
+  _Type get##_Member() const { return m_##_Member; }   \
+ private:                                              \
+  _Type m_##_Member;                                   \
 };
 ```
 
-## Documentation: Writing for Future You
+---
 
-Documentation serves two masters: the person trying to understand your code right now, and the person (possibly you) who needs to modify it six months from now. We use **Doxygen** as the standard documentation generator for the engine because it integrates well with IDEs and generates useful reference material, but the real value is in writing documentation that actually helps.
+## Documentation standards
 
-All documentation should strive to be **clear, concise, and helpful to both new and experienced contributors**.
+Documentation exists to explain intent, constraints, and safe usage. You should write documentation for future contributors who lack your current context.
 
-### Document What Matters
+Mosaic uses **Doxygen** for API documentation generation. You must write Doxygen-style comments for all non-trivial public and internal APIs.
 
-Not every function needs documentation. `vector.size()` doesn't need explanation. But any function with side effects, performance implications, or complex behavior absolutely does. The question isn't "what does this code do?"—the code already answers that. The question is "why does this code exist, and what do I need to know to use it safely?"
+### What to document
 
-**All non-trivial public and internal APIs** must be documented. Specifically, document any function or class that has:
-* **Side effects**
-* **Performance implications**
-* **Complex input/output behavior**
+Document functions, classes, and systems that have side effects, performance implications, or complex behavior. Focus on why the code exists and how it must be used safely.
 
-Document **subsystems**, **core abstractions**, and **data flow** at a high level when relevant. Document ownership semantics, thread safety constraints, and units of measurement. Mention preconditions and postconditions. Explain the non-obvious:
+Always document:
+
+* Preconditions and postconditions
+* Ownership and lifetime rules
+* Thread-safety guarantees
+* Units of measurement
 
 ```cpp
 /**
  * Initializes the graphics subsystem and prepares rendering backends.
  *
- * Must be called before any rendering calls. This function allocates GPU memory and
- * sets up hardware-specific pipelines.
+ * Must be called before any rendering operations. This function allocates
+ * GPU memory and initializes platform-specific pipelines.
  *
- * @return True if initialization succeeded, false otherwise.
+ * @return True if initialization succeeds.
  */
 bool Renderer::initialize();
 ```
 
-Avoid redundant comments on trivial functions (e.g., `size()` on containers).
+Avoid documenting trivial accessors or self-explanatory functions.
 
-### Where to Document
+### Where to document
 
-Use **Doxygen-style comments** directly in headers for functions, classes, and enums. If an entire file or subsystem needs explanation, place a Doxygen `\file` or `\brief` comment block at the top.
+Place API documentation in headers. Use file-level Doxygen comments for subsystems or modules that require contextual explanation.
 
-Document major modules in standalone `.md` files under the `docs/` directory for higher-level guides.
+Write higher-level architectural documentation in standalone Markdown files under the `docs/` directory.
 
-### Implementation Comments
+### Implementation comments
 
-Header documentation explains _what_ and _why_. Implementation comments explain _how_, but only when the how isn't obvious. For **complex implementation logic**, use in-source comments in `.cpp` files to explain:
-* Non-obvious control flow
-* Performance-critical sections
-* Subtle algorithmic behavior and bug fixes
+Use comments in implementation files to explain non-obvious control flow, performance-sensitive code, or subtle algorithmic behavior. Do not restate what the code already expresses clearly.
 
-Straightforward code should be self-explanatory.
+---
 
-### Style and Format
+## Architecture and layout
 
-Use **full sentences** with correct punctuation. Start function descriptions with a verb in **third-person singular** ("Returns", "Initializes", "Calculates").
+Mirror namespace structure in the directory layout. This alignment reduces mental overhead and makes symbol ownership obvious.
 
-Always mention:
-* Preconditions and postconditions
-* Ownership and lifetime expectations
-* Thread safety or concurrency constraints
-* Units of measurement (e.g., milliseconds, degrees, normalized)
+Reserve `internal` and `detail` namespaces for implementation details that external users must not depend on.
 
-## Architecture: Organizing for Growth
+Prefer explicit naming such as `mosaic::platform::win32::Win32Platform`. Verbosity is acceptable when it prevents ambiguity and reduces reliance on `using` directives.
 
-Our folder structure mirrors our namespace organization because consistency between logical and physical organization reduces mental overhead. Each namespace gets its own folder, with the exception of `internal` and `detail` namespaces, which are reserved for implementation details that users shouldn't depend on.
+As systems grow, migrate them into dedicated subdirectories rather than flattening namespaces.
 
-We use explicit, sometimes redundant naming (`mosaic::platform::win32::Win32Platform`) because it eliminates ambiguity. Yes, it's more verbose, but verbosity that prevents bugs is good verbosity. When you see a symbol used, you know exactly where it comes from without having to trace through a chain of `using` directives.
+---
 
-As systems grow complex, they migrate into dedicated subfolders. This organic growth pattern keeps the codebase navigable as it scales.
+## Error handling
 
-## Error Handling: Explicit and Predictable
+Avoid exceptions for recoverable errors. Exceptions introduce unpredictable control flow and platform-specific behavior that complicates engine code.
 
-Exceptions in C++ are powerful but problematic in game engines. They're expensive, can be unpredictable across platforms, and make control flow hard to reason about. We reserve exceptions for truly exceptional situations—irrecoverable errors where crashing is the appropriate response.
-
-For recoverable errors, we use our `Result` class, which forces explicit error handling and makes failure paths visible in the code:
+Use Mosaic’s `Result` type for recoverable failures that require error propagation.
 
 ```cpp
-#include <pieces/result.hpp>
-
-// Other includes
-
 Result<Texture, std::string> loadTexture(const std::string& path) {
-    if (path.empty()) {
-        return Err<Texture, std::string>("Invalid texture path: " + path);
-    }
+  if (path.empty()) {
+    return Err<Texture, std::string>("Invalid texture path");
+  }
 
-    ... // Your texture loading logic
-
-    return Ok<Texture, std::string>(std::move(tex));
+  return Ok<Texture, std::string>(std::move(texture));
 }
-
-// Somewhere in your code
-
-auto result = loadTexture("character.png");
-
-if (result.isErr()) {
-    std::cerr << "Texture load failed: " << result.error() << '\n';
-    return 1;
-}
-
-Texture& texture = result.unwrap();
 ```
 
-For simple success/failure cases without additional error data, a `bool` return is sufficient. For optional values, `std::optional` works well. But when you need rich error information that might be useful to callers up the stack, `Result` is the right choice.
+Use `bool` for simple success or failure cases. Use `std::optional` when absence is meaningful but error context is unnecessary.
 
-## Object Lifecycle: Predictable and Safe
+Reserve exceptions for unrecoverable errors where termination is the correct response.
 
-Game engines deal with complex object lifetimes—GPU resources, file handles, network connections, and objects that span multiple systems. We separate construction from initialization to make these lifetimes explicit and error handling possible:
+---
 
-**Constructors** establish invariants and perform trivial setup. They cannot fail because there's no clean way to handle constructor failure in C++.
+## Object lifecycle
 
-**Initialization** happens through explicit `initialize()` methods that return `Result` or equivalent. This makes initialization failures handleable and gives you a place to clean up partial initialization.
+Separate construction from initialization to make failure handling explicit.
 
-**Factory methods** like `create()` handle construction and initialization as a unit, returning `std::unique_ptr` for successful creation or error information for failures.
+Constructors must establish invariants and perform trivial setup only. Constructors must not fail.
 
-This pattern guarantees that objects are either fully constructed and initialized, or they don't exist at all. No half-initialized objects, no mysterious constructor failures, no guessing about object validity.
+Perform fallible work in explicit initialization methods that return `Result` or equivalent. Use factory functions to combine construction and initialization when appropriate.
 
-## Platform Abstraction: Pragmatic Isolation
+This pattern guarantees that objects are either fully valid or do not exist.
 
-Platform-specific code doesn't always need to be hidden behind abstraction layers. If you have a few lines of platform-specific logic in an otherwise platform-neutral file, it's often clearer to handle it with preprocessor directives and comments than to create elaborate abstraction machinery.
+---
 
-For substantial platform differences, proper abstraction layers make sense. But for minor variations—different file paths, slightly different API calls—inline platform handling can be simpler and more maintainable.
+## Platform abstraction
 
-The key is proportionality: the complexity of your abstraction should match the complexity of the differences you're abstracting.
+Apply abstraction proportionally. Inline platform-specific logic is acceptable for small, localized differences. Use preprocessor directives and comments when this improves clarity.
 
-## The Long View
-
-These conventions aren't just about making code pretty—they're about building a codebase that can grow and evolve over years of development. When you're in the thick of implementing a feature, it's tempting to take shortcuts or ignore conventions for the sake of speed.
-
-But game engines are long-lived projects. Code you write today will be read, modified, and debugged by people (including future you) who don't have the context you have right now. These conventions are an investment in that future, trading a small amount of extra work today for significantly easier maintenance tomorrow.
-
-The goal isn't perfect code—it's sustainable code. Code that your team can work with confidently, code that newcomers can understand quickly, and code that won't become a maintenance nightmare as your project grows.
+Introduce abstraction layers only when platform divergence is substantial or growing. Avoid unnecessary indirection that obscures control flow.

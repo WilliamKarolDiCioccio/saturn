@@ -1,71 +1,194 @@
 ---
 title: ABI Safety
-description: Guidelines for ensuring Application Binary Interface (ABI) safety when building and distributing Mosaic as a dynamic library.
+description: Rules and constraints for maintaining Application Binary Interface (ABI) safety in Mosaic’s dynamic library.
 ---
 
-ABI safety is a non-negotiable requirement when building a dynamic library that will be distributed and reused across different machines and projects. In our case, the Mosaic engine DLL must follow strict rules to ensure that game programs can link against it without needing to recompile the entire engine.
+ABI safety is a **hard requirement** for Mosaic when distributed as a dynamic library. Public engine binaries must remain link-compatible across projects and machines without forcing consumers to rebuild the engine.
 
-## What ABI Really Means
+Breaking ABI compatibility leads to undefined behavior that is often silent, difficult to diagnose, and catastrophic at runtime. These rules exist to prevent that class of failure.
 
-The **Application Binary Interface (ABI)** defines how compiled code communicates at the binary level. It includes things like:
+---
 
-* **Instruction conventions**: How functions are called, how parameters are passed, and how return values are handled.
-* **Memory layout**: How classes, structs, and data members are arranged in memory, including padding and alignment.
-* **VTable layout**: How virtual functions are represented and called.
-* **Exception and RTTI handling**: How exceptions and runtime type information are represented across binaries.
+## What ABI Means in Practice
 
-Even small differences in ABI—caused by compiler versions, compiler settings, or target architectures—can cause catastrophic failures if a program tries to use an incompatible binary.
+The **Application Binary Interface (ABI)** defines how compiled code interacts at the binary level. It governs:
 
-## The Most Dangerous Objects to Export
+- **Calling conventions**
+  How functions are invoked, how arguments are passed, and how return values are produced.
 
-Certain objects are particularly unsafe to expose across DLL boundaries:
+- **Object layout**
+  Memory layout of classes and structs, including padding, alignment, and member ordering.
 
-* **STL components and anything from `std`**: These may change layout, internal implementation, or memory management between compiler versions.
-* **Non-const references and raw pointers**: Accessing memory through a client-side pointer or reference assumes a memory layout that may differ from the library's expectations.
-* **Objects managed by different memory systems**: Constructing an object in the library but destructing it in the client (or vice versa) can lead to undefined behavior.
-* **Inline methods exposing internal types**: Even harmless-looking inline methods can introduce ABI leaks if they expose STL or internal headers.
-* **Cross-DLL exceptions or RTTI**: Throwing exceptions or sharing type info across DLL boundaries is unsafe unless the same compiler and CRT are guaranteed.
+- **Virtual dispatch**
+  VTable layout and virtual function resolution.
 
-### Safer Options
+- **Exceptions and RTTI**
+  Binary representation of exceptions and runtime type information.
 
-* **Opaque pointers / PIMPL**: Export only a pointer to an incomplete `struct Impl`. All data members live in the `.cpp`, and inline methods only forward to the Impl. This isolates internal layout changes from the client.
-* **Copied objects**: Safe because they are fully constructed and destroyed on the same side.
-* **Const references**: Safe in most cases because they only read data without attempting modification or destruction.
+ABI compatibility depends on:
+- Compiler vendor and version
+- Compiler flags and standard library implementation
+- Target architecture
+- Build configuration (Debug vs Release)
 
-### Ownership Rules
+A mismatch in any of these can invalidate binary compatibility even when source code appears unchanged.
 
-To maintain ABI safety, objects should have **clear ownership**:
+---
 
-* If the library constructs an object, the library should also destruct it.
-* If the client constructs an object, the client should destruct it.
-* Access to internal data should generally be done through **safe accessors** (copies or const references), never assuming internal layout.
+## Objects That Must Not Cross DLL Boundaries
 
-### Virtual Functions & Interface Stability
+The following constructs are **ABI-unsafe** and must not appear in public engine APIs.
 
-* Public virtual functions form an **ABI contract**.
-* Never remove existing virtual functions.
-* Adding virtual functions should be done carefully—prefer appending to the end of the vtable and versioning the DLL accordingly.
+### Standard Library Types
 
-### Singletons & Static Objects
+- Any type from `std` (containers, strings, smart pointers, function wrappers)
+- Types that embed or expose STL internals
 
-* Static or singleton objects should live entirely inside the DLL.
-* Provide access via static getters to avoid cross-DLL construction/destruction issues.
+Standard library implementations are **not ABI-stable** across compiler versions or CRTs.
 
-### Platform & Compiler Considerations
+---
 
-* ABI can differ between compiler vendors, versions, and build types (Debug vs Release).
-* STL implementations may differ across compilers or CRT versions.
-* When breaking rules for design reasons, carefully document and isolate the exceptions.
+### Ownership-Sensitive Objects
 
-### Testing & Versioning
+- Objects constructed in the library and destroyed in the client
+- Objects destroyed by a different allocator than the one that created them
 
-* Use automated ABI testing tools (`nm`, `readelf`, `dumpbin`, `abi-compliance-checker`) to detect accidental breaks.
-* Provide a versioning policy for the DLL to indicate when ABI-breaking changes occur.
+Cross-boundary allocation or destruction results in undefined behavior.
 
-### Pragmatic Exceptions
+---
 
-Sometimes, breaking these rules is necessary for **quality-of-life improvements** or **design reasons**. In these cases, extra care is required:
+### Exposed Internal Layout
 
-* Document the exception clearly.
-* Limit exposure to a small, well-audited API.
-* Accept that changes in compiler, settings, or CRT may require careful review or recompilation.
+- Inline methods that reference private members
+- Headers that expose internal structs, templates, or implementation headers
+
+Even inline accessors can leak ABI if they expose layout or template instantiations.
+
+---
+
+### Exceptions and RTTI
+
+- Throwing exceptions across the DLL boundary
+- Using `dynamic_cast` or `typeid` across boundaries
+
+These are only safe when compiler, standard library, and runtime are strictly identical—and should be avoided regardless.
+
+---
+
+## Approved ABI-Safe Patterns
+
+### Opaque Handles (PIMPL)
+
+Use opaque pointers to incomplete types as the primary mechanism for ABI isolation.
+
+- Public headers declare an incomplete `Impl`
+- All data members live in the source file
+- Public methods forward to the implementation
+
+This isolates layout changes from consumers and is the **preferred pattern** in Mosaic.
+
+---
+
+### Value Copies
+
+Returning or accepting copied values is ABI-safe **only** when:
+- The type is trivially copyable, or
+- Construction and destruction occur on the same side
+
+---
+
+### Const Accessors
+
+`const` references or views are generally safe when:
+- They do not imply ownership transfer
+- They do not expose internal layout assumptions
+
+---
+
+## Ownership Rules (Mandatory)
+
+To maintain ABI safety, ownership must be explicit and respected:
+
+- Objects created by the library are destroyed by the library
+- Objects created by the client are destroyed by the client
+- Ownership transfer must be explicit and documented
+- Internal state must not be mutated through client-owned pointers
+
+When in doubt, return handles or copies—not references.
+
+---
+
+## Virtual Functions and ABI Stability
+
+Virtual functions form part of the ABI contract.
+
+Rules:
+- Never remove or reorder public virtual functions
+- Never change the signature of an existing virtual function
+- New virtual functions must be appended to the end of the vtable
+- ABI-breaking changes require versioned binaries
+
+Virtual interfaces should be treated as frozen contracts once released.
+
+---
+
+## Singletons and Static State
+
+- Static objects must be owned entirely by the DLL
+- Clients must never construct or destruct static engine objects
+- Access must be provided via exported functions or accessors
+
+This prevents cross-runtime lifetime mismatches.
+
+---
+
+## Platform and Toolchain Constraints
+
+ABI compatibility is **not portable by default**.
+
+Expect differences across:
+- Compiler vendors (MSVC, Clang, GCC)
+- Compiler versions
+- CRT versions
+- Architectures
+- Build modes
+
+Mosaic does not attempt to guarantee ABI compatibility across incompatible toolchains. Consumers are expected to use supported configurations.
+
+---
+
+## Testing and Versioning
+
+ABI stability must be verified continuously.
+
+Recommended tools:
+- `abi-compliance-checker`
+- `nm`, `readelf`, `objdump`
+- `dumpbin` (Windows)
+
+Any ABI-breaking change must:
+- Be detected automatically
+- Be documented
+- Trigger a version bump
+
+---
+
+## Pragmatic Exceptions
+
+Some designs may require controlled ABI violations.
+
+When this occurs:
+- Scope must be minimal
+- Exposure must be tightly audited
+- Exceptions must be documented explicitly
+- Rebuild requirements must be clearly stated
+
+ABI safety is the default. Exceptions are deliberate, rare, and visible.
+
+---
+
+## Design Principle
+
+ABI rules exist to **protect users from undefined behavior**, not to constrain design unnecessarily.
+
+When choosing between convenience and binary safety, Mosaic always favors **explicitness, isolation, and long-term stability**.

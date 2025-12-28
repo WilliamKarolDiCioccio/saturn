@@ -44,45 +44,53 @@ export default defineConfig({
               translations: { en: "Overview", it: "Panoramica" },
               slug: "intro/overview",
             },
+            {
+              label: "License",
+              translations: { en: "License", it: "Licenza" },
+              slug: "intro/license",
+            },
           ],
         },
         {
-          label: "User Guide",
+          label: "User guide",
           translations: {
-            en: "User Guide",
-            it: "Guida Utente",
+            en: "User guide",
+            it: "Guida utente",
           },
           items: [
             {
-              label: "Getting Started",
-              translations: { en: "Getting Started", it: "Per Iniziare" },
+              label: "Getting started",
+              translations: { en: "Getting started", it: "Per iniziare" },
               slug: "user/getting_started",
               badge: "WIP",
             },
           ],
         },
         {
-          label: "Collaborator Guide",
+          label: "Collaborator guide",
           translations: {
-            en: "Collaborator Guide",
-            it: "Guida Collaboratori",
+            en: "Collaborator guide",
+            it: "Guida collaboratori",
           },
           items: [
             {
-              label: "Getting Started",
-              translations: { en: "Getting Started", it: "Per Iniziare" },
-              slug: "collaborator/getting_started",
+              label: "Build environment",
+              translations: {
+                en: "Build environment",
+                it: "Ambiente di build",
+              },
+              slug: "collaborator/build_environment",
             },
             {
-              label: "C++ Conventions",
-              translations: { en: "C++ Conventions", it: "Convenzioni C++" },
+              label: "C++ conventions",
+              translations: { en: "C++ conventions", it: "Convenzioni C++" },
               slug: "collaborator/cpp_conventions",
             },
             {
-              label: "GitHub Repository Conventions",
+              label: "GitHub repository conventions",
               translations: {
-                en: "GitHub Repository Conventions",
-                it: "Convenzioni GitHub",
+                en: "GitHub repository conventions",
+                it: "Convenzioni repository GitHub",
               },
               slug: "collaborator/gh_repo_conventions",
             },
@@ -97,9 +105,9 @@ export default defineConfig({
           autogenerate: { directory: "engineering" },
         },
         {
-          label: "API Reference",
+          label: "API reference",
           translations: {
-            en: "API Reference",
+            en: "API reference",
             it: "Riferimento API",
           },
           autogenerate: { directory: "reference" },
