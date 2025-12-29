@@ -25,6 +25,28 @@ concept Component = std::is_trivially_copyable_v<T> && std::is_trivially_destruc
                     !std::is_pointer_v<T> && !std::is_reference_v<T> && !std::is_const_v<T> &&
                     !std::is_volatile_v<T> && std::is_standard_layout_v<T>;
 
+namespace detail
+{
+
+template <typename... Ts>
+struct TypeList
+{
+};
+
+template <Component... Components>
+using From = TypeList<Components...>;
+
+template <Component... Components>
+using Add = TypeList<Components...>;
+
+template <Component... Components>
+using Remove = TypeList<Components...>;
+
+template <Component... Components>
+using With = TypeList<Components...>;
+
+} // namespace detail
+
 } // namespace ecs
 } // namespace mosaic
 

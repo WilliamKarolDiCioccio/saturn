@@ -66,6 +66,39 @@ class EntityRegistry final
 
         void freeID(EntityID _id) { m_freeList.push_back(_id); }
 
+        /**
+         * @brief Allocates multiple entity IDs at once.
+         *
+         * @param _count Number of IDs to allocate.
+         * @return Vector of allocated EntityMeta.
+         */
+        [[nodiscard]] std::vector<EntityMeta> getIDBulk(size_t _count)
+        {
+            std::vector<EntityMeta> result;
+            result.reserve(_count);
+
+            for (size_t i = 0; i < _count; ++i)
+            {
+                result.push_back(getID());
+            }
+
+            return result;
+        }
+
+        /**
+         * @brief Frees multiple entity IDs at once.
+         *
+         * @param _ids Vector of entity IDs to free.
+         */
+        void freeIDBulk(const std::vector<EntityID>& _ids)
+        {
+            m_freeList.reserve(m_freeList.size() + _ids.size());
+            for (EntityID id : _ids)
+            {
+                m_freeList.push_back(id);
+            }
+        }
+
         void reset()
         {
             m_next = 0;
@@ -105,7 +138,7 @@ class EntityRegistry final
          * @param _com The component registry for component type information.
          */
         EntityView(const std::vector<Archetype*>& _archetypes, const ComponentRegistry* _com)
-            : m_archetypes(std::move(_archetypes)), m_componentRegistry(_com){};
+            : m_archetypes(std::move(_archetypes)), m_componentRegistry(_com) {};
 
        public:
         /**
@@ -243,9 +276,13 @@ class EntityRegistry final
      * @param _componentRegistry The component registry for component type information.
      */
     EntityRegistry(const ComponentRegistry* _componentRegistry)
-        : m_componentRegistry(_componentRegistry){};
+        : m_componentRegistry(_componentRegistry) {};
 
    public:
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Single Entity API
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /**
      * @brief Creates a new entity with the specified components.
      *
@@ -300,122 +337,435 @@ class EntityRegistry final
     }
 
     /**
-     * @brief Destroys multiple entities.
+     * @brief Modifies the components of the entity with the specified ID by adding and/or removing
+     * specified components.
      *
-     * @param _eids A vector of entity IDs to be destroyed.
+     * If the entity already has some of the specified components, they will not be duplicated.
+     * If the entity does not have some of the components to be removed, they will be ignored.
+     * The entity will be moved to the corresponding archetype that matches its updated component
+     * signature.
+     *
+     * @tparam AddComponents The component types to be added to the entity.
+     * @tparam RemoveComponents The component types to be removed from the entity.
+     * @param _eid The ID of the entity whose components are to be modified.
+     * @throws std::runtime_error if one or more components are not registered.
      */
-    void destroyEntities(const std::vector<EntityID>& _eids)
+    template <Component... AddComponents, Component... RemoveComponents>
+    void modifyComponents(EntityID _eid, detail::Add<AddComponents...>,
+                          detail::Remove<RemoveComponents...>)
     {
-        for (EntityID eid : _eids) destroyEntity(eid);
+        // validate registrations (guard empty packs)
+        if ((sizeof...(AddComponents) > 0 &&
+             !areComponentsRegistered<AddComponents...>(m_componentRegistry)) ||
+            (sizeof...(RemoveComponents) > 0 &&
+             !areComponentsRegistered<RemoveComponents...>(m_componentRegistry)))
+        {
+            throw std::runtime_error("One or more components are not registered.");
+        }
+
+        auto mapIt = m_entityToArchetype.find(_eid);
+        if (mapIt == m_entityToArchetype.end()) return; // entity not found (no-op)
+
+        Archetype* oldArch = mapIt->second;
+        Byte* oldRowPtr = oldArch->get(_eid);
+        if (!oldRowPtr) return; // defensive
+
+        ComponentSignature oldSig = oldArch->signature();
+
+        // compute destination signature
+        ComponentSignature newSig = oldSig;
+        (newSig.setBit(m_componentRegistry->getID<AddComponents>()), ...);
+        (newSig.clearBit(m_componentRegistry->getID<RemoveComponents>()), ...);
+
+        // no-op if signature unchanged
+        if (oldSig == newSig) return;
+
+        size_t newStride = calculateStrideFromSignature(m_componentRegistry, newSig);
+        Archetype* newArch = getOrCreateArchetype(newSig, newStride);
+
+        if (newArch == oldArch) return; // safety (shouldn't happen, but cheap guard)
+
+        std::vector<Byte> newRow(newStride);
+        Byte* newRowPtr = newRow.data();
+
+        // copy EntityMeta
+        EntityMeta meta = *reinterpret_cast<EntityMeta*>(oldRowPtr);
+        new (newRowPtr) EntityMeta{meta};
+
+        // copy surviving components from old row to the corresponding new offsets
+        auto oldOffsets = oldArch->componentOffsets(); // map<CompID, offset>
+        auto newOffsets = newArch->componentOffsets(); // map<CompID, offset>
+
+        for (const auto& [compID, srcOffset] : oldOffsets)
+        {
+            auto destIt = newOffsets.find(compID);
+            if (destIt == newOffsets.end()) continue; // component removed
+            size_t compSize = m_componentRegistry->info(compID).size;
+            std::memcpy(newRowPtr + destIt->second, oldRowPtr + srcOffset, compSize);
+        }
+
+        // default-construct newly added components (if any)
+        if constexpr (sizeof...(AddComponents) > 0)
+        {
+            ((new (newRowPtr + newOffsets[m_componentRegistry->getID<AddComponents>()])
+                  AddComponents()),
+             ...);
+        }
+
+        // perform the migration: insert into destination archetype, remove from source, update
+        // mapping
+        newArch->insert(meta.id, newRowPtr);
+        oldArch->remove(meta.id);
+        m_entityToArchetype[meta.id] = newArch;
     }
 
     /**
      * @brief Adds the specified components to the entity with the given ID.
      *
-     * If the entity already has some of the specified components, they will not be duplicated.
-     * The entity will be moved to a new archetype that matches its updated component signature.
-     *
-     * @tparam Ts The component types to be added to the entity.
+     * @tparam Ts The component types to add.
      * @param _eid The ID of the entity to which components will be added.
      * @throws std::runtime_error if one or more components are not registered.
      */
     template <Component... Ts>
     void addComponents(EntityID _eid)
     {
-        if (!areComponentsRegistered<Ts...>(m_componentRegistry))
-        {
-            throw std::runtime_error("One or more components are not registered.");
-        }
-
-        if (m_entityToArchetype.find(_eid) == m_entityToArchetype.end()) return;
-
-        Archetype* oldArch = m_entityToArchetype.at(_eid);
-        ComponentSignature oldSig = oldArch->signature();
-
-        ComponentSignature newSig = oldSig;
-        (newSig.setBit(m_componentRegistry->getID<Ts>()), ...);
-
-        size_t newStride = calculateStrideFromSignature(m_componentRegistry, newSig);
-        Archetype* newArch = getOrCreateArchetype(newSig, newStride);
-
-        if (oldArch == newArch) return;
-
-        std::vector<Byte> newRow(newStride);
-        Byte* newRowPtr = newRow.data();
-
-        EntityMeta meta = *reinterpret_cast<EntityMeta*>(oldArch->get(_eid));
-        new (newRowPtr) EntityMeta{meta};
-
-        auto oldComponentOffsets = oldArch->componentOffsets();
-        auto newComponentOffsets = newArch->componentOffsets();
-
-        for (const auto& [compID, offset] : oldComponentOffsets)
-        {
-            size_t compSize = m_componentRegistry->info(compID).size;
-            std::memcpy(newRowPtr + newComponentOffsets[compID], oldArch->get(_eid) + offset,
-                        compSize);
-        }
-
-        ((new (newRowPtr + newComponentOffsets[m_componentRegistry->getID<Ts>()]) Ts()), ...);
-
-        newArch->insert(meta.id, newRowPtr);
-        oldArch->remove(meta.id);
-        m_entityToArchetype[meta.id] = newArch;
+        modifyComponents(_eid, detail::Add<Ts...>{}, detail::Remove<>{});
     }
 
     /**
      * @brief Removes the specified components from the entity with the given ID.
      *
-     * If the entity does not have some of the specified components, they will be ignored.
-     * The entity will be moved to a new archetype that matches its updated component signature.
-     *
-     * @tparam Ts The component types to be removed from the entity.
+     * @tparam Ts The component types to remove.
      * @param _eid The ID of the entity from which components will be removed.
      * @throws std::runtime_error if one or more components are not registered.
      */
     template <Component... Ts>
     void removeComponents(EntityID _eid)
     {
+        modifyComponents(_eid, detail::Add<>{}, detail::Remove<Ts...>{});
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Bulk Operations API
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * @brief Creates multiple entities with the same component signature.
+     *
+     * All entities are created with default-initialized components.
+     * This is significantly faster than calling createEntity() in a loop.
+     *
+     * @tparam Ts The component types for all new entities.
+     * @param _count Number of entities to create.
+     * @return Vector of EntityMeta for all created entities.
+     * @throws std::runtime_error if one or more components are not registered.
+     */
+    template <Component... Ts>
+    std::vector<EntityMeta> createEntityBulk(size_t _count)
+    {
+        if (_count == 0) return {};
+
         if (!areComponentsRegistered<Ts...>(m_componentRegistry))
         {
             throw std::runtime_error("One or more components are not registered.");
         }
 
-        if (m_entityToArchetype.find(_eid) == m_entityToArchetype.end()) return;
+        auto sig = getSignatureFromTypes<Ts...>(m_componentRegistry);
+        auto stride = calculateStrideFromSignature(m_componentRegistry, sig);
+        auto componentOffsets = getComponentOffsetsInBytesFromSignature(m_componentRegistry, sig);
 
-        Archetype* oldArch = m_entityToArchetype.at(_eid);
-        ComponentSignature oldSig = oldArch->signature();
-        size_t oldStride = oldArch->stride();
+        // Allocate all entity IDs upfront
+        std::vector<EntityMeta> metas = m_entityAllocator.getIDBulk(_count);
 
-        ComponentSignature newSig = oldSig;
-        (newSig.clearBit(m_componentRegistry->getID<Ts>()), ...);
+        // Get or create archetype
+        Archetype* arch = getOrCreateArchetype(sig, stride);
 
-        size_t newStride = calculateStrideFromSignature(m_componentRegistry, newSig);
-        Archetype* newArch = getOrCreateArchetype(newSig, newStride);
-
-        if (oldArch == newArch) return;
-
-        std::vector<Byte> newRow(newStride);
-        Byte* newRowPtr = newRow.data();
-
-        EntityMeta meta = *reinterpret_cast<EntityMeta*>(oldArch->get(_eid));
-        new (newRowPtr) EntityMeta{meta};
-
-        auto oldComponentOffsets = oldArch->componentOffsets();
-        auto newComponentOffsets = newArch->componentOffsets();
-
-        for (const auto& [compID, offset] : oldComponentOffsets)
+        // Extract just the IDs for bulk insert
+        std::vector<EntityID> eids;
+        eids.reserve(_count);
+        for (const auto& meta : metas)
         {
-            if (newComponentOffsets.find(compID) == newComponentOffsets.end()) continue;
-
-            size_t compSize = m_componentRegistry->info(compID).size;
-            std::memcpy(newRowPtr + newComponentOffsets[compID], oldArch->get(_eid) + offset,
-                        compSize);
+            eids.push_back(meta.id);
         }
 
-        newArch->insert(meta.id, newRowPtr);
-        oldArch->remove(meta.id);
-        m_entityToArchetype[meta.id] = newArch;
+        // Allocate uninitialized storage for all entities
+        Byte* dstBase = arch->insertBulkUninitialized(eids.data(), _count);
+
+        // Initialize each entity's data
+        for (size_t i = 0; i < _count; ++i)
+        {
+            Byte* rowPtr = dstBase + i * stride;
+
+            // Initialize EntityMeta
+            new (rowPtr) EntityMeta{metas[i]};
+
+            // Default-initialize all components
+            ((new (rowPtr + componentOffsets[m_componentRegistry->getID<Ts>()]) Ts()), ...);
+
+            // Update entity-to-archetype mapping
+            m_entityToArchetype[metas[i].id] = arch;
+        }
+
+        return metas;
+    }
+
+    /**
+     * @brief Destroys multiple entities.
+     *
+     * Invalid entity IDs are skipped (not treated as errors).
+     *
+     * @param _eids Vector of entity IDs to destroy.
+     * @return Vector of entity IDs that were NOT found (skipped).
+     */
+    std::vector<EntityID> destroyEntityBulk(const std::vector<EntityID>& _eids)
+    {
+        std::vector<EntityID> notFound;
+
+        // Group entities by archetype for batch removal
+        std::unordered_map<Archetype*, std::vector<EntityID>> archetypeGroups;
+
+        for (EntityID eid : _eids)
+        {
+            auto it = m_entityToArchetype.find(eid);
+            if (it == m_entityToArchetype.end())
+            {
+                notFound.push_back(eid);
+            }
+            else
+            {
+                archetypeGroups[it->second].push_back(eid);
+            }
+        }
+
+        // Remove entities from each archetype in batches
+        for (auto& [arch, eids] : archetypeGroups)
+        {
+            arch->removeBulk(eids.data(), eids.size());
+
+            for (EntityID eid : eids)
+            {
+                m_entityToArchetype.erase(eid);
+            }
+        }
+
+        // Free all valid IDs at once
+        std::vector<EntityID> validIds;
+        validIds.reserve(_eids.size() - notFound.size());
+        for (EntityID eid : _eids)
+        {
+            if (std::find(notFound.begin(), notFound.end(), eid) == notFound.end())
+            {
+                validIds.push_back(eid);
+            }
+        }
+        m_entityAllocator.freeIDBulk(validIds);
+
+        return notFound;
+    }
+
+    /**
+     * @brief Modifies components of multiple entities in bulk by adding and/or removing specified
+     * components.
+     *
+     * If an entity already has some of the specified components, they will not be duplicated.
+     * If an entity does not have some of the components to be removed, they will be ignored.
+     * The entities will be moved to the corresponding archetypes that match their updated component
+     * signatures.
+     *
+     * @tparam AddComponents The component types to be added to the entities.
+     * @tparam RemoveComponents The component types to be removed from the entities.
+     * @param _eids Vector of entity IDs whose components are to be modified.
+     * @return std::vector<EntityID> Vector of entity IDs that were NOT found (skipped).
+     * @throws std::runtime_error if one or more components are not registered.
+     */
+    template <Component... AddComponents, Component... RemoveComponents>
+    std::vector<EntityID> modifyComponentsBulk(detail::Add<AddComponents...>,
+                                               detail::Remove<RemoveComponents...>,
+                                               const std::vector<EntityID>& _eids)
+    {
+        if (_eids.empty()) return {};
+
+        // validate registrations (guard empty packs)
+        if ((sizeof...(AddComponents) > 0 &&
+             !areComponentsRegistered<AddComponents...>(m_componentRegistry)) ||
+            (sizeof...(RemoveComponents) > 0 &&
+             !areComponentsRegistered<RemoveComponents...>(m_componentRegistry)))
+        {
+            throw std::runtime_error("One or more components are not registered.");
+        }
+
+        std::vector<EntityID> notFound;
+        std::unordered_map<Archetype*, std::vector<EntityID>> archetypeGroups;
+
+        // Group entities by their current archetype (skip missing)
+        for (EntityID eid : _eids)
+        {
+            auto it = m_entityToArchetype.find(eid);
+            if (it == m_entityToArchetype.end())
+            {
+                notFound.push_back(eid);
+            }
+            else
+            {
+                archetypeGroups[it->second].push_back(eid);
+            }
+        }
+
+        // Process each group
+        for (auto& [srcArch, eids] : archetypeGroups)
+        {
+            ComponentSignature oldSig = srcArch->signature();
+
+            // Compute new signature: set bits for Add, clear bits for Remove
+            ComponentSignature newSig = oldSig;
+            (newSig.setBit(m_componentRegistry->getID<AddComponents>()), ...);
+            (newSig.clearBit(m_componentRegistry->getID<RemoveComponents>()), ...);
+
+            if (oldSig == newSig) continue; // nothing to do for this archetype
+
+            size_t newStride = calculateStrideFromSignature(m_componentRegistry, newSig);
+            Archetype* dstArch = getOrCreateArchetype(newSig, newStride);
+
+            auto srcOffsets = srcArch->componentOffsets();  // map<CompID, offset>
+            auto destOffsets = dstArch->componentOffsets(); // map<CompID, offset>
+
+            for (EntityID eid : eids)
+            {
+                Byte* srcRow = srcArch->get(eid);
+                if (!srcRow) continue; // defensive
+
+                std::vector<Byte> newRow(newStride);
+                Byte* newRowPtr = newRow.data();
+
+                // copy meta
+                EntityMeta meta = *reinterpret_cast<EntityMeta*>(srcRow);
+                new (newRowPtr) EntityMeta{meta};
+
+                // Copy components that survive into destination offsets
+                for (const auto& [compID, srcOffset] : srcOffsets)
+                {
+                    auto it = destOffsets.find(compID);
+                    if (it == destOffsets.end()) continue; // this component was removed
+                    size_t compSize = m_componentRegistry->info(compID).size;
+                    std::memcpy(newRowPtr + it->second, srcRow + srcOffset, compSize);
+                }
+
+                // Default-construct newly added components
+                if constexpr (sizeof...(AddComponents) > 0)
+                {
+                    ((new (newRowPtr + destOffsets[m_componentRegistry->getID<AddComponents>()])
+                          AddComponents()),
+                     ...);
+                }
+
+                // Insert into destination archetype, remove from source, update map
+                dstArch->insert(meta.id, newRowPtr);
+                srcArch->remove(meta.id);
+                m_entityToArchetype[meta.id] = dstArch;
+            }
+        }
+
+        return notFound;
+    }
+
+    /**
+     * @brief Adds the specified components to multiple entities in bulk.
+     *
+     * @tparam Ts The component types to add.
+     * @param _eids Vector of entities to which components will be added.
+     * @return std::vector<EntityID> Vector of entity IDs that were NOT found (skipped).
+     */
+    template <Component... Ts>
+    std::vector<EntityID> addComponentsBulk(const std::vector<EntityID>& _eids)
+    {
+        return modifyComponentsBulk(detail::Add<Ts...>{}, detail::Remove<>{}, _eids);
+    }
+
+    /**
+     * @brief Removes the specified components from multiple entities in bulk.
+     *
+     * @tparam Ts The component types to remove.
+     * @param _eids Vector of entities from which components will be removed.
+     * @return std::vector<EntityID> Vector of entity IDs that were NOT found (skipped).
+     */
+    template <Component... Ts>
+    std::vector<EntityID> removeComponentsBulk(const std::vector<EntityID>& _eids)
+    {
+        return modifyComponentsBulk(detail::Add<>{}, detail::Remove<Ts...>{}, _eids);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Archetype Migration API
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    template <Component... SourceComponents, Component... AddComponents,
+              Component... RemoveComponents>
+    size_t migrateArchetypeModifyComponents(detail::From<SourceComponents...>,
+                                            detail::Add<AddComponents...>,
+                                            detail::Remove<RemoveComponents...>)
+    {
+        static_assert(sizeof...(SourceComponents) > 0,
+                      "Source archetype must specify at least one component");
+
+        // Verify components are registered (guard empty packs)
+        if (!areComponentsRegistered<SourceComponents...>(m_componentRegistry) ||
+            (sizeof...(AddComponents) > 0 &&
+             !areComponentsRegistered<AddComponents...>(m_componentRegistry)) ||
+            (sizeof...(RemoveComponents) > 0 &&
+             !areComponentsRegistered<RemoveComponents...>(m_componentRegistry)))
+        {
+            throw std::runtime_error("One or more components are not registered.");
+        }
+
+        // Source signature & archetype lookup
+        ComponentSignature srcSig = getSignatureFromTypes<SourceComponents...>(m_componentRegistry);
+
+        auto srcIt = m_archetypes.find(srcSig);
+        if (srcIt == m_archetypes.end() || srcIt->second->empty()) return 0;
+
+        Archetype* srcArch = srcIt->second.get();
+
+        // Compute destination signature: set bits for Add, clear bits for Remove
+        ComponentSignature destSig = srcSig;
+        (destSig.setBit(m_componentRegistry->getID<AddComponents>()), ...);
+        (destSig.clearBit(m_componentRegistry->getID<RemoveComponents>()), ...);
+
+        if (srcSig == destSig) return 0; // nothing to do
+
+        // Ensure destination archetype exists
+        size_t destStride = calculateStrideFromSignature(m_componentRegistry, destSig);
+        Archetype* dstArch = getOrCreateArchetype(destSig, destStride);
+
+        auto destOffsets = dstArch->componentOffsets();
+
+        // Count and migrate
+        size_t count = srcArch->size();
+        std::vector<EntityID> migratedIds = srcArch->migrateAllTo(*dstArch, m_componentRegistry);
+
+        // Initialize added components (if any) and update entity->archetype mapping
+        if constexpr (sizeof...(AddComponents) > 0)
+        {
+            for (EntityID eid : migratedIds)
+            {
+                Byte* rowPtr = dstArch->get(eid);
+                // placement-new each added component at its offset
+                ((new (rowPtr + destOffsets[m_componentRegistry->getID<AddComponents>()])
+                      AddComponents()),
+                 ...);
+
+                m_entityToArchetype[eid] = dstArch;
+            }
+        }
+        else
+        {
+            // No components to construct; just update mapping
+            for (EntityID eid : migratedIds)
+            {
+                m_entityToArchetype[eid] = dstArch;
+            }
+        }
+
+        return count;
     }
 
     /**
@@ -448,6 +798,7 @@ class EntityRegistry final
         ComponentSignature sig = getSignatureFromTypes<Ts...>(m_componentRegistry);
 
         if (m_archetypes.find(sig) == m_archetypes.end()) return std::nullopt;
+        if (m_archetypes.at(sig)->empty()) return std::nullopt;
 
         return EntityView<Ts...>({m_archetypes.at(sig).get()}, m_componentRegistry);
     }
@@ -474,7 +825,7 @@ class EntityRegistry final
 
         for (const auto& [archSig, arch] : m_archetypes)
         {
-            if ((archSig & sig) == sig) matchingArches.push_back(arch.get());
+            if ((archSig & sig) == sig && !arch->empty()) matchingArches.push_back(arch.get());
         }
 
         if (matchingArches.empty()) return std::nullopt;
@@ -507,7 +858,7 @@ class EntityRegistry final
      * @throws std::runtime_error if one or more components are not registered.
      */
     template <Component... Ts>
-    [[nodiscard]] std::optional<std::tuple<Ts&...>> getComponents(EntityID _eid)
+    [[nodiscard]] std::optional<std::tuple<Ts&...>> getComponentsForEntity(EntityID _eid)
     {
         if (!areComponentsRegistered<Ts...>(m_componentRegistry))
         {
@@ -547,7 +898,7 @@ class EntityRegistry final
         auto rowPtr = m_entityToArchetype.at(_meta.id)->get(_meta.id);
         auto entityMeta = reinterpret_cast<EntityMeta*>(rowPtr);
 
-        return entityMeta->gen == _meta.gen == m_entityAllocator.getGenForID(_meta.id);
+        return entityMeta->gen == _meta.gen && m_entityAllocator.getGenForID(_meta.id) == _meta.gen;
     }
 
     // Returns the total number of entities in the registry.

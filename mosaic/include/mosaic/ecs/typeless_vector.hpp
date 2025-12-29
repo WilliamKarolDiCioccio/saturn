@@ -101,6 +101,52 @@ class TypelessVector final
         --m_size;
     }
 
+    /**
+     * @brief Appends multiple elements from a contiguous source buffer.
+     *
+     * @param _src Pointer to contiguous source data (count * stride bytes).
+     * @param _count Number of elements to append.
+     */
+    void pushBackBulk(const void* _src, size_t _count)
+    {
+        if (_count == 0) return;
+
+        ensureCapacity(m_size + _count);
+        Byte* dest = (*this)[m_size];
+        std::memcpy(dest, _src, _count * m_stride);
+        m_size += _count;
+    }
+
+    /**
+     * @brief Appends uninitialized slots to the vector.
+     *
+     * Caller is responsible for initializing the data via data() + offset.
+     *
+     * @param _count Number of uninitialized slots to append.
+     * @return Pointer to the first uninitialized slot.
+     */
+    Byte* appendUninitialized(size_t _count)
+    {
+        if (_count == 0) return nullptr;
+
+        ensureCapacity(m_size + _count);
+        Byte* dest = (*this)[m_size];
+        m_size += _count;
+        return dest;
+    }
+
+    /**
+     * @brief Erases multiple elements from the end of the vector.
+     *
+     * @param _count Number of elements to erase from the end.
+     */
+    void popBackBulk(size_t _count)
+    {
+        if (_count > m_size)
+            throw std::runtime_error("TypelessVector::popBackBulk count exceeds size");
+        m_size -= _count;
+    }
+
     void erase(size_t _idx)
     {
         if (_idx >= m_size) throw std::out_of_range("TypelessVector::erase out of range");

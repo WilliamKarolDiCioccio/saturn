@@ -154,6 +154,181 @@ class TypelessSparseSet final
         }
     }
 
+    /**
+     * @brief Inserts multiple entities with contiguous component data.
+     *
+     * @param _eids Array of entity IDs to insert.
+     * @param _componentData Contiguous buffer of component data (count * stride bytes).
+     * @param _count Number of entities to insert.
+     *
+     * @note Entities that already exist will have their data overwritten.
+     */
+    void insertBulk(const EntityID* _eids, const void* _componentData, size_t _count)
+    {
+        if (_count == 0) return;
+
+        // Reserve capacity upfront
+        EntityID maxEid = 0;
+        for (size_t i = 0; i < _count; ++i)
+        {
+            if (_eids[i] > maxEid) maxEid = _eids[i];
+        }
+        reserve(maxEid + 1, m_denseEntities.size() + _count);
+
+        const Byte* srcData = static_cast<const Byte*>(_componentData);
+        const size_t stride = m_componentTuples.stride();
+
+        for (size_t i = 0; i < _count; ++i)
+        {
+            insert(_eids[i], srcData + i * stride);
+        }
+    }
+
+    /**
+     * @brief Inserts multiple entities with uninitialized component data.
+     *
+     * More efficient than insertBulk when caller will fill data afterward.
+     * Returns pointer to first component slot for caller to initialize.
+     *
+     * @param _eids Array of entity IDs to insert.
+     * @param _count Number of entities to insert.
+     * @return Pointer to first component data slot, or nullptr if count is 0.
+     *
+     * @note All entities must be NEW (not already present). Caller must initialize data.
+     */
+    Byte* insertBulkUninitialized(const EntityID* _eids, size_t _count)
+    {
+        if (_count == 0) return nullptr;
+
+        // Reserve capacity upfront
+        EntityID maxEid = 0;
+        for (size_t i = 0; i < _count; ++i)
+        {
+            if (_eids[i] > maxEid) maxEid = _eids[i];
+        }
+        reserve(maxEid + 1, m_denseEntities.size() + _count);
+
+        // Reserve dense array space
+        m_denseEntities.reserve(m_denseEntities.size() + _count);
+
+        // Append uninitialized component slots
+        Byte* destBase = m_componentTuples.appendUninitialized(_count);
+
+        // Update sparse mapping for each entity
+        for (size_t i = 0; i < _count; ++i)
+        {
+            EntityID eid = _eids[i];
+            Page& page = ensurePageExists(eid);
+            size_t offset = getPageOffset(eid);
+
+            page.sparse[offset] = m_denseEntities.size();
+            m_denseEntities.push_back(eid);
+            page.present.set(offset);
+            ++page.presentCount;
+        }
+
+        return destBase;
+    }
+
+    /**
+     * @brief Removes multiple entities from the sparse set.
+     *
+     * @param _eids Array of entity IDs to remove.
+     * @param _count Number of entities to remove.
+     * @return Vector of entity IDs that were NOT found (skip failures).
+     */
+    std::vector<EntityID> removeBulk(const EntityID* _eids, size_t _count)
+    {
+        std::vector<EntityID> notFound;
+
+        for (size_t i = 0; i < _count; ++i)
+        {
+            if (!contains(_eids[i]))
+            {
+                notFound.push_back(_eids[i]);
+            }
+            else
+            {
+                remove(_eids[i]);
+            }
+        }
+
+        return notFound;
+    }
+
+    /**
+     * @brief Transfers ALL entities to another sparse set with data transformation.
+     *
+     * This is the key operation for whole-archetype migration. After this call,
+     * this sparse set will be empty and all entities will be in the destination.
+     *
+     * @param _dest Destination sparse set (must have different stride for component layout change).
+     * @param _transform Function to transform source row to dest row: void(EntityID, Byte* src,
+     * Byte* dest)
+     * @return Vector of all entity IDs that were migrated.
+     */
+    template <typename TransformFunc>
+    std::vector<EntityID> moveAllTo(TypelessSparseSet& _dest, TransformFunc&& _transform)
+    {
+        if (empty()) return {};
+
+        const size_t count = size();
+        std::vector<EntityID> migratedEntities(m_denseEntities);
+
+        // Reserve in destination
+        EntityID maxEid = 0;
+        for (EntityID eid : m_denseEntities)
+        {
+            if (eid > maxEid) maxEid = eid;
+        }
+        _dest.reserve(maxEid + 1, _dest.size() + count);
+
+        // Allocate destination slots
+        Byte* destBase = _dest.m_componentTuples.appendUninitialized(count);
+        const size_t destStride = _dest.stride();
+
+        // Transform and copy each entity
+        for (size_t i = 0; i < count; ++i)
+        {
+            EntityID eid = m_denseEntities[i];
+            Byte* srcRow = m_componentTuples[i];
+            Byte* destRow = destBase + i * destStride;
+
+            // Apply transformation (copies shared components, initializes new ones)
+            _transform(eid, srcRow, destRow);
+
+            // Update destination sparse mapping
+            Page& destPage = _dest.ensurePageExists(eid);
+            size_t destOffset = _dest.getPageOffset(eid);
+            destPage.sparse[destOffset] = _dest.m_denseEntities.size();
+            _dest.m_denseEntities.push_back(eid);
+            destPage.present.set(destOffset);
+            ++destPage.presentCount;
+        }
+
+        // Clear source (but keep allocated memory for potential reuse)
+        for (EntityID eid : migratedEntities)
+        {
+            const size_t pageIdx = getPageIndex(eid);
+            if (pageIdx < m_pages.size() && m_pages[pageIdx])
+            {
+                Page& page = *m_pages[pageIdx];
+                size_t offset = getPageOffset(eid);
+                page.present.reset(offset);
+                --page.presentCount;
+
+                if constexpr (AggressiveReclaim)
+                {
+                    if (page.presentCount == 0) m_pages[pageIdx].reset(nullptr);
+                }
+            }
+        }
+        m_denseEntities.clear();
+        m_componentTuples.clear();
+
+        return migratedEntities;
+    }
+
     bool contains(EntityID _eid) const noexcept
     {
         size_t pageIdx = getPageIndex(_eid);

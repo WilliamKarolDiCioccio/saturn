@@ -41,7 +41,7 @@ class Archetype final
      */
     Archetype(ComponentSignature _signature, size_t _stride,
               std::unordered_map<ComponentID, size_t> _componentOffsets)
-        : m_signature(_signature), m_storage(_stride), m_componentOffsets(_componentOffsets){};
+        : m_signature(_signature), m_storage(_stride), m_componentOffsets(_componentOffsets) {};
 
    public:
     /**
@@ -58,6 +58,87 @@ class Archetype final
      * @param _eid The ID of the entity to be removed.
      */
     void remove(EntityID _eid) { m_storage.remove(_eid); }
+
+    /**
+     * @brief Inserts multiple entities with contiguous raw data into the archetype.
+     *
+     * @param _eids Array of entity IDs to insert.
+     * @param _data Contiguous buffer of entity data (count * stride bytes).
+     * @param _count Number of entities to insert.
+     */
+    void insertBulk(const EntityID* _eids, const Byte* _data, size_t _count)
+    {
+        m_storage.insertBulk(_eids, _data, _count);
+    }
+
+    /**
+     * @brief Inserts multiple entities with uninitialized data.
+     *
+     * @param _eids Array of entity IDs to insert.
+     * @param _count Number of entities to insert.
+     * @return Pointer to the first entity's data slot for caller to initialize.
+     */
+    Byte* insertBulkUninitialized(const EntityID* _eids, size_t _count)
+    {
+        return m_storage.insertBulkUninitialized(_eids, _count);
+    }
+
+    /**
+     * @brief Removes multiple entities from the archetype.
+     *
+     * @param _eids Array of entity IDs to remove.
+     * @param _count Number of entities to remove.
+     * @return Vector of entity IDs that were NOT found.
+     */
+    std::vector<EntityID> removeBulk(const EntityID* _eids, size_t _count)
+    {
+        return m_storage.removeBulk(_eids, _count);
+    }
+
+    /**
+     * @brief Migrates ALL entities from this archetype to another.
+     *
+     * This is the key performance optimization for bulk archetype migration.
+     * After this call, this archetype will be empty.
+     *
+     * @param _dest Destination archetype (must have compatible component layout).
+     * @param _registry Component registry for size/alignment info.
+     * @return Vector of all entity IDs that were migrated.
+     */
+    template <typename ComponentRegistryT>
+    std::vector<EntityID> migrateAllTo(Archetype& _dest, const ComponentRegistryT* _registry)
+    {
+        const auto& srcOffsets = m_componentOffsets;
+        const auto& destOffsets = _dest.m_componentOffsets;
+        const size_t destStride = _dest.stride();
+
+        // Compute shared components (present in both archetypes)
+        std::vector<std::tuple<ComponentID, size_t, size_t, size_t>> sharedComponents;
+        for (const auto& [compID, srcOffset] : srcOffsets)
+        {
+            auto it = destOffsets.find(compID);
+            if (it != destOffsets.end())
+            {
+                size_t compSize = _registry->info(compID).size;
+                sharedComponents.emplace_back(compID, srcOffset, it->second, compSize);
+            }
+        }
+
+        // Use moveAllTo with transform function
+        return m_storage.moveAllTo(
+            _dest.m_storage,
+            [&](EntityID eid, Byte* srcRow, Byte* destRow)
+            {
+                // Copy EntityMeta first (always at offset 0)
+                std::memcpy(destRow, srcRow, sizeof(EntityMeta));
+
+                // Copy shared components
+                for (const auto& [compID, srcOff, destOff, size] : sharedComponents)
+                {
+                    std::memcpy(destRow + destOff, srcRow + srcOff, size);
+                }
+            });
+    }
 
     /**
      * @brief Retrieves a pointer to the raw data of the entity with the given ID.
@@ -105,6 +186,18 @@ class Archetype final
     [[nodiscard]] inline size_t memoryUsageInBytes() const noexcept
     {
         return m_storage.memoryUsageInBytes();
+    }
+
+    // Returns all entity IDs stored in this archetype.
+    [[nodiscard]] inline const std::vector<EntityID>& entityIDs() const noexcept
+    {
+        return m_storage.keys();
+    }
+
+    // Returns whether this archetype contains the specified entity.
+    [[nodiscard]] inline bool contains(EntityID _eid) const noexcept
+    {
+        return m_storage.contains(_eid);
     }
 };
 
