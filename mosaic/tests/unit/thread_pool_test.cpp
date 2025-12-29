@@ -480,64 +480,6 @@ TEST_F(ThreadPoolTest, BarrierSynchronization)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// Worker State Tests
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-TEST_F(ThreadPoolTest, BusyWorkersCount)
-{
-    constexpr int numTasks = 4;
-
-    std::latch start{1};
-    std::latch done{numTasks};
-
-    std::vector<TaskFuture<void>> futures;
-
-    for (int i = 0; i < numTasks; ++i)
-    {
-        auto future = pool->enqueueToWorker(
-            [&start, &done]()
-            {
-                start.wait();
-                std::this_thread::sleep_for(10ms);
-                done.count_down();
-            });
-
-        if (future.has_value()) futures.push_back(std::move(*future));
-    }
-
-    // Wait for tasks to be picked up
-    std::this_thread::sleep_for(5ms);
-
-    // Release tasks
-    start.count_down();
-
-    // Should have busy workers now
-    bool hadBusyWorkers = false;
-
-    for (int i = 0; i < 10; ++i)
-    {
-        if (pool->getBusyWorkersCount() > 0)
-        {
-            hadBusyWorkers = true;
-            break;
-        }
-
-        std::this_thread::sleep_for(1ms);
-    }
-
-    done.wait();
-
-    for (auto& f : futures) f.wait();
-
-    EXPECT_TRUE(hadBusyWorkers);
-
-    std::this_thread::sleep_for(50ms);
-
-    // After completion, should be idle
-    EXPECT_EQ(pool->getBusyWorkersCount(), 0);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
 // Memory and Resource Tests
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

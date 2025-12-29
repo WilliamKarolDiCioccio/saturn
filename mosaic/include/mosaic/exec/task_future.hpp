@@ -53,7 +53,7 @@ class FutureException : public std::logic_error
 
    public:
     explicit FutureException(FutureErrorCode _code)
-        : std::logic_error(getMessage(_code)), m_code(_code){};
+        : std::logic_error(getMessage(_code)), m_code(_code) {};
 
     FutureErrorCode code() const noexcept { return m_code; }
 
@@ -107,7 +107,7 @@ class SharedState
         : m_status(FutureStatus::pending),
           m_future_retrieved(false),
           m_cancellationRequested(false),
-          m_cancelled(false){};
+          m_cancelled(false) {};
 
     ~SharedState() = default;
 
@@ -248,7 +248,7 @@ class SharedState
                   [this]
                   {
                       auto status = m_status.load(std::memory_order_acquire);
-                      return status != FutureStatus::pending;
+                      return status != FutureStatus::pending && status != FutureStatus::executing;
                   });
 
         auto status = m_status.load(std::memory_order_acquire);
@@ -281,7 +281,7 @@ class SharedState
                   [this]
                   {
                       auto status = m_status.load(std::memory_order_acquire);
-                      return status != FutureStatus::pending;
+                      return status != FutureStatus::pending && status != FutureStatus::executing;
                   });
 
         auto status = m_status.load(std::memory_order_acquire);

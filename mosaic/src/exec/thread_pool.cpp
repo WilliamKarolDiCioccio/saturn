@@ -64,6 +64,26 @@ constexpr auto k_idleTimeout = std::chrono::milliseconds(1);
 constexpr size_t k_stealBatchSize = 8;
 constexpr size_t k_maxPopCountFromGlobal = 16;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// WorkerStats - Cache-line aligned per-worker statistics
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+struct alignas(MOSAIC_CACHE_LINE_SIZE) WorkerStats
+{
+    std::atomic<uint64_t> tasksExecuted{0};
+    std::atomic<uint64_t> tasksStolen{0};
+    std::atomic<uint64_t> stealAttempts{0};
+    std::atomic<uint64_t> tasksReceivedFromGlobal{0};
+
+    void reset() noexcept
+    {
+        tasksExecuted.store(0, std::memory_order_relaxed);
+        tasksStolen.store(0, std::memory_order_relaxed);
+        stealAttempts.store(0, std::memory_order_relaxed);
+        tasksReceivedFromGlobal.store(0, std::memory_order_relaxed);
+    }
+};
+
 class ThreadWorker final
 {
    private:
@@ -82,6 +102,8 @@ class ThreadWorker final
     std::jthread m_thread;
 
     moodycamel::ConcurrentQueue<std::move_only_function<void()>> m_taskQueue;
+
+    WorkerStats m_stats;
 
    public:
     explicit ThreadWorker(uint32_t _idx, const std::string& _debugName, ThreadPool::Impl* _pool,
@@ -155,6 +177,8 @@ class ThreadWorker final
 
         if (count == 0) return false;
 
+        m_stats.tasksReceivedFromGlobal.fetch_add(count, std::memory_order_relaxed);
+
         _outTask = std::move(tasks[0]);
 
         for (size_t i = 1; i < count; ++i) m_taskQueue.enqueue(std::move(tasks[i]));
@@ -169,6 +193,8 @@ class ThreadWorker final
         const uint32_t n = impl.workersCount;
 
         if (n <= 1) return false;
+
+        m_stats.stealAttempts.fetch_add(1, std::memory_order_relaxed);
 
         static thread_local uint32_t nextStart = 0;
         const uint32_t start = nextStart;
@@ -191,6 +217,8 @@ class ThreadWorker final
             size_t actualCount = victim->m_taskQueue.try_dequeue_bulk(stolen, k_stealBatchSize);
 
             if (actualCount == 0) continue;
+
+            m_stats.tasksStolen.fetch_add(actualCount, std::memory_order_relaxed);
 
             _outTask = std::move(stolen[0]);
 
@@ -222,6 +250,8 @@ class ThreadWorker final
         {
             MOSAIC_ERROR("Worker {}: task threw unknown exception.", m_idx);
         }
+
+        m_stats.tasksExecuted.fetch_add(1, std::memory_order_relaxed);
 
         task = nullptr;
     }
@@ -362,6 +392,54 @@ uint32_t ThreadPool::getIdleWorkersCount() const noexcept
     return m_impl->idleWorkersCount.load(std::memory_order_acquire);
 }
 
+WorkerStatsSnapshot ThreadPool::getWorkerStats(uint32_t _workerIdx) const noexcept
+{
+    if (_workerIdx >= m_impl->workersCount)
+    {
+        MOSAIC_ERROR("ThreadWorker with id {} does not exist.", _workerIdx);
+        return {};
+    }
+
+    const auto& worker = m_impl->workers[_workerIdx];
+    const auto& stats = worker->m_stats;
+
+    return {
+        stats.tasksExecuted.load(std::memory_order_relaxed),
+        stats.tasksStolen.load(std::memory_order_relaxed),
+        stats.stealAttempts.load(std::memory_order_relaxed),
+        stats.tasksReceivedFromGlobal.load(std::memory_order_relaxed),
+        worker->getTasksCount(),
+    };
+}
+
+PoolStatsSnapshot ThreadPool::getPoolStats() const noexcept
+{
+    PoolStatsSnapshot result{};
+
+    for (uint32_t i = 0; i < m_impl->workersCount; ++i)
+    {
+        const auto& worker = m_impl->workers[i];
+        const auto& stats = worker->m_stats;
+
+        result.totalTasksExecuted += stats.tasksExecuted.load(std::memory_order_relaxed);
+        result.totalTasksStolen += stats.tasksStolen.load(std::memory_order_relaxed);
+        result.totalStealAttempts += stats.stealAttempts.load(std::memory_order_relaxed);
+        result.totalTasksReceivedFromGlobal +=
+            stats.tasksReceivedFromGlobal.load(std::memory_order_relaxed);
+        result.totalQueuedTasks += worker->getTasksCount();
+    }
+
+    return result;
+}
+
+void ThreadPool::resetStats() noexcept
+{
+    for (auto& worker : m_impl->workers)
+    {
+        worker->m_stats.reset();
+    }
+}
+
 ThreadWorker* ThreadPool::getRandomWorker() const noexcept
 {
     if (m_impl->workers.empty()) return nullptr;
@@ -414,6 +492,27 @@ void ThreadPool::startupWorker(uint32_t _idx)
     worker->m_thread = std::jthread(&ThreadWorker::operator(), worker);
 
     setWorkerAffinity(_idx, _idx + 1); // +1 to leave core 0 for main thread
+}
+
+bool ThreadPool::assignTaskToGlobal(std::move_only_function<void()> _task) noexcept
+{
+    if (m_impl->stop.load(std::memory_order_acquire))
+    {
+        MOSAIC_WARN("ThreadPool is shutting down, cannot assign new tasks.");
+        return false;
+    }
+
+    m_impl->globalTaskQueue.enqueue(std::move(_task));
+
+    for (auto& worker : m_impl->workers)
+    {
+        if (mosaic::utils::hasFlag(worker->m_sharingMode, WorkerSharingMode::global_consumer))
+        {
+            worker->notify();
+        }
+    }
+
+    return true;
 }
 
 bool ThreadPool::assignTaskToWorker(std::move_only_function<void()> _task) noexcept

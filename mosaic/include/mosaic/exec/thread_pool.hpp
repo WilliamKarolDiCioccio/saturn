@@ -51,6 +51,43 @@ inline constexpr WorkerSharingMode shared_no_steal = WorkerSharingMode::accept_d
 } // namespace worker_sharing_presets
 
 /**
+ * @brief Statistics snapshot for a single worker (copy, no atomics exposed).
+ *
+ * All counters are cumulative since pool initialization or last resetStats() call.
+ */
+struct WorkerStatsSnapshot
+{
+    uint64_t tasksExecuted;           /// Total tasks executed by this worker.
+    uint64_t tasksStolen;             /// Total tasks stolen from other workers.
+    uint64_t stealAttempts;           /// Total steal attempts made by this worker.
+    uint64_t tasksReceivedFromGlobal; /// Total tasks received from global queue.
+    size_t currentQueueSize;          /// Approximate current queue size.
+};
+
+/**
+ * @brief Aggregated statistics snapshot for the entire pool.
+ *
+ * Computed lazily by iterating all workers - O(workers) cost.
+ */
+struct PoolStatsSnapshot
+{
+    uint64_t totalTasksExecuted;
+    uint64_t totalTasksStolen;
+    uint64_t totalStealAttempts;
+    uint64_t totalTasksReceivedFromGlobal;
+    size_t totalQueuedTasks;
+
+    /// Compute average tasks stolen per steal attempt. Can exceed 1.0 due to batch stealing.
+    /// Returns 0.0 if no attempts made.
+    [[nodiscard]] double stealSuccessRate() const noexcept
+    {
+        return totalStealAttempts > 0
+                   ? static_cast<double>(totalTasksStolen) / static_cast<double>(totalStealAttempts)
+                   : 0.0;
+    }
+};
+
+/**
  * @brief A thread worker wraps a single thread and manages its task queue.
  *
  * Workers can have different sharing modes that dictate how they interact with the task system.
@@ -203,6 +240,15 @@ class MOSAIC_API ThreadPool
     [[nodiscard]] uint32_t getBusyWorkersCount() const noexcept;
     [[nodiscard]] uint32_t getIdleWorkersCount() const noexcept;
 
+    /// @brief Get statistics snapshot for a specific worker.
+    [[nodiscard]] WorkerStatsSnapshot getWorkerStats(uint32_t _workerIdx) const noexcept;
+
+    /// @brief Get aggregated statistics for entire pool (lazy - iterates all workers).
+    [[nodiscard]] PoolStatsSnapshot getPoolStats() const noexcept;
+
+    /// @brief Reset all statistics counters across all workers.
+    void resetStats() noexcept;
+
     /// @brief Get a random worker from the pool using a uniform distribution.
     [[nodiscard]] ThreadWorker* getRandomWorker() const noexcept;
 
@@ -222,6 +268,14 @@ class MOSAIC_API ThreadPool
    private:
     void setupWorker(uint32_t _idx);
     void startupWorker(uint32_t _idx);
+
+    /**
+     * @brief Assigns a task to the global task queue.
+     *
+     * @return true if the task was successfully enqueued to the global queue.
+     * @return false if the thread pool is shutting down and cannot accept new tasks.
+     */
+    bool assignTaskToGlobal(std::move_only_function<void()> _task) noexcept;
 
     /**
      * @brief Tries to perform optimal assignment of a task to a worker.
