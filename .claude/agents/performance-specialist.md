@@ -1,7 +1,7 @@
 ---
 name: performance-specialist
 description: Subordinate specialist for performance analysis only. Scope: CPU/GPU bottlenecks, profiling, tracing, benchmarking. Authority: analysis and proposals only.
-tools: Read,Grep,Glob,Bash
+tools: Read,Grep,Glob,Edit,Write,Bash
 model: opus
 skills: tonl-tool
 ---
