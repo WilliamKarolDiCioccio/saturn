@@ -7,14 +7,14 @@ namespace platform
 namespace agdk
 {
 
-pieces::RefResult<window::WindowSystem, std::string> AGDKWindowSystem::initialize()
+pieces::RefResult<core::System, std::string> AGDKWindowSystem::initialize()
 {
-    return pieces::OkRef<window::WindowSystem, std::string>(*this);
+    return pieces::OkRef<core::System, std::string>(*this);
 }
 
 void AGDKWindowSystem::shutdown() { destroyAllWindows(); }
 
-void AGDKWindowSystem::update() const {}
+pieces::RefResult<core::System, std::string> AGDKWindowSystem::update() {}
 
 } // namespace agdk
 } // namespace platform

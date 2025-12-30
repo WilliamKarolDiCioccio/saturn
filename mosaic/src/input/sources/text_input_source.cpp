@@ -3,7 +3,7 @@
 #if defined(MOSAIC_PLATFORM_DESKTOP) || defined(MOSAIC_PLATFORM_WEB)
 #include "platform/GLFW/glfw_text_input_source.hpp"
 #elif defined(MOSAIC_PLATFORM_ANDROID)
-#include "mosaic/platform/AGDK/agdk_text_input_source.hpp"
+#include "platform/AGDK/agdk_text_input_source.hpp"
 #endif
 
 #include <pieces/utils/string.hpp>

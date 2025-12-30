@@ -12,6 +12,7 @@
 #include <chrono>
 
 #include "mosaic/defines.hpp"
+#include "mosaic/exec/move_only_task.hpp"
 
 namespace mosaic
 {
@@ -689,7 +690,7 @@ inline auto makeTaskPair(F&& _f, Args&&... _args)
 
     auto argsTuple = std::make_tuple(std::forward<Args>(_args)...);
 
-    std::move_only_function<void()> wrapper =
+    MoveOnlyTask<void()> wrapper =
         [promise, f = std::forward<F>(_f), argsTuple = std::move(argsTuple)]() mutable
     {
         ExecutionToken<Ret> token(*promise);

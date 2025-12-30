@@ -283,8 +283,8 @@ extern "C"
     {                                                                                          \
         void android_main(struct android_app* _pApp)                                           \
         {                                                                                      \
-            mosaic::tools::Logger::getInstance()->addSink<mosaic::core::DefaultSink>(          \
-                "default", mosaic::core::DefaultSink());                                       \
+            mosaic::tools::Logger::getInstance()->addSink<mosaic::tools::DefaultSink>(         \
+                "default", mosaic::tools::DefaultSink());                                      \
                                                                                                \
             auto app = std::make_unique<AppType>(__VA_ARGS__);                                 \
             auto platform = mosaic::core::Platform::create(app.get());                         \

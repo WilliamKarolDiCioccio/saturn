@@ -44,6 +44,13 @@ if(EMSCRIPTEN)
 endif()
 
 # ---------------------------
+# Android-Specific Config
+# ---------------------------
+if(ANDROID)
+  add_compile_options(-fexperimental-library)
+endif()
+
+# ---------------------------
 # Dependencies via find_package
 # ---------------------------
 find_package(glm CONFIG REQUIRED)
@@ -91,8 +98,11 @@ endif()
 # ---------------------------
 add_subdirectory("pieces")
 add_subdirectory("mosaic")
-add_subdirectory("codex")
-add_subdirectory("docsgen")
+
+if (NOT ANDROID AND NOT EMSCRIPTEN)
+  add_subdirectory("codex")
+  add_subdirectory("docsgen")
+endif()
 
 # ---------------------------
 # Applications & Tests

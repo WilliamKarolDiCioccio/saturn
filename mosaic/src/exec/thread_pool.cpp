@@ -6,7 +6,6 @@
 #include <random>
 #include <chrono>
 #include <cassert>
-#include <functional>
 #include <condition_variable>
 
 #ifdef MOSAIC_PLATFORM_WINDOWS
@@ -31,38 +30,18 @@ struct ThreadPool::Impl
     // fixed after initialization (no need for atomic)
     uint32_t workersCount = 0;
 
-    moodycamel::ConcurrentQueue<std::move_only_function<void()>> globalTaskQueue;
+    moodycamel::ConcurrentQueue<MoveOnlyTask<void()>> globalTaskQueue;
     std::vector<std::unique_ptr<ThreadWorker>> workers;
 
     // Aligned to 64 bytes boundaries to avoid false sharing
     alignas(MOSAIC_CACHE_LINE_SIZE) std::atomic<uint32_t> idleWorkersCount;
     alignas(MOSAIC_CACHE_LINE_SIZE) std::atomic<bool> stop;
 
-    Impl() : workersCount(0), idleWorkersCount(0), stop(false)
-    {
-        assert(!s_created && "ThreadPool already exists!");
-        s_created = true;
-
-        stop.store(false, std::memory_order_relaxed);
-    };
-
-    ~Impl()
-    {
-        stop.store(true, std::memory_order_relaxed);
-
-        s_created = false;
-    }
+    Impl();
+    ~Impl();
 };
 
 bool ThreadPool::Impl::s_created = false;
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// ThreadWorker
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-constexpr auto k_idleTimeout = std::chrono::milliseconds(1);
-constexpr size_t k_stealBatchSize = 8;
-constexpr size_t k_maxPopCountFromGlobal = 16;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // WorkerStats - Cache-line aligned per-worker statistics
@@ -84,6 +63,14 @@ struct alignas(MOSAIC_CACHE_LINE_SIZE) WorkerStats
     }
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// ThreadWorker
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+constexpr auto k_idleTimeout = std::chrono::milliseconds(1);
+constexpr size_t k_stealBatchSize = 8;
+constexpr size_t k_maxPopCountFromGlobal = 16;
+
 class ThreadWorker final
 {
    private:
@@ -101,7 +88,7 @@ class ThreadWorker final
 
     std::jthread m_thread;
 
-    moodycamel::ConcurrentQueue<std::move_only_function<void()>> m_taskQueue;
+    moodycamel::ConcurrentQueue<MoveOnlyTask<void()>> m_taskQueue;
 
     WorkerStats m_stats;
 
@@ -120,7 +107,7 @@ class ThreadWorker final
 
         m_tid = std::hash<std::thread::id>{}(std::this_thread::get_id());
 
-        std::move_only_function<void()> task;
+        MoveOnlyTask<void()> task;
 
         while (!impl.stop.load(std::memory_order_acquire))
         {
@@ -158,12 +145,12 @@ class ThreadWorker final
         impl.idleWorkersCount.fetch_sub(1, std::memory_order_release);
     }
 
-    bool tryPopLocal(std::move_only_function<void()>& _outTask) noexcept
+    bool tryPopLocal(MoveOnlyTask<void()>& _outTask) noexcept
     {
         return m_taskQueue.try_dequeue(_outTask);
     }
 
-    bool tryPopGlobal(std::move_only_function<void()>& _outTask) noexcept
+    bool tryPopGlobal(MoveOnlyTask<void()>& _outTask) noexcept
     {
         if (!mosaic::utils::hasFlag(m_sharingMode, WorkerSharingMode::global_consumer))
         {
@@ -172,7 +159,7 @@ class ThreadWorker final
 
         auto& impl = *m_pool;
 
-        std::move_only_function<void()> tasks[k_maxPopCountFromGlobal];
+        MoveOnlyTask<void()> tasks[k_maxPopCountFromGlobal];
         const size_t count = impl.globalTaskQueue.try_dequeue_bulk(tasks, k_maxPopCountFromGlobal);
 
         if (count == 0) return false;
@@ -186,7 +173,7 @@ class ThreadWorker final
         return true;
     }
 
-    bool tryStealing(std::move_only_function<void()>& _outTask) noexcept
+    bool tryStealing(MoveOnlyTask<void()>& _outTask) noexcept
     {
         const auto& impl = *m_pool;
         const auto& workers = impl.workers;
@@ -213,7 +200,7 @@ class ThreadWorker final
                 continue;
             }
 
-            std::move_only_function<void()> stolen[k_stealBatchSize];
+            MoveOnlyTask<void()> stolen[k_stealBatchSize];
             size_t actualCount = victim->m_taskQueue.try_dequeue_bulk(stolen, k_stealBatchSize);
 
             if (actualCount == 0) continue;
@@ -236,7 +223,7 @@ class ThreadWorker final
         return false;
     }
 
-    void executeTask(std::move_only_function<void()>& task) noexcept
+    void executeTask(MoveOnlyTask<void()>& task) noexcept
     {
         try
         {
@@ -256,6 +243,25 @@ class ThreadWorker final
         task = nullptr;
     }
 };
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// ThreadPool::Impl (with complete type for ThreadWorker)
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+ThreadPool::Impl::Impl() : workersCount(0), idleWorkersCount(0), stop(false)
+{
+    assert(!s_created && "ThreadPool already exists!");
+    s_created = true;
+
+    stop.store(false, std::memory_order_relaxed);
+};
+
+ThreadPool::Impl::~Impl()
+{
+    stop.store(true, std::memory_order_relaxed);
+
+    s_created = false;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // ThreadPool
@@ -494,7 +500,7 @@ void ThreadPool::startupWorker(uint32_t _idx)
     setWorkerAffinity(_idx, _idx + 1); // +1 to leave core 0 for main thread
 }
 
-bool ThreadPool::assignTaskToGlobal(std::move_only_function<void()> _task) noexcept
+bool ThreadPool::assignTaskToGlobal(MoveOnlyTask<void()> _task) noexcept
 {
     if (m_impl->stop.load(std::memory_order_acquire))
     {
@@ -515,7 +521,7 @@ bool ThreadPool::assignTaskToGlobal(std::move_only_function<void()> _task) noexc
     return true;
 }
 
-bool ThreadPool::assignTaskToWorker(std::move_only_function<void()> _task) noexcept
+bool ThreadPool::assignTaskToWorker(MoveOnlyTask<void()> _task) noexcept
 {
     if (m_impl->stop.load(std::memory_order_acquire))
     {
@@ -550,8 +556,7 @@ bool ThreadPool::assignTaskToWorker(std::move_only_function<void()> _task) noexc
     return true;
 }
 
-bool ThreadPool::assignTaskToWorkerById(uint32_t _idx,
-                                        std::move_only_function<void()> _task) noexcept
+bool ThreadPool::assignTaskToWorkerById(uint32_t _idx, MoveOnlyTask<void()> _task) noexcept
 {
     ThreadWorker* worker = getWorkerByIdx(_idx);
 
@@ -583,7 +588,7 @@ bool ThreadPool::assignTaskToWorkerById(uint32_t _idx,
 }
 
 bool ThreadPool::assignTaskToWorkerByDebugName(const std::string& _debugName,
-                                               std::move_only_function<void()> _task) noexcept
+                                               MoveOnlyTask<void()> _task) noexcept
 {
     ThreadWorker* worker = getWorkerByDebugName(_debugName);
 

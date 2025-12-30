@@ -27,8 +27,7 @@ struct PlatformContext::Impl
     std::vector<PlatformContextChangedEvent> platformContextListeners;
 };
 
-inline void PlatformContext::registerPlatformContextChangedCallback(
-    PlatformContextChangedEvent _callback)
+void PlatformContext::registerPlatformContextChangedCallback(PlatformContextChangedEvent _callback)
 {
     m_impl->platformContextListeners.push_back(_callback);
 }
@@ -44,7 +43,7 @@ struct Platform::Impl
     std::unique_ptr<PlatformContext> platformContext;
     std::vector<PlatformContextChangedEvent> m_platformContextListeners;
 
-    Impl(Application* _app) : app(_app), platformContext(PlatformContext::create()){};
+    Impl(Application* _app) : app(_app), platformContext(PlatformContext::create()) {};
 };
 
 std::unique_ptr<PlatformContext> PlatformContext::create()

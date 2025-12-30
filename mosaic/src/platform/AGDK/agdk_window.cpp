@@ -10,10 +10,6 @@ namespace agdk
 pieces::RefResult<window::Window, std::string> AGDKWindow::initialize(
     const window::WindowProperties& _properties)
 {
-    auto& props = getWindowProperties();
-
-    props = _properties;
-
     static int windowCount = 0;
 
     if (windowCount > 0)

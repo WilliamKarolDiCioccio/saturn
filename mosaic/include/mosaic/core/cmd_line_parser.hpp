@@ -12,6 +12,8 @@
 #include <variant>
 #include <memory>
 #include <span>
+// Needed for type traits used in templates
+#include <type_traits>
 
 namespace mosaic
 {
@@ -70,7 +72,7 @@ class CommandLineParser
               maxSpellCheckDistance(3),
               printErrors(true),
               autoHelp(true),
-              maxArguments(64){};
+              maxArguments(64) {};
     };
 
    private:
@@ -103,7 +105,7 @@ class CommandLineParser
               handler(std::move(_handler)),
               validator(std::move(_validator)),
               required(_required),
-              parsed(false){};
+              parsed(false) {};
     };
 
     MOSAIC_API static CommandLineParser* s_instance;
@@ -123,7 +125,7 @@ class CommandLineParser
           m_args(),
           m_shouldTerminate(false),
           m_options(),
-          m_shortToLong(){};
+          m_shortToLong() {};
     ~CommandLineParser() = default;
 
    public:
@@ -256,19 +258,19 @@ std::optional<std::string> CommandLineParser::registerTypedOption(
     ValueValidator validator;
     if constexpr (std::is_same_v<T, std::string>)
     {
-        validator = validateString;
+        validator = [this](const std::string& v) { return this->validateString(v); };
     }
     else if constexpr (std::is_same_v<T, int>)
     {
-        validator = validateInt;
+        validator = [this](const std::string& v) { return this->validateInt(v); };
     }
     else if constexpr (std::is_same_v<T, float>)
     {
-        validator = validateFloat;
+        validator = [this](const std::string& v) { return this->validateFloat(v); };
     }
     else if constexpr (std::is_same_v<T, bool>)
     {
-        validator = validateBool;
+        validator = [this](const std::string& v) { return this->validateBool(v); };
     }
     else
     {
@@ -308,7 +310,7 @@ std::optional<std::string> CommandLineParser::registerTypedOption(
         }
     }
 
-    return RegisterOption(_name, _shortName, _description, _help, _valueType, false, wrappedHandler,
+    return registerOption(_name, _shortName, _description, _help, _valueType, false, wrappedHandler,
                           validator, _required, defaultStr);
 }
 

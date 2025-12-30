@@ -8,7 +8,10 @@
 #include <sstream>
 #include <vector>
 #include <cassert>
+
+#ifndef MOSAIC_ARCH_ARM64
 #include <stacktrace>
+#endif
 
 #ifdef MOSAIC_COMPILER_MSVC
 #include <corecrt.h>
@@ -82,6 +85,7 @@ void Logger::logInternal(LogLevel _level, std::string _formattedMessage) noexcep
         _formattedMessage = fmt::format("[{}] {}", timeBuffer, _formattedMessage);
     }
 
+#ifndef MOSAIC_ARCH_ARM64
     // Append stack trace if requested (platform-dependent, stubbed here)
     if (m_config.showStackTrace)
     {
@@ -90,6 +94,7 @@ void Logger::logInternal(LogLevel _level, std::string _formattedMessage) noexcep
 
         _formattedMessage += fmt::format("\n[Stack Trace]\n{}", oss.str());
     }
+#endif
 
     for (const auto& [name, sink] : m_sinks)
     {

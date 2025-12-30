@@ -2,8 +2,6 @@
 
 #include "mosaic/defines.hpp"
 
-#include <functional>
-
 #include <pieces/core/result.hpp>
 #include <pieces/utils/enum_flags.hpp>
 
@@ -11,6 +9,7 @@
 #include "mosaic/core/sys_info.hpp"
 
 #include "task_future.hpp"
+#include "move_only_task.hpp"
 
 namespace mosaic
 {
@@ -275,7 +274,7 @@ class MOSAIC_API ThreadPool
      * @return true if the task was successfully enqueued to the global queue.
      * @return false if the thread pool is shutting down and cannot accept new tasks.
      */
-    bool assignTaskToGlobal(std::move_only_function<void()> _task) noexcept;
+    bool assignTaskToGlobal(MoveOnlyTask<void()> _task) noexcept;
 
     /**
      * @brief Tries to perform optimal assignment of a task to a worker.
@@ -284,7 +283,7 @@ class MOSAIC_API ThreadPool
      * global queue.
      * @return false if the thread pool is shutting down and cannot accept new tasks.
      */
-    bool assignTaskToWorker(std::move_only_function<void()> _task) noexcept;
+    bool assignTaskToWorker(MoveOnlyTask<void()> _task) noexcept;
 
     /**
      * @brief Assigns a task directly to a specific worker by its ID.
@@ -293,7 +292,7 @@ class MOSAIC_API ThreadPool
      * @return false if the thread pool is shutting down or the worker does not allow direct task
      * assignments.
      */
-    bool assignTaskToWorkerById(uint32_t _idx, std::move_only_function<void()> _task) noexcept;
+    bool assignTaskToWorkerById(uint32_t _idx, MoveOnlyTask<void()> _task) noexcept;
 
     /**
      * @brief Assigns a task directly to a specific worker by its debug name.
@@ -303,7 +302,7 @@ class MOSAIC_API ThreadPool
      * assignments.
      */
     bool assignTaskToWorkerByDebugName(const std::string& _debugName,
-                                       std::move_only_function<void()> _task) noexcept;
+                                       MoveOnlyTask<void()> _task) noexcept;
 };
 
 } // namespace exec

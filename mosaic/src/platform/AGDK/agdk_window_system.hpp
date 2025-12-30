@@ -15,10 +15,10 @@ class AGDKWindowSystem : public window::WindowSystem
     ~AGDKWindowSystem() override = default;
 
    public:
-    pieces::RefResult<window::WindowSystem, std::string> initialize() override;
+    virtual pieces::RefResult<System, std::string> initialize() override;
     void shutdown() override;
 
-    void update() const override;
+    virtual pieces::RefResult<System, std::string> update() override;
 };
 
 } // namespace agdk

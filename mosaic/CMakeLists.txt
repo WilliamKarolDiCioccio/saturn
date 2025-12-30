@@ -44,7 +44,7 @@ if(ANDROID)
     "src/platform/AGDK/agdk_sys_info.cpp"
     "src/platform/AGDK/agdk_sys_console.cpp"
     "src/platform/AGDK/agdk_sys_ui.cpp"
-    "src/external/game_activity.cpp")
+    "src/platform/AGDK/agdk_text_input_source.cpp")
 else()
   if(WIN32)
     list(

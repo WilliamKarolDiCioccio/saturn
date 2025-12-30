@@ -69,6 +69,82 @@
 #define MOSAIC_API
 #endif
 
+// Architecture detection
+#if defined(__x86_64__) || defined(_M_X64) || defined(_M_AMD64)
+#define MOSAIC_ARCH_X64
+#define MOSAIC_ARCH_NAME "x86_64"
+#define MOSAIC_ARCH_BITS 64
+#elif defined(__i386) || defined(__i386__) || defined(_M_IX86)
+#define MOSAIC_ARCH_X86
+#define MOSAIC_ARCH_NAME "x86"
+#define MOSAIC_ARCH_BITS 32
+#elif defined(__aarch64__) || defined(_M_ARM64)
+#define MOSAIC_ARCH_ARM64
+#define MOSAIC_ARCH_NAME "ARM64"
+#define MOSAIC_ARCH_BITS 64
+#elif defined(__arm__) || defined(__thumb__) || defined(_M_ARM)
+#define MOSAIC_ARCH_ARM32
+#define MOSAIC_ARCH_NAME "ARM"
+#define MOSAIC_ARCH_BITS 32
+#elif defined(__wasm64__) || defined(__wasm__)
+#if defined(__wasm64__)
+#define MOSAIC_ARCH_WASM64
+#define MOSAIC_ARCH_NAME "WASM64"
+#define MOSAIC_ARCH_BITS 64
+#else
+#define MOSAIC_ARCH_WASM32
+#define MOSAIC_ARCH_NAME "WASM32"
+#define MOSAIC_ARCH_BITS 32
+#endif
+#elif defined(__mips__) || defined(__mips) || defined(__MIPS__)
+#if defined(__mips64) || defined(__mips64_)
+#define MOSAIC_ARCH_MIPS64
+#define MOSAIC_ARCH_NAME "MIPS64"
+#define MOSAIC_ARCH_BITS 64
+#else
+#define MOSAIC_ARCH_MIPS
+#define MOSAIC_ARCH_NAME "MIPS"
+#define MOSAIC_ARCH_BITS 32
+#endif
+#elif defined(__riscv) || defined(__riscv__)
+#if defined(__riscv_xlen) && (__riscv_xlen == 64)
+#define MOSAIC_ARCH_RISCV64
+#define MOSAIC_ARCH_NAME "RISC-V64"
+#define MOSAIC_ARCH_BITS 64
+#else
+#define MOSAIC_ARCH_RISCV32
+#define MOSAIC_ARCH_NAME "RISC-V32"
+#define MOSAIC_ARCH_BITS 32
+#endif
+#elif defined(__powerpc64__) || defined(__ppc64__) || defined(__PPC64__)
+#define MOSAIC_ARCH_PPC64
+#define MOSAIC_ARCH_NAME "PowerPC64"
+#define MOSAIC_ARCH_BITS 64
+#elif defined(__powerpc__) || defined(__ppc__) || defined(__PPC__)
+#define MOSAIC_ARCH_PPC
+#define MOSAIC_ARCH_NAME "PowerPC"
+#define MOSAIC_ARCH_BITS 32
+#else
+#define MOSAIC_ARCH_UNKNOWN
+#define MOSAIC_ARCH_NAME "Unknown"
+#define MOSAIC_ARCH_BITS 0
+#endif
+
+#if MOSAIC_ARCH_BITS == 64
+#define MOSAIC_ARCH_64BIT
+#else
+#define MOSAIC_ARCH_32BIT
+#endif
+
+// Endianness hint (if available)
+#if defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && defined(__ORDER_BIG_ENDIAN__)
+#if (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
+#define MOSAIC_ARCH_LITTLE_ENDIAN
+#elif (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+#define MOSAIC_ARCH_BIG_ENDIAN
+#endif
+#endif
+
 // Debug break macros
 #if defined(MOSAIC_DEBUG_BUILD) || defined(MOSAIC_DEV_BUILD)
 #if defined(MOSAIC_COMPILER_MSVC)

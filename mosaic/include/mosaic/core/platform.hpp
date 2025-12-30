@@ -34,7 +34,7 @@ class MOSAIC_API PlatformContext
     static std::unique_ptr<PlatformContext> create();
 
    public:
-    inline void registerPlatformContextChangedCallback(PlatformContextChangedEvent _callback);
+    void registerPlatformContextChangedCallback(PlatformContextChangedEvent _callback);
 
    protected:
     void invokePlatformContextChangedCallbacks(void* _newContext);
