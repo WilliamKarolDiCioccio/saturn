@@ -1,1 +1,21 @@
-/build
+# IntelliJ / Android Studio
+.idea/
+*.iml
+*.swp
+*.bak
+
+# Android / Build
+build/
+.gradle/
+local.properties
+/captures
+
+# C++ / NDK
+# This is critical! These folders store the stale PCH and indexer data.
+.cxx/
+.externalNativeBuild/
+cmake_install.cmake
+CMakeCache.txt
+CMakeFiles/
+install_manifest.txt
+Makefile
