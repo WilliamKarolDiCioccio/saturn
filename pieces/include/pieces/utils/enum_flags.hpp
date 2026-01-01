@@ -36,19 +36,19 @@
         return static_cast<ENUMTYPE>(~static_cast<Underlying>(lhs));                               \
     }                                                                                              \
                                                                                                    \
-    [[nodiscard]] inline ENUMTYPE& operator|=(ENUMTYPE& lhs, ENUMTYPE rhs)                         \
+    inline ENUMTYPE& operator|=(ENUMTYPE& lhs, ENUMTYPE rhs)                                       \
     {                                                                                              \
         lhs = lhs | rhs;                                                                           \
         return lhs;                                                                                \
     }                                                                                              \
                                                                                                    \
-    [[nodiscard]] inline ENUMTYPE& operator&=(ENUMTYPE& lhs, ENUMTYPE rhs)                         \
+    inline ENUMTYPE& operator&=(ENUMTYPE& lhs, ENUMTYPE rhs)                                       \
     {                                                                                              \
         lhs = lhs & rhs;                                                                           \
         return lhs;                                                                                \
     }                                                                                              \
                                                                                                    \
-    [[nodiscard]] inline ENUMTYPE& operator^=(ENUMTYPE& lhs, ENUMTYPE rhs)                         \
+    inline ENUMTYPE& operator^=(ENUMTYPE& lhs, ENUMTYPE rhs)                                       \
     {                                                                                              \
         lhs = lhs ^ rhs;                                                                           \
         return lhs;                                                                                \

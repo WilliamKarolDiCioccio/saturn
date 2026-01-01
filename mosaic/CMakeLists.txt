@@ -25,7 +25,7 @@ set(FRAMEWORK_SRC
     "src/input/input_context.cpp"
     "src/input/sources/mouse_input_source.cpp"
     "src/input/sources/keyboard_input_source.cpp"
-    "src/input/sources/text_input_source.cpp"
+    "src/input/sources/unified_text_input_source.cpp"
     # Graphics
     "src/graphics/render_context.cpp"
     "src/graphics/render_system.cpp"
@@ -43,8 +43,7 @@ if(ANDROID)
     "src/platform/AGDK/jni_helper.cpp"
     "src/platform/AGDK/agdk_sys_info.cpp"
     "src/platform/AGDK/agdk_sys_console.cpp"
-    "src/platform/AGDK/agdk_sys_ui.cpp"
-    "src/platform/AGDK/agdk_text_input_source.cpp")
+    "src/platform/AGDK/agdk_sys_ui.cpp")
 else()
   if(WIN32)
     list(
@@ -53,7 +52,8 @@ else()
       "src/platform/Win32/win32_platform.cpp"
       "src/platform/Win32/win32_sys_info.cpp"
       "src/platform/Win32/win32_sys_console.cpp"
-      "src/platform/Win32/win32_sys_ui.cpp")
+      "src/platform/Win32/win32_sys_ui.cpp"
+      "src/platform/Win32/win32_unified_text_input_source.cpp")
   elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
     list(
       APPEND
@@ -78,8 +78,7 @@ else()
     "src/platform/GLFW/glfw_window.cpp"
     "src/platform/GLFW/glfw_window_system.cpp"
     "src/platform/GLFW/glfw_keyboard_input_source.cpp"
-    "src/platform/GLFW/glfw_mouse_input_source.cpp"
-    "src/platform/GLFW/glfw_text_input_source.cpp")
+    "src/platform/GLFW/glfw_mouse_input_source.cpp")
 endif()
 
 if(NOT EMSCRIPTEN)

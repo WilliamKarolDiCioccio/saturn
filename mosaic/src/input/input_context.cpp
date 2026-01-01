@@ -42,7 +42,7 @@ struct InputContext::Impl
     // Cache
     std::unordered_map<std::string, bool> triggeredActionsCache;
 
-    Impl(const window::Window* _window) : window(_window){};
+    Impl(const window::Window* _window) : window(_window) {};
 };
 
 InputContext::InputContext(const window::Window* _window) : m_impl(new Impl(_window)) {}
@@ -56,16 +56,16 @@ pieces::RefResult<InputContext, std::string> InputContext::initialize()
 
 void InputContext::shutdown()
 {
-    removeTextInputSource();
+    removeUnifiedTextInputSource();
     removeKeyboardInputSource();
     removeMouseInputSource();
 }
 
 void InputContext::update()
 {
-    if (m_impl->keyboardInputSource) m_impl->mouseSource->processInput();
+    if (m_impl->mouseSource) m_impl->mouseSource->processInput();
     if (m_impl->keyboardInputSource) m_impl->keyboardInputSource->processInput();
-    if (m_impl->textInputSource) m_impl->textInputSource->processInput();
+    if (m_impl->unifiedTextInputSource) m_impl->unifiedTextInputSource->processInput();
 
     m_impl->triggeredActionsCache.clear();
 }

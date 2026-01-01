@@ -122,7 +122,8 @@ void MouseInputSource::processInput()
                     timeSinceLastEvent <= k_doubleClickMaxInterval)
                 {
                     currEvent = MouseButtonEvent{
-                        ActionableState::press | ActionableState::double_press, currentTime,
+                        ActionableState::press | ActionableState::double_press,
+                        currentTime,
                         m_pollCount,
                         std::chrono::milliseconds(0), // Press is instantaneous
                     };
@@ -130,7 +131,9 @@ void MouseInputSource::processInput()
                 else
                 {
                     currEvent = MouseButtonEvent{
-                        ActionableState::press, currentTime, m_pollCount,
+                        ActionableState::press,
+                        currentTime,
+                        m_pollCount,
                         std::chrono::milliseconds(0), // Press is instantaneous
                     };
                 }
@@ -148,7 +151,9 @@ void MouseInputSource::processInput()
                 if (totalPressDuration >= k_keyReleaseDuration)
                 {
                     currEvent = MouseButtonEvent{
-                        ActionableState::release, currentTime, m_pollCount,
+                        ActionableState::release,
+                        currentTime,
+                        m_pollCount,
                         totalPressDuration, // Duration from press to release
                     };
 

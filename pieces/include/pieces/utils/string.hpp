@@ -6,7 +6,7 @@
 
 #include <utf8.h>
 
-namespace mosaic
+namespace pieces
 {
 namespace utils
 {
@@ -82,4 +82,4 @@ namespace utils
 }
 
 } // namespace utils
-} // namespace mosaic
+} // namespace pieces

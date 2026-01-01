@@ -6,7 +6,7 @@
 #include "sources/input_source.hpp"
 #include "sources/mouse_input_source.hpp"
 #include "sources/keyboard_input_source.hpp"
-#include "sources/text_input_source.hpp"
+#include "sources/unified_text_input_source.hpp"
 
 namespace mosaic
 {

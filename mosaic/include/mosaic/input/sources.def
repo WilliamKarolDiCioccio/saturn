@@ -1,4 +1,4 @@
 // (Type, Member, Name)
 DEFINE_SOURCE(MouseInputSource, mouseSource, MouseInput)
 DEFINE_SOURCE(KeyboardInputSource, keyboardInputSource, KeyboardInput)
-DEFINE_SOURCE(TextInputSource, textInputSource, TextInput)
+DEFINE_SOURCE(UnifiedTextInputSource, unifiedTextInputSource, UnifiedTextInput)

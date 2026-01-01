@@ -23,7 +23,6 @@
 - Platform event loop (window/ package handles GLFW polling)
 - Gamepad/controller input (future feature)
 - Touch input (future feature)
-- IME (Input Method Editor) beyond basic text input
 
 ---
 
@@ -35,7 +34,7 @@
 - **`InputSource`** (`sources/input_source.hpp`) — Base class for platform-specific input
 - **`MouseInputSource`** (`sources/mouse_input_source.hpp`) — Mouse position, buttons, wheel
 - **`KeyboardInputSource`** (`sources/keyboard_input_source.hpp`) — Keyboard key states
-- **`TextInputSource`** (`sources/text_input_source.hpp`) — Text input events (UTF-8)
+- **`UnifiedTextInputSource`** (`sources/unified_text_input_source.hpp`) — Unified text input + IME composition (UTF-8/UTF-32)
 - **`Action`** (`action.hpp:25`) — Named action with trigger predicate: `function<bool(InputContext*)>`
 - **`KeyboardKey`** (`mappings.hpp`) — Enum of keyboard keys (virtual key codes)
 - **`MouseButton`** (`mappings.hpp`) — Enum of mouse buttons (left, right, middle, etc.)
@@ -60,6 +59,10 @@
 - **Predicate-based actions**: Action::trigger lambda returns bool(InputContext*)
 - **Virtual key mapping**: String names map to platform-specific key codes (rebindable)
 - **State caching**: Current state + previous state enable edge detection (press = down && !wasDown)
+- **Unified text input**: UnifiedTextInputSource handles both regular text (WM_CHAR) and IME composition (WM_IME_*) in single class
+  - Filters WM_CHAR during active IME composition to prevent duplicate events
+  - Emits both TextInputEvent (committed text) and IMEEvent (composition lifecycle)
+  - Currently Win32-only; other platforms not yet implemented
 
 ---
 
@@ -187,7 +190,7 @@
 - `include/mosaic/input/sources/input_source.hpp` — InputSource base class
 - `include/mosaic/input/sources/mouse_input_source.hpp` — MouseInputSource
 - `include/mosaic/input/sources/keyboard_input_source.hpp` — KeyboardInputSource
-- `include/mosaic/input/sources/text_input_source.hpp` — TextInputSource
+- `include/mosaic/input/sources/unified_text_input_source.hpp` — UnifiedTextInputSource (text + IME)
 - `include/mosaic/input/mappings.hpp` — KeyboardKey, MouseButton enums
 - `include/mosaic/input/events.hpp` — Input event types
 - `include/mosaic/input/constants.hpp` — Input constants
@@ -197,12 +200,12 @@
 - `src/input/input_context.cpp` — InputContext implementation
 - `src/input/sources/mouse_input_source.cpp` — MouseInputSource implementation
 - `src/input/sources/keyboard_input_source.cpp` — KeyboardInputSource implementation
-- `src/input/sources/text_input_source.cpp` — TextInputSource implementation
+- `src/input/sources/unified_text_input_source.cpp` — UnifiedTextInputSource implementation
 
 **Platform-Specific:**
 - `src/platform/GLFW/glfw_mouse_input_source.cpp` — GLFW mouse source
 - `src/platform/GLFW/glfw_keyboard_input_source.cpp` — GLFW keyboard source
-- `src/platform/GLFW/glfw_text_input_source.cpp` — GLFW text source
+- `src/platform/Win32/win32_unified_text_input_source.cpp` — Win32 unified text + IME source
 
 **Tests:**
 - None currently (tests needed for action triggers, virtual key mapping)
@@ -223,4 +226,4 @@
 ---
 
 ## Status Notes
-**Stable** — Core three-layer architecture functional. Gamepad/controller and touch input not implemented. IME support minimal.
+**Stable** — Core three-layer architecture functional. Unified text input with full IME support on Win32. Gamepad/controller and touch input not implemented. Text input on GLFW/AGDK/Emscripten platforms not yet implemented.

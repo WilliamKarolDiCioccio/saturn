@@ -83,7 +83,7 @@ struct InputEventMetadata
     InputEventMetadata(std::chrono::time_point<std::chrono::high_resolution_clock> _now,
                        std::chrono::duration<double> _duration, uint64_t _pollCount = 0,
                        InputEventType _type = InputEventType::standalone)
-        : timestamp(_now), duration(_duration), pollCount(_pollCount), type(_type){};
+        : timestamp(_now), duration(_duration), pollCount(_pollCount), type(_type) {};
 };
 
 /**
@@ -102,13 +102,13 @@ struct MouseButtonEvent
     MouseButtonEvent()
         : metadata(std::chrono::high_resolution_clock::now(), std::chrono::milliseconds(0), 0,
                    InputEventType::standalone),
-          state(ActionableState::none){};
+          state(ActionableState::none) {};
 
     MouseButtonEvent(ActionableState _state,
                      std::chrono::time_point<std::chrono::high_resolution_clock> _now,
                      uint64_t _pollCount,
                      std::chrono::duration<double> _duration = std::chrono::milliseconds(0))
-        : metadata(_now, _duration, _pollCount), state(_state){};
+        : metadata(_now, _duration, _pollCount), state(_state) {};
 };
 
 /**
@@ -126,13 +126,13 @@ struct MouseCursorMoveEvent
     MouseCursorMoveEvent()
         : metadata(std::chrono::high_resolution_clock::now(), std::chrono::milliseconds(0), 0),
           position(0.0f),
-          delta(0.0f){};
+          delta(0.0f) {};
 
     MouseCursorMoveEvent(glm::vec2 _position, glm::vec2 _delta,
                          std::chrono::time_point<std::chrono::high_resolution_clock> _now,
                          uint64_t _pollCount, InputEventType _type,
                          std::chrono::duration<double> _duration = std::chrono::milliseconds(0))
-        : metadata(_now, _duration, _pollCount, _type), position(_position), delta(_delta){};
+        : metadata(_now, _duration, _pollCount, _type), position(_position), delta(_delta) {};
 };
 
 /**
@@ -151,13 +151,13 @@ struct MouseWheelScrollEvent
     MouseWheelScrollEvent()
         : metadata(std::chrono::high_resolution_clock::now(), std::chrono::milliseconds(0), 0),
           offset(0.0f),
-          delta(0.0f){};
+          delta(0.0f) {};
 
     MouseWheelScrollEvent(glm::vec2 _offset, glm::vec2 _delta,
                           std::chrono::time_point<std::chrono::high_resolution_clock> _now,
                           uint64_t _pollCount, InputEventType _type,
                           std::chrono::duration<double> _duration = std::chrono::milliseconds(0))
-        : metadata(_now, _duration, _pollCount, _type), offset(_offset), delta(_delta){};
+        : metadata(_now, _duration, _pollCount, _type), offset(_offset), delta(_delta) {};
 };
 
 /**
@@ -171,13 +171,13 @@ struct KeyboardKeyEvent
     KeyboardKeyEvent()
         : metadata(std::chrono::high_resolution_clock::now(), std::chrono::milliseconds(0), 0,
                    InputEventType::standalone),
-          state(ActionableState::none){};
+          state(ActionableState::none) {};
 
     KeyboardKeyEvent(ActionableState _state,
                      std::chrono::time_point<std::chrono::high_resolution_clock> _now,
                      uint64_t _pollCount,
                      std::chrono::duration<double> _duration = std::chrono::milliseconds(0))
-        : metadata(_now, _duration, _pollCount), state(_state){};
+        : metadata(_now, _duration, _pollCount), state(_state) {};
 };
 
 /**
@@ -200,7 +200,7 @@ struct TextInputEvent
         : metadata(std::chrono::high_resolution_clock::now(), std::chrono::milliseconds(0), 0,
                    InputEventType::standalone),
           codepoints(),
-          text(){};
+          text() {};
 
     TextInputEvent(std::vector<char32_t> _codepoints, std::string _text,
                    std::chrono::time_point<std::chrono::high_resolution_clock> _now,
@@ -208,7 +208,50 @@ struct TextInputEvent
                    std::chrono::duration<double> _duration = std::chrono::milliseconds(0))
         : metadata(_now, _duration, _pollCount, InputEventType::standalone),
           codepoints(std::move(_codepoints)),
-          text(std::move(_text)){};
+          text(std::move(_text)) {};
+};
+
+/**
+ * @brief The `IMEEventType` enum class defines the types of Input Method Editor (IME) events.
+ *
+ * This enum is used to categorize the different stages of text composition when using an IME.
+ */
+enum class IMEEventType
+{
+    CompositionStart,
+    CompositionUpdate,
+    CompositionCommit,
+    CompositionEnd
+};
+
+/**
+ * @brief The `IMEComposition` struct contains data for Input Method Editor (IME) compositions.
+ *
+ * This struct holds the current composition text and the cursor position within that text.
+ */
+struct IMEComposition
+{
+    std::string text;
+    size_t cursor;
+
+    IMEComposition() : text(""), cursor(0) {};
+};
+
+/**
+ * @brief The `IMEEvent` struct contains data for Input Method Editor (IME) events.
+ *
+ * This event is used to handle complex text input scenarios, such as those involving character
+ * composition in languages like Chinese, Japanese, and Korean.
+ */
+struct IMEEvent
+{
+    IMEEventType type;
+    IMEComposition composition;
+
+    IMEEvent() : type(IMEEventType::CompositionStart), composition() {};
+
+    IMEEvent(IMEEventType _type, const IMEComposition& _composition)
+        : type(_type), composition(_composition) {};
 };
 
 } // namespace input

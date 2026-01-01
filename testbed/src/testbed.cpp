@@ -1,6 +1,7 @@
 #include "testbed.hpp"
 
 #include <chrono>
+#include <iostream>
 
 #include <mosaic/tools/logger.hpp>
 #include <mosaic/core/timer.hpp>
@@ -8,6 +9,8 @@
 #include <mosaic/input/input_system.hpp>
 #include <mosaic/graphics/render_system.hpp>
 #include <mosaic/ecs/entity_registry.hpp>
+
+#include <pieces/utils/string.hpp>
 
 using namespace std::chrono_literals;
 
@@ -34,7 +37,11 @@ void TestbedApplication::onInitialize()
 
     inputContext->addMouseInputSource();
     inputContext->addKeyboardInputSource();
-    inputContext->addTextInputSource();
+
+    if (inputContext->addUnifiedTextInputSource().isOk())
+    {
+        inputContext->getUnifiedTextInputSource()->setEnabled(false);
+    }
 
     inputContext->registerActions({
         input::Action{
@@ -159,17 +166,6 @@ void TestbedApplication::onPollInputs()
     {
         return requestExit();
     }
-
-#ifndef MOSAIC_PLATFORM_ANDROID
-    {
-        auto src = inputContext->getTextInputSource();
-
-        const auto srcPollCount = src->getPollCount();
-        const auto event = src->getTextInputEvent();
-
-        if (srcPollCount == event.metadata.pollCount) MOSAIC_INFO(event.text);
-    }
-#endif
 }
 
 } // namespace testbed
