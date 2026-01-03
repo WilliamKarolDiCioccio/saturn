@@ -41,7 +41,7 @@
 - **`EntityView<Ts...>`** (`entity_registry.hpp:90`) — Non-owning view for querying entities with components Ts...
 
 ### Invariants (NEVER violate)
-1. **Component concept**: Components MUST be trivially copyable, trivially destructible, not pointer/reference/const/volatile, standard layout (Component concept)
+1. **Component concept**: Components MUST be trivially copyable, trivially destructible, not pointer/reference/const/volatile, standard layout (Component concept). Note: trivially copyable types CAN have non-trivial constructors.
 2. **Archetype storage layout**: Each archetype row MUST be `[EntityMeta | Component1 | Component2 | ... | ComponentN]` (metadata first)
 3. **Signature uniqueness**: No two archetypes MUST have identical ComponentSignature (registry deduplicates)
 4. **Generational indices**: EntityGen MUST increment on entity destruction (never reuse same {ID, gen} pair)
@@ -59,6 +59,47 @@
 - **Swap-and-pop deletion**: remove() swaps with last entity, pops back (O(1) but reorders)
 - **Cache-line optimization**: Components packed contiguously for data locality
 - **Sparse set indexing**: O(1) entity lookup via page-based SparseSet (from pieces)
+
+### Component Construction
+Components can be constructed in two ways:
+
+1. **Default construction** (no arguments):
+   ```cpp
+   auto entity = registry->createEntity<Position, Velocity>();
+   // Components are default-initialized (indeterminate values)
+   ```
+
+2. **Constructor arguments** (via std::tuple):
+   ```cpp
+   auto entity = registry->createEntity<Position, Velocity>(
+       std::make_tuple(10.0f, 20.0f, 30.0f),  // Position(x, y, z)
+       std::make_tuple(1.0f, 2.0f, 3.0f)      // Velocity(dx, dy, dz)
+   );
+   ```
+
+**Key points:**
+- Constructor arguments are passed via `std::make_tuple` for each component
+- Number of tuples MUST match number of component types (enforced at compile time via `requires` clause)
+- Bulk operations use **shared arguments** for all entities (performance over flexibility)
+- Components are constructed in EntityRegistry via placement new before memcpy to type-erased storage
+- Type-erased storage (TypelessSparseSet/TypelessVector) remains memcpy-only (no constructor invocation)
+- Backwards compatible: existing code without args continues to work
+
+**Bulk construction with shared args:**
+```cpp
+// All 100 entities get Position(0, 0, 0)
+auto entities = registry->createEntityBulk<Position>(100,
+    std::make_tuple(0.0f, 0.0f, 0.0f)
+);
+```
+
+**Adding components with args during archetype migration:**
+```cpp
+registry->addComponents<Velocity>(entityID,
+    std::make_tuple(5.0f, 10.0f, 15.0f)
+);
+// Existing components preserved, new Velocity constructed with args
+```
 
 ---
 
@@ -197,12 +238,16 @@
 - `mosaic/bench/ecs_bench.cpp` — Entity creation, component iteration, archetype migration
 
 ### Key Functions/Methods
-- `EntityRegistry::createEntity<Ts...>(Ts... components)` → EntityMeta — Create entity with components
-- `EntityRegistry::destroyEntity(EntityMeta)` — Destroy entity, increment generation
-- `EntityRegistry::addComponents<Ts...>(EntityMeta, Ts...)` — Migrate entity to new archetype
-- `EntityRegistry::removeComponents<Ts...>(EntityMeta)` — Migrate entity to archetype without components
-- `EntityRegistry::getComponent<T>(EntityMeta)` → T* — Get component pointer (nullptr if missing)
-- `EntityRegistry::viewSubset<Ts...>()` → EntityView<Ts...> — Query entities with components
+- `EntityRegistry::createEntity<Ts...>()` → EntityMeta — Create entity with default-initialized components
+- `EntityRegistry::createEntity<Ts...>(ArgTuples...)` → EntityMeta — Create entity with components initialized using constructor arguments (tuples)
+- `EntityRegistry::createEntityBulk<Ts...>(count)` → vector<EntityMeta> — Create multiple entities with default-initialized components
+- `EntityRegistry::createEntityBulk<Ts...>(count, ArgTuples...)` → vector<EntityMeta> — Create multiple entities with shared constructor arguments
+- `EntityRegistry::destroyEntity(EntityID)` — Destroy entity, increment generation
+- `EntityRegistry::addComponents<Ts...>(EntityID)` — Migrate entity to new archetype (default-initialized)
+- `EntityRegistry::addComponents<Ts...>(EntityID, ArgTuples...)` — Migrate entity to new archetype with constructor arguments
+- `EntityRegistry::removeComponents<Ts...>(EntityID)` — Migrate entity to archetype without components
+- `EntityRegistry::getComponentsForEntity<Ts...>(EntityID)` → optional<tuple<Ts&...>> — Get component references
+- `EntityRegistry::viewSubset<Ts...>()` → optional<EntityView<Ts...>> — Query entities with components
 - `EntityView::forEach(fn)` — Iterate entities, call fn(EntityMeta, Ts&...)
 - `ComponentRegistry::registerComponent<T>()` → ComponentID — Runtime component registration
 

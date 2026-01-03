@@ -840,3 +840,153 @@ TEST_F(ECSTest, EmptyViewIsSafe)
     auto result = m_entityRegistry->viewSet<Tag>();
     ASSERT_FALSE(result.has_value());
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Constructor Arguments Tests
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+TEST_F(ECSTest, CreateEntityWithConstructorArgs)
+{
+    // Create entity with constructor args
+    auto meta = m_entityRegistry->createEntity<Position, Velocity>(
+        std::make_tuple(10.0f, 20.0f, 30.0f), // Position(x, y, z)
+        std::make_tuple(1.0f, 2.0f, 3.0f)     // Velocity(dx, dy, dz)
+    );
+
+    // Verify values were initialized correctly
+    auto result = m_entityRegistry->getComponentsForEntity<Position, Velocity>(meta.id);
+    ASSERT_TRUE(result.has_value());
+
+    auto& [pos, vel] = result.value();
+    EXPECT_FLOAT_EQ(pos.x, 10.0f);
+    EXPECT_FLOAT_EQ(pos.y, 20.0f);
+    EXPECT_FLOAT_EQ(pos.z, 30.0f);
+    EXPECT_FLOAT_EQ(vel.dx, 1.0f);
+    EXPECT_FLOAT_EQ(vel.dy, 2.0f);
+    EXPECT_FLOAT_EQ(vel.dz, 3.0f);
+}
+
+TEST_F(ECSTest, CreateEntityWithSingleComponentConstructorArgs)
+{
+    // Create entity with single component and args
+    auto meta =
+        m_entityRegistry->createEntity<Health>(std::make_tuple(100, 100) // Health(hp, maxHp)
+        );
+
+    auto result = m_entityRegistry->getComponentsForEntity<Health>(meta.id);
+    ASSERT_TRUE(result.has_value());
+
+    auto& health = std::get<0>(result.value());
+    EXPECT_EQ(health.hp, 100);
+    EXPECT_EQ(health.maxHp, 100);
+}
+
+TEST_F(ECSTest, CreateEntityBulkWithSharedArgs)
+{
+    // Create 100 entities with same constructor args
+    auto metas = m_entityRegistry->createEntityBulk<Position>(
+        100, std::make_tuple(5.0f, 5.0f, 5.0f) // All entities get Position(5, 5, 5)
+    );
+
+    ASSERT_EQ(metas.size(), 100);
+
+    // Verify all have same values
+    for (const auto& meta : metas)
+    {
+        auto result = m_entityRegistry->getComponentsForEntity<Position>(meta.id);
+        ASSERT_TRUE(result.has_value());
+
+        auto& pos = std::get<0>(result.value());
+        EXPECT_FLOAT_EQ(pos.x, 5.0f);
+        EXPECT_FLOAT_EQ(pos.y, 5.0f);
+        EXPECT_FLOAT_EQ(pos.z, 5.0f);
+    }
+}
+
+TEST_F(ECSTest, CreateEntityBulkWithMultipleComponentsAndSharedArgs)
+{
+    // Create entities with multiple components and shared args
+    auto metas = m_entityRegistry->createEntityBulk<Position, Health>(
+        50, std::make_tuple(0.0f, 0.0f, 0.0f), // Position(0, 0, 0)
+        std::make_tuple(50, 100)               // Health(50, 100)
+    );
+
+    ASSERT_EQ(metas.size(), 50);
+
+    // Verify first and last have correct values
+    auto first = m_entityRegistry->getComponentsForEntity<Position, Health>(metas[0].id);
+    ASSERT_TRUE(first.has_value());
+    EXPECT_FLOAT_EQ(std::get<0>(first.value()).x, 0.0f);
+    EXPECT_EQ(std::get<1>(first.value()).hp, 50);
+    EXPECT_EQ(std::get<1>(first.value()).maxHp, 100);
+
+    auto last = m_entityRegistry->getComponentsForEntity<Position, Health>(metas[49].id);
+    ASSERT_TRUE(last.has_value());
+    EXPECT_FLOAT_EQ(std::get<0>(last.value()).x, 0.0f);
+    EXPECT_EQ(std::get<1>(last.value()).hp, 50);
+}
+
+TEST_F(ECSTest, AddComponentsWithArgs)
+{
+    // Create entity with Position
+    auto meta = m_entityRegistry->createEntity<Position>(std::make_tuple(1.0f, 2.0f, 3.0f));
+
+    // Add Velocity with args (triggers archetype migration)
+    m_entityRegistry->addComponents<Velocity>(meta.id, std::make_tuple(10.0f, 20.0f, 30.0f));
+
+    // Verify both components
+    auto result = m_entityRegistry->getComponentsForEntity<Position, Velocity>(meta.id);
+    ASSERT_TRUE(result.has_value());
+
+    auto& [pos, vel] = result.value();
+    EXPECT_FLOAT_EQ(pos.x, 1.0f); // Original Position preserved
+    EXPECT_FLOAT_EQ(pos.y, 2.0f);
+    EXPECT_FLOAT_EQ(pos.z, 3.0f);
+    EXPECT_FLOAT_EQ(vel.dx, 10.0f); // New Velocity has args
+    EXPECT_FLOAT_EQ(vel.dy, 20.0f);
+    EXPECT_FLOAT_EQ(vel.dz, 30.0f);
+}
+
+TEST_F(ECSTest, AddMultipleComponentsWithArgs)
+{
+    // Create entity with just Position
+    auto meta = m_entityRegistry->createEntity<Position>(std::make_tuple(5.0f, 10.0f, 15.0f));
+
+    // Add Velocity and Health with args
+    m_entityRegistry->modifyComponents(meta.id, detail::Add<Velocity, Health>{}, detail::Remove<>{},
+                                       std::make_tuple(1.0f, 2.0f, 3.0f), // Velocity args
+                                       std::make_tuple(75, 100)           // Health args
+    );
+
+    // Verify all three components
+    auto result = m_entityRegistry->getComponentsForEntity<Position, Velocity, Health>(meta.id);
+    ASSERT_TRUE(result.has_value());
+
+    auto& [pos, vel, health] = result.value();
+    EXPECT_FLOAT_EQ(pos.x, 5.0f);
+    EXPECT_FLOAT_EQ(vel.dx, 1.0f);
+    EXPECT_EQ(health.hp, 75);
+    EXPECT_EQ(health.maxHp, 100);
+}
+
+TEST_F(ECSTest, MixedConstructorArgsAndDefaultConstruction)
+{
+    // Create entity with args
+    auto meta1 = m_entityRegistry->createEntity<Position>(std::make_tuple(1.0f, 2.0f, 3.0f));
+
+    // Create entity without args
+    auto meta2 = m_entityRegistry->createEntity<Position>();
+
+    // Both should exist in same archetype
+    EXPECT_EQ(m_entityRegistry->archetypeCount(), 1);
+    EXPECT_EQ(m_entityRegistry->entityCount(), 2);
+
+    // Verify first has initialized values
+    auto result1 = m_entityRegistry->getComponentsForEntity<Position>(meta1.id);
+    ASSERT_TRUE(result1.has_value());
+    EXPECT_FLOAT_EQ(std::get<0>(result1.value()).x, 1.0f);
+
+    // Second exists but values are default-initialized (indeterminate)
+    auto result2 = m_entityRegistry->getComponentsForEntity<Position>(meta2.id);
+    EXPECT_TRUE(result2.has_value());
+}

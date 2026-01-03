@@ -96,11 +96,14 @@ class EntityRegistry final
      * arguments.
      *
      * @tparam Ts The component types to be added to the new entity.
+     * @tparam ArgTuples The tuple types containing constructor arguments for each component.
+     * @param _argTuples Tuples of constructor arguments for each component (use std::make_tuple).
      * @return The metadata of the newly created entity.
      * @throws std::runtime_error if one or more components are not registered.
      */
-    template <Component... Ts>
-    EntityMeta createEntity()
+    template <Component... Ts, typename... ArgTuples>
+        requires(sizeof...(Ts) == sizeof...(ArgTuples))
+    EntityMeta createEntity(ArgTuples&&... _argTuples)
     {
         if (!areComponentsRegistered<Ts...>(m_componentRegistry))
         {
@@ -120,7 +123,17 @@ class EntityRegistry final
 
         new (rowPtr) EntityMeta{meta};
 
-        ((new (rowPtr + componentOffsets[m_componentRegistry->getID<Ts>()]) Ts()), ...);
+        // Construct each component with its args via tuple unpacking
+        size_t idx = 0;
+        (
+            [&]<typename T, typename ArgTuple>(ArgTuple&& argTuple)
+            {
+                auto offset = componentOffsets[m_componentRegistry->getID<T>()];
+                std::apply([&](auto&&... args)
+                           { new (rowPtr + offset) T(std::forward<decltype(args)>(args)...); },
+                           std::forward<ArgTuple>(argTuple));
+            }.template operator()<Ts>(std::forward<ArgTuples>(_argTuples)),
+            ...);
 
         arch->insert(meta.id, rowPtr);
         m_entityToArchetype[meta.id] = arch;
@@ -254,6 +267,119 @@ class EntityRegistry final
         modifyComponents(_eid, detail::Add<>{}, detail::Remove<Ts...>{});
     }
 
+    /**
+     * @brief Modifies the components of the entity with the specified ID by adding and/or removing
+     * specified components, with constructor arguments for added components.
+     *
+     * If the entity already has some of the specified components, they will not be duplicated.
+     * If the entity does not have some of the components to be removed, they will be ignored.
+     * The entity will be moved to the corresponding archetype that matches its updated component
+     * signature.
+     *
+     * @tparam AddComponents The component types to be added to the entity.
+     * @tparam RemoveComponents The component types to be removed from the entity.
+     * @tparam ArgTuples The tuple types containing constructor arguments for added components.
+     * @param _eid The ID of the entity whose components are to be modified.
+     * @param _addTag Tag for added components.
+     * @param _removeTag Tag for removed components.
+     * @param _argTuples Tuples of constructor arguments for each added component.
+     * @throws std::runtime_error if one or more components are not registered.
+     */
+    template <Component... AddComponents, Component... RemoveComponents, typename... ArgTuples>
+        requires(sizeof...(AddComponents) == sizeof...(ArgTuples))
+    void modifyComponents(EntityID _eid, detail::Add<AddComponents...>,
+                          detail::Remove<RemoveComponents...>, ArgTuples&&... _argTuples)
+    {
+        // validate registrations (guard empty packs)
+        if ((sizeof...(AddComponents) > 0 &&
+             !areComponentsRegistered<AddComponents...>(m_componentRegistry)) ||
+            (sizeof...(RemoveComponents) > 0 &&
+             !areComponentsRegistered<RemoveComponents...>(m_componentRegistry)))
+        {
+            throw std::runtime_error("One or more components are not registered.");
+        }
+
+        auto mapIt = m_entityToArchetype.find(_eid);
+        if (mapIt == m_entityToArchetype.end()) return; // entity not found (no-op)
+
+        Archetype* oldArch = mapIt->second;
+        Byte* oldRowPtr = oldArch->get(_eid);
+        if (!oldRowPtr) return; // defensive
+
+        ComponentSignature oldSig = oldArch->signature();
+
+        // compute destination signature
+        ComponentSignature newSig = oldSig;
+        (newSig.setBit(m_componentRegistry->getID<AddComponents>()), ...);
+        (newSig.clearBit(m_componentRegistry->getID<RemoveComponents>()), ...);
+
+        // no-op if signature unchanged
+        if (oldSig == newSig) return;
+
+        size_t newStride = calculateStrideFromSignature(m_componentRegistry, newSig);
+        Archetype* newArch = getOrCreateArchetype(newSig, newStride);
+
+        if (newArch == oldArch) return; // safety (shouldn't happen, but cheap guard)
+
+        std::vector<Byte> newRow(newStride);
+        Byte* newRowPtr = newRow.data();
+
+        // copy EntityMeta
+        EntityMeta meta = *reinterpret_cast<EntityMeta*>(oldRowPtr);
+        new (newRowPtr) EntityMeta{meta};
+
+        // copy surviving components from old row to the corresponding new offsets
+        auto oldOffsets = oldArch->componentOffsets(); // map<CompID, offset>
+        auto newOffsets = newArch->componentOffsets(); // map<CompID, offset>
+
+        for (const auto& [compID, srcOffset] : oldOffsets)
+        {
+            auto destIt = newOffsets.find(compID);
+            if (destIt == newOffsets.end()) continue; // component removed
+            size_t compSize = m_componentRegistry->info(compID).size;
+            std::memcpy(newRowPtr + destIt->second, oldRowPtr + srcOffset, compSize);
+        }
+
+        // construct newly added components with args (if any)
+        if constexpr (sizeof...(AddComponents) > 0)
+        {
+            (
+                [&]<typename T, typename ArgTuple>(ArgTuple&& argTuple)
+                {
+                    auto offset = newOffsets[m_componentRegistry->getID<T>()];
+                    std::apply(
+                        [&](auto&&... args)
+                        { new (newRowPtr + offset) T(std::forward<decltype(args)>(args)...); },
+                        std::forward<ArgTuple>(argTuple));
+                }.template operator()<AddComponents>(std::forward<ArgTuples>(_argTuples)),
+                ...);
+        }
+
+        // perform the migration: insert into destination archetype, remove from source, update
+        // mapping
+        newArch->insert(meta.id, newRowPtr);
+        oldArch->remove(meta.id);
+        m_entityToArchetype[meta.id] = newArch;
+    }
+
+    /**
+     * @brief Adds the specified components to the entity with the given ID, initialized with
+     * constructor arguments.
+     *
+     * @tparam Ts The component types to add.
+     * @tparam ArgTuples The tuple types containing constructor arguments for each component.
+     * @param _eid The ID of the entity to which components will be added.
+     * @param _argTuples Tuples of constructor arguments for each component.
+     * @throws std::runtime_error if one or more components are not registered.
+     */
+    template <Component... Ts, typename... ArgTuples>
+        requires(sizeof...(Ts) == sizeof...(ArgTuples))
+    void addComponents(EntityID _eid, ArgTuples&&... _argTuples)
+    {
+        modifyComponents(_eid, detail::Add<Ts...>{}, detail::Remove<>{},
+                         std::forward<ArgTuples>(_argTuples)...);
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     // Bulk Operations API
     ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -310,6 +436,78 @@ class EntityRegistry final
 
             // Default-initialize all components
             ((new (rowPtr + componentOffsets[m_componentRegistry->getID<Ts>()]) Ts()), ...);
+
+            // Update entity-to-archetype mapping
+            m_entityToArchetype[metas[i].id] = arch;
+        }
+
+        return metas;
+    }
+
+    /**
+     * @brief Creates multiple entities with the same component signature, initialized with
+     * constructor arguments.
+     *
+     * All entities are created with the same constructor arguments (shared initialization).
+     * This is significantly faster than calling createEntity() in a loop.
+     *
+     * @tparam Ts The component types for all new entities.
+     * @tparam ArgTuples The tuple types containing constructor arguments for each component.
+     * @param _count Number of entities to create.
+     * @param _argTuples Tuples of constructor arguments for each component (use std::make_tuple).
+     * @return Vector of EntityMeta for all created entities.
+     * @throws std::runtime_error if one or more components are not registered.
+     */
+    template <Component... Ts, typename... ArgTuples>
+        requires(sizeof...(Ts) == sizeof...(ArgTuples))
+    std::vector<EntityMeta> createEntityBulk(size_t _count, ArgTuples&&... _argTuples)
+    {
+        if (_count == 0) return {};
+
+        if (!areComponentsRegistered<Ts...>(m_componentRegistry))
+        {
+            throw std::runtime_error("One or more components are not registered.");
+        }
+
+        auto sig = getSignatureFromTypes<Ts...>(m_componentRegistry);
+        auto stride = calculateStrideFromSignature(m_componentRegistry, sig);
+        auto componentOffsets = getComponentOffsetsInBytesFromSignature(m_componentRegistry, sig);
+
+        // Allocate all entity IDs upfront
+        std::vector<EntityMeta> metas = m_EntityAllocationHelper.getIDBulk(_count);
+
+        // Get or create archetype
+        Archetype* arch = getOrCreateArchetype(sig, stride);
+
+        // Extract just the IDs for bulk insert
+        std::vector<EntityID> eids;
+        eids.reserve(_count);
+        for (const auto& meta : metas)
+        {
+            eids.push_back(meta.id);
+        }
+
+        // Allocate uninitialized storage for all entities
+        Byte* dstBase = arch->insertBulkUninitialized(eids.data(), _count);
+
+        // Initialize each entity's data with the SAME constructor arguments
+        for (size_t i = 0; i < _count; ++i)
+        {
+            Byte* rowPtr = dstBase + i * stride;
+
+            // Initialize EntityMeta
+            new (rowPtr) EntityMeta{metas[i]};
+
+            // Construct each component with its args via tuple unpacking (same args for all)
+            (
+                [&]<typename T, typename ArgTuple>(ArgTuple&& argTuple)
+                {
+                    auto offset = componentOffsets[m_componentRegistry->getID<T>()];
+                    std::apply([&](auto&&... args)
+                               { new (rowPtr + offset) T(std::forward<decltype(args)>(args)...); },
+                               std::forward<ArgTuple>(argTuple));
+                }.template operator()<Ts>(_argTuples),
+                ...);
 
             // Update entity-to-archetype mapping
             m_entityToArchetype[metas[i].id] = arch;
