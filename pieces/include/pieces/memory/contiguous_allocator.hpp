@@ -12,24 +12,21 @@ namespace pieces
 {
 
 /**
- * @brief An enum class to define the policy for contiguous allocators.
+ * @brief An enum class to define contiguous allocator policies.
  */
 enum class ContiguousAllocatorPolicy : uint8_t
 {
-    linear,
-    stack,
-    circular,
+    linear, // Allocates memory linearly, does not allow deallocation.
+    stack,  // Allocates memory in a stack-like manner, allowing deallocation only in reverse order.
+    circular, // Allocates memory in a circular buffer manner, allowing wrap-around when full.
 };
 
 /**
  * @brief A templetized base class for contiguous memory allocators (linear, stack, circular).
  *
  * The three policies are:
- *
  * - linear: Allocates memory linearly, does not allow deallocation.
- *
  * - stack: Allocates memory in a stack-like manner, allowing deallocation only in reverse order.
- *
  * - circular: Allocates memory in a circular buffer manner, allowing wrap-around when the buffer is
  * full.
  *
