@@ -3,6 +3,7 @@
 #include <typeindex>
 #include <typeinfo>
 #include <string>
+#include <vector>
 #include <unordered_map>
 
 #include "component.hpp"

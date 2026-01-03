@@ -1,18 +1,16 @@
 #pragma once
 
-#include <array>
-#include <functional>
 #include <algorithm>
 #include <optional>
 #include <unordered_map>
 
-#include <pieces/containers/sparse_set.hpp>
-
 #include "entity.hpp"
 #include "component.hpp"
-#include "helpers.hpp"
 #include "archetype.hpp"
 #include "component_registry.hpp"
+#include "component_utils.hpp"
+#include "entity_view.hpp"
+#include "entity_allocation_helper.hpp"
 
 namespace mosaic
 {
@@ -38,236 +36,10 @@ class EntityRegistry final
    private:
     using Byte = uint8_t;
 
-    /**
-     * @brief The 'EntityAllocator' is a helper class responsible for managing the allocation and
-     * deallocation of entity IDs and keeping track of their generation counts.
-     */
-    class EntityAllocator
-    {
-       public:
-        [[nodiscard]] EntityMeta getID()
-        {
-            if (!m_freeList.empty())
-            {
-                EntityID id = m_freeList.back();
-                m_freeList.pop_back();
-
-                ++m_generations[id];
-
-                return {id, m_generations[id]};
-            }
-
-            EntityID id = m_next++;
-
-            if (id >= m_generations.size()) m_generations.push_back(0);
-
-            return {id, m_generations[id]};
-        }
-
-        void freeID(EntityID _id) { m_freeList.push_back(_id); }
-
-        /**
-         * @brief Allocates multiple entity IDs at once.
-         *
-         * @param _count Number of IDs to allocate.
-         * @return Vector of allocated EntityMeta.
-         */
-        [[nodiscard]] std::vector<EntityMeta> getIDBulk(size_t _count)
-        {
-            std::vector<EntityMeta> result;
-            result.reserve(_count);
-
-            for (size_t i = 0; i < _count; ++i)
-            {
-                result.push_back(getID());
-            }
-
-            return result;
-        }
-
-        /**
-         * @brief Frees multiple entity IDs at once.
-         *
-         * @param _ids Vector of entity IDs to free.
-         */
-        void freeIDBulk(const std::vector<EntityID>& _ids)
-        {
-            m_freeList.reserve(m_freeList.size() + _ids.size());
-            for (EntityID id : _ids)
-            {
-                m_freeList.push_back(id);
-            }
-        }
-
-        void reset()
-        {
-            m_next = 0;
-            m_freeList.clear();
-            m_generations.clear();
-        }
-
-        [[nodiscard]] EntityGen getGenForID(EntityID _eid) const { return m_generations[_eid]; }
-
-       private:
-        EntityID m_next = 0;
-        std::vector<EntityID> m_freeList;
-        std::vector<EntityGen> m_generations;
-    };
-
-    /**
-     * @brief The 'EntityView' class provides a non-owning view over a set of entities that share
-     * a specific set of components even if they are stored in different archetypes.
-     *
-     * @tparam Ts The component types that define the view.
-     */
-    template <Component... Ts>
-    class EntityView
-    {
-       private:
-        using Byte = uint8_t;
-
-        std::vector<Archetype*> m_archetypes;
-        const ComponentRegistry* m_componentRegistry;
-
-       public:
-        /**
-         * @brief Constructs an EntityView with the given archetypes and component registry
-         * (inherited from the EntityRegistry).
-         *
-         * @param _archetypes The list of archetypes containing the entities to be viewed.
-         * @param _com The component registry for component type information.
-         */
-        EntityView(const std::vector<Archetype*>& _archetypes, const ComponentRegistry* _com)
-            : m_archetypes(std::move(_archetypes)), m_componentRegistry(_com) {};
-
-       public:
-        /**
-         * @brief Applies the provided function to each entity and its components in the view.
-         *
-         * @tparam Func The type of the function to be applied.
-         * @param _func The function to apply to each entity and its components. It should accept
-         * an EntityMeta and references to the components of types Ts...
-         */
-        template <typename Func>
-            requires std::is_invocable_r_v<void, Func, EntityMeta, Ts&...>
-        void forEach(Func&& _func)
-        {
-            for (auto* archetype : m_archetypes)
-            {
-                auto componentOffsets = archetype->componentOffsets();
-
-                Byte* base = archetype->data();
-                size_t stride = archetype->stride();
-                size_t count = archetype->size();
-
-                for (size_t row = 0; row < count; ++row)
-                {
-                    Byte* rowPtr = base + row * stride;
-
-                    EntityMeta meta = *reinterpret_cast<EntityMeta*>(rowPtr);
-
-                    auto tuple = std::forward_as_tuple(
-                        meta, (*reinterpret_cast<Ts*>(
-                                  rowPtr + componentOffsets[m_componentRegistry->getID<Ts>()]))...);
-
-                    std::apply(_func, tuple);
-                }
-            }
-        }
-
-       public:
-        /**
-         * @brief An iterator for traversing entities and their components in the view.
-         */
-        struct Iterator
-        {
-           private:
-            const ComponentRegistry* m_componentRegistry;
-            std::vector<Archetype*> m_archetypes;
-            size_t m_archetypeIndex;
-            size_t m_rowIndex;
-
-            // Cached values for the current archetype
-            Byte* m_base = nullptr;
-            size_t m_stride = 0;
-            size_t m_count = 0;
-            std::unordered_map<ComponentID, size_t> m_componentOffsets;
-
-            // Load the archetype at the given index and update cached values
-            void loadArchetype(size_t index)
-            {
-                if (index >= m_archetypes.size()) return;
-                Archetype* arch = m_archetypes[index];
-                m_base = arch->data();
-                m_stride = arch->stride();
-                m_count = arch->size();
-                m_componentOffsets = arch->componentOffsets();
-            }
-
-            // Advance to the next valid archetype with rows, if necessary
-            void advanceToValid()
-            {
-                while (m_archetypeIndex < m_archetypes.size() && m_rowIndex >= m_count)
-                {
-                    ++m_archetypeIndex;
-                    m_rowIndex = 0;
-                    if (m_archetypeIndex < m_archetypes.size()) loadArchetype(m_archetypeIndex);
-                }
-            }
-
-           public:
-            Iterator(const ComponentRegistry* _com, std::vector<Archetype*> _archetypes,
-                     size_t archetypeIndex, size_t rowIndex)
-                : m_componentRegistry(_com),
-                  m_archetypes(std::move(_archetypes)),
-                  m_archetypeIndex(archetypeIndex),
-                  m_rowIndex(rowIndex)
-            {
-                if (m_archetypeIndex < m_archetypes.size()) loadArchetype(m_archetypeIndex);
-                advanceToValid();
-            }
-
-            struct EntityMetaComponentTuplePair
-            {
-                EntityMeta meta;
-                std::tuple<Ts&...> components;
-            };
-
-            EntityMetaComponentTuplePair operator*() const
-            {
-                Byte* rowPtr = m_base + m_rowIndex * m_stride;
-                EntityID eid = *reinterpret_cast<EntityID*>(rowPtr);
-
-                auto comps = std::forward_as_tuple((*reinterpret_cast<Ts*>(
-                    rowPtr + m_componentOffsets.at(m_componentRegistry->getID<Ts>())))...);
-
-                return {EntityMeta{eid, 0u}, comps};
-            }
-
-            bool operator!=(const Iterator& _other) const
-            {
-                return m_archetypeIndex != _other.m_archetypeIndex ||
-                       m_rowIndex != _other.m_rowIndex;
-            }
-
-            void operator++()
-            {
-                ++m_rowIndex;
-                advanceToValid();
-            }
-        };
-
-        Iterator begin() { return Iterator(m_componentRegistry, m_archetypes, 0, 0); }
-        Iterator end()
-        {
-            return Iterator(m_componentRegistry, m_archetypes, m_archetypes.size(), 0);
-        }
-    };
-
     std::unordered_map<ComponentSignature, std::unique_ptr<Archetype>> m_archetypes;
     std::unordered_map<EntityID, Archetype*> m_entityToArchetype;
     const ComponentRegistry* m_componentRegistry;
-    EntityAllocator m_entityAllocator;
+    EntityAllocationHelper m_EntityAllocationHelper;
 
    public:
     /**
@@ -301,7 +73,44 @@ class EntityRegistry final
         auto sig = getSignatureFromTypes<Ts...>(m_componentRegistry);
         auto stride = calculateStrideFromSignature(m_componentRegistry, sig);
 
-        EntityMeta meta = m_entityAllocator.getID();
+        EntityMeta meta = m_EntityAllocationHelper.getID();
+        Archetype* arch = getOrCreateArchetype(sig, stride);
+
+        auto componentOffsets = getComponentOffsetsInBytesFromSignature(m_componentRegistry, sig);
+
+        std::vector<Byte> row(stride);
+        Byte* rowPtr = row.data();
+
+        new (rowPtr) EntityMeta{meta};
+
+        ((new (rowPtr + componentOffsets[m_componentRegistry->getID<Ts>()]) Ts()), ...);
+
+        arch->insert(meta.id, rowPtr);
+        m_entityToArchetype[meta.id] = arch;
+
+        return meta;
+    }
+
+    /**
+     * @brief Creates a new entity with the specified components, initialized with constructor
+     * arguments.
+     *
+     * @tparam Ts The component types to be added to the new entity.
+     * @return The metadata of the newly created entity.
+     * @throws std::runtime_error if one or more components are not registered.
+     */
+    template <Component... Ts>
+    EntityMeta createEntity()
+    {
+        if (!areComponentsRegistered<Ts...>(m_componentRegistry))
+        {
+            throw std::runtime_error("One or more components are not registered.");
+        }
+
+        auto sig = getSignatureFromTypes<Ts...>(m_componentRegistry);
+        auto stride = calculateStrideFromSignature(m_componentRegistry, sig);
+
+        EntityMeta meta = m_EntityAllocationHelper.getID();
         Archetype* arch = getOrCreateArchetype(sig, stride);
 
         auto componentOffsets = getComponentOffsetsInBytesFromSignature(m_componentRegistry, sig);
@@ -333,7 +142,7 @@ class EntityRegistry final
 
         arch->remove(_eid);
         m_entityToArchetype.erase(_eid);
-        m_entityAllocator.freeID(_eid);
+        m_EntityAllocationHelper.freeID(_eid);
     }
 
     /**
@@ -475,7 +284,7 @@ class EntityRegistry final
         auto componentOffsets = getComponentOffsetsInBytesFromSignature(m_componentRegistry, sig);
 
         // Allocate all entity IDs upfront
-        std::vector<EntityMeta> metas = m_entityAllocator.getIDBulk(_count);
+        std::vector<EntityMeta> metas = m_EntityAllocationHelper.getIDBulk(_count);
 
         // Get or create archetype
         Archetype* arch = getOrCreateArchetype(sig, stride);
@@ -558,7 +367,7 @@ class EntityRegistry final
                 validIds.push_back(eid);
             }
         }
-        m_entityAllocator.freeIDBulk(validIds);
+        m_EntityAllocationHelper.freeIDBulk(validIds);
 
         return notFound;
     }
@@ -773,7 +582,7 @@ class EntityRegistry final
      */
     void clear()
     {
-        m_entityAllocator.reset();
+        m_EntityAllocationHelper.reset();
         m_entityToArchetype.clear();
         m_archetypes.clear();
     }
@@ -898,7 +707,8 @@ class EntityRegistry final
         auto rowPtr = m_entityToArchetype.at(_meta.id)->get(_meta.id);
         auto entityMeta = reinterpret_cast<EntityMeta*>(rowPtr);
 
-        return entityMeta->gen == _meta.gen && m_entityAllocator.getGenForID(_meta.id) == _meta.gen;
+        return entityMeta->gen == _meta.gen &&
+               m_EntityAllocationHelper.getGenForID(_meta.id) == _meta.gen;
     }
 
     // Returns the total number of entities in the registry.
