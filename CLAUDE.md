@@ -42,6 +42,35 @@ Only delegate directly to specialists when:
 
 **If task touches engine code + docs/tests/perf → Use `engine-architect` to coordinate.**
 
+## Gemini CLI Integration
+
+**See `GEMINI.md` for full rules.** Gemini is a support agent, not a peer.
+
+### Mandatory Large File Rule
+Before reading ANY file, check line count:
+```bash
+python .claude/skills/invoke-gemini/scripts/check_line_count.py <file>
+```
+- `>1000 lines` → Gemini MUST analyze first; Claude MUST NOT read directly
+- `<=1000 lines` → Claude proceeds normally
+
+### Gemini Use Cases
+**Use Gemini for:**
+- Large file structural analysis (>1000 lines)
+- Flutter UI / Dart binding boilerplate
+- Repetitive code generation (serialization, adapters)
+- Platform scaffolding
+
+**Never use Gemini for:**
+- ECS, renderer, threading, memory management
+- Architectural decisions
+- Any deep reasoning task
+
+### Workflow
+1. Claude defines spec/constraints
+2. Gemini generates bulk output
+3. Claude reviews and integrates
+
 ## Hierarchical Context System
 
 **This repository uses package-level CLAUDE.md files for deep, localized context.**
