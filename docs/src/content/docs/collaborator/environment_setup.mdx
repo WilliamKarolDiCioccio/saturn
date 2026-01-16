@@ -1,0 +1,259 @@
+---
+title: Environment Setup
+description: Setting up the environment for contributing to Mosaic.
+---
+
+import { Steps, Badge, Card, CardGrid, Tabs, TabItem } from '@astrojs/starlight/components'
+
+This document explains how to set up your development environment and build Mosaic from source. It describes required tools, supported platforms, dependency management, and platform-specific setup steps. You should follow this guide before attempting to configure or build the engine.
+
+---
+
+## Supported platforms and compilers
+
+Mosaic targets **Windows**, **Linux**, **Web**, and **Android**. You may ignore setup steps for platforms you do not intend to build.
+
+On Windows, Visual Studio 2022 provides the most reliable CMake integration and debugging experience. The default compiler is MSVC, although Clang is also supported. On Linux and Web targets, Clang is the preferred compiler. Web builds rely on Emscripten.
+
+---
+
+## Environment setup
+
+<Tabs>
+
+<TabItem label="Windows">
+
+### Install Visual Studio 2022
+
+Install **Visual Studio 2022** with the following components:
+
+* Desktop development with C++
+* C++ CMake tools for Windows
+* MSVC v143 toolset or later
+* Windows 10 or Windows 11 SDK
+
+Visual Studio provides first-class CMake preset support and simplifies debugging large native codebases.
+
+### Install other required tools
+
+:::tip
+- In this guide we use chocolatey to install required tools. You can also install them manually or using other package managers.
+
+- Version parameters are optional but recommended to ensure compatibility.
+
+- You may need to run PowerShell as Administrator to install packages.
+:::
+
+```powershell
+choco install python --version 3.14.2 -y
+choco install fvm --version 4.0.5 -y
+choco install git --version 2.52.0 -y
+choco install vscode --version 1.107.1 -y
+choco install androidstudio --version 2025.2.2.8 -y
+```
+
+### Install vcpkg
+
+Mosaic uses **vcpkg in manifest mode** to manage most third-party dependencies. You must install vcpkg separately, but you do not need to integrate it globally.
+
+<Steps>
+
+1. Clone the vcpkg repository.
+
+   ```powershell
+   git clone https://github.com/microsoft/vcpkg.git
+   ```
+
+2. Bootstrap vcpkg for your platform.
+
+   ```powershell
+   ./vcpkg/bootstrap-vcpkg.bat
+   ```
+
+3. If required, set the `VCPKG_ROOT` environment variable to the vcpkg directory.
+
+</Steps>
+
+---
+
+### Web (Emscripten) <Badge text="Experimental" variant="danger" />
+
+Mosaic uses **Emscripten** to target WebAssembly.
+
+<Steps>
+
+1. Install the Emscripten SDK.
+
+   ```powershell
+   git clone https://github.com/emscripten-core/emsdk.git
+   cd emsdk
+   ./emsdk install latest
+   ./emsdk activate latest
+   ```
+
+2. Load the Emscripten environment.
+
+   ```powershell
+   .\emsdk_env.bat
+   ```
+
+3. Verify that `emcc` is available in your `PATH` before running CMake.
+
+</Steps>
+
+---
+
+### Android <Badge text="Experimental" variant="danger" />
+
+<Steps>
+
+1. Install **Android Studio**.
+
+2. Open the SDK Manager and install:
+
+   * Android NDK r23 or newer
+   * CMake and LLDB
+   * Android SDK tools for API level 24 or later
+
+3. Set the `ANDROID_NDK_HOME` environment variable to the NDK installation path.
+
+</Steps>
+
+---
+
+### Claude Code AI Integration <Badge text="Optional" variant="tip" />
+
+Mosaic supports **Claude Code** AI integration for code generation and assistance. To install it run the following PowerShell command:
+
+```powershell
+irm https://claude.ai/install.ps1 | iex
+```
+
+We use Gemini CLI in conjunction with Claude Code for improved AI capabilities. To install Gemini CLI you need Node.js:
+
+```powershell
+choco install nodejs --version 25.2.1 -y
+npm install -g @google/gemini-cli
+```
+
+</TabItem>
+
+<TabItem label="Linux">
+
+### Install system packages
+
+Install the required system packages for building and running Mosaic:
+
+```bash
+sudo apt update
+sudo apt install \
+  build-essential \
+  cmake \
+  git \
+  ninja-build \
+  python3 \
+  python3-pip \
+  libx11-dev \
+  libxcursor-dev \
+  libxrandr-dev \
+  libxi-dev \
+  libgl1-mesa-dev \
+  libvulkan-dev
+```
+
+You may need additional packages depending on your distribution and window system (e.g., Wayland).
+
+### Install vcpkg
+
+Mosaic uses **vcpkg in manifest mode** to manage most third-party dependencies. You must install vcpkg separately, but you do not need to integrate it globally.
+
+<Steps>
+
+1. Clone the vcpkg repository.
+
+   ```bash
+   git clone https://github.com/microsoft/vcpkg.git
+   ```
+
+2. Bootstrap vcpkg for your platform.
+
+   ```bash
+   ./vcpkg/bootstrap-vcpkg.sh
+   ```
+
+3. If required, set the `VCPKG_ROOT` environment variable to the vcpkg directory.
+
+</Steps>
+
+### Install FVM
+
+Install **FVM** (Flutter Version Manager) to manage Flutter SDK versions:
+
+```bash
+curl -fsSL https://fvm.app/install.sh | bash
+```
+
+---
+
+### Web (Emscripten) <Badge text="Experimental" variant="danger" />
+
+Mosaic uses **Emscripten** to target WebAssembly.
+
+<Steps>
+
+1. Install the Emscripten SDK.
+
+   ```bash
+   git clone https://github.com/emscripten-core/emsdk.git
+   cd emsdk
+   ./emsdk install latest
+   ./emsdk activate latest
+   ```
+
+2. Load the Emscripten environment.
+
+   ```bash
+   source ./emsdk_env.sh
+   ```
+
+3. Verify that `emcc` is available in your `PATH` before running CMake.
+
+</Steps>
+
+---
+
+### Android <Badge text="Experimental" variant="danger" />
+
+<Steps>
+
+1. Install **Android Studio**.
+
+2. Open the SDK Manager and install:
+
+   * Android NDK r23 or newer
+   * CMake and LLDB
+   * Android SDK tools for API level 24 or later
+
+3. Set the `ANDROID_NDK_HOME` environment variable to the NDK installation path.
+
+</Steps>
+
+---
+
+### Claude Code AI Integration <Badge text="Optional" variant="tip" />
+
+Mosaic supports **Claude Code** AI integration for code generation and assistance. To install it run the following Bash command:
+
+```bash
+curl -fsSL https://claude.ai/install.sh | bash
+```
+
+We use Gemini CLI in conjunction with Claude Code for improved AI capabilities. To install Gemini CLI you need Node.js:
+
+```bash
+sudo apt install nodejs npm
+sudo npm install -g @google/gemini-cli
+```
+
+</TabItem>
+</Tabs>

@@ -1,0 +1,48 @@
+---
+title: Build Instructions
+description: Instructions for building Mosaic from source.
+---
+
+import { Steps } from '@astrojs/starlight/components'
+
+This document provides step-by-step instructions for building the Mosaic engine and editor from source code.
+
+---
+
+Follow these steps to build Mosaic from source.
+
+<Steps>
+
+1. Clone the repository and initialize all submodules.
+
+   ```bash
+   git clone --recurse-submodules https://github.com/WilliamKarolDiCioccio/mosaic
+   ```
+
+2. Select a CMake **configure preset** appropriate for your platform.
+
+3. Select a corresponding **build preset** and build the project. The vcpkg toolchain installs dependencies automatically.
+
+</Steps>
+
+At this point, the engine, editor, and test targets are available for your platform.
+
+:::caution
+Mosaic enables Web Workers using the `-pthread` flag to preserve compatibility with native threading code. In some cases, additional flags are required to enable atomic and bulk memory features.
+
+If the build fails with missing atomic support, patch the following file:
+
+```
+out/build/emscripten-${PROFILE}/_deps/emdawnwebgpu-src/emdawnwebgpu.port.py
+```
+
+Add the required flags manually:
+
+```diff lang="py"
+flags = ['-g', '-std=c++17', '-fno-exceptions']
++flags += ['-matomics', '-mbulk-memory']
+flags += compute_library_compile_flags(settings)
+```
+
+This change enables compatibility with multi-threaded WebAssembly targets.
+:::
