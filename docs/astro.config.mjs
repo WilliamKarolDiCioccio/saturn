@@ -74,12 +74,20 @@ export default defineConfig({
           },
           items: [
             {
-              label: "Build environment",
+              label: "Environment setup",
               translations: {
-                en: "Build environment",
-                it: "Ambiente di build",
+                en: "Environment setup",
+                it: "Configurazione ambiente",
               },
-              slug: "collaborator/build_environment",
+              slug: "collaborator/environment_setup",
+            },
+            {
+              label: "Build Instructions",
+              translations: {
+                en: "Build Instructions",
+                it: "Istruzioni di compilazione",
+              },
+              slug: "collaborator/build_instructions",
             },
             {
               label: "C++ conventions",
