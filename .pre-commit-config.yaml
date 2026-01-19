@@ -40,3 +40,37 @@ repos:
       - id: clang-format
         files: ^(mosaic|testbed|pieces|codex|docsgen)/
         args: [--style=file, -i]
+
+  # Dart and Flutter hooks
+  - repo: local
+    hooks:
+      - id: dart-format-app
+        name: Dart Format (editor/app)
+        entry: bash -c "cd editor/app && dart format --fix ."
+        language: system
+        files: ^editor/app/.*\.(dart|yaml|json)$
+        pass_filenames: false
+      - id: flutter-analyze-app
+        name: Flutter Analyze (editor/app)
+        entry: bash -c "cd editor/app && fvm flutter analyze"
+        language: system
+        files: ^editor/app/.*\.(dart|yaml|json)$
+        pass_filenames: false
+      - id: dart-format-packages
+        name: Dart Format (editor/packages)
+        entry: bash -c "cd editor/packages && dart format --fix ."
+        language: system
+        files: ^editor/packages/.*\.(dart|yaml|json)$
+        pass_filenames: false
+      - id: flutter-analyze-packages
+        name: Flutter Analyze (editor/packages)
+        entry: bash -c "cd editor/packages && fvm flutter analyze"
+        language: system
+        files: ^editor/packages/.*\.(dart|yaml|json)$
+        pass_filenames: false
+      - id: dart-format-tools
+        name: Dart Format (editor/tools)
+        entry: bash -c "cd editor/tools && dart format --fix ."
+        language: system
+        files: ^editor/tools/.*\.(dart|yaml|json)$
+        pass_filenames: false
