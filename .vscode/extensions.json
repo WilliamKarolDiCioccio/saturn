@@ -3,6 +3,9 @@
     "ms-vscode.cpptools",
     "ms-vscode.cmake-tools",
     "xaver.clang-format",
-    "antaalt.shader-validator"
+    "antaalt.shader-validator",
+    "Dart-Code.dart-code",
+    "aziznal.dart-import-sorter",
+    "Dart-Code.flutter"
   ]
 }
