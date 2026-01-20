@@ -1,5 +1,4 @@
 ---
-import Image from "astro/components/Image.astro";
 import logo from "../assets/svgs/logo.svg";
 import logotype from "../assets/svgs/logotype.svg";
 ---
@@ -7,8 +6,8 @@ import logotype from "../assets/svgs/logotype.svg";
 <div class="hero-container">
   <canvas id="starfield"></canvas>
   <div class="hero-content">
-    <Image src={logotype} alt="Saturn Game Engine" class="hero-logotype" />
-    <Image src={logo} alt="Saturn Game Engine" class="hero-logo-icon" />
+    <img src={logotype} alt="Saturn Game Engine" class="hero-logotype" />
+    <img src={logo} alt="Saturn Game Engine" class="hero-logo-icon" />
     <p class="hero-tagline">The gravity center for your ideas.</p>
     <a href="./intro/overview/" class="hero-cta">Get Started</a>
   </div>
