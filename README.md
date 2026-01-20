@@ -1,8 +1,8 @@
+# 🎮 Saturn Game Engine
+
 <p align="center">
   <img src="https://raw.githubusercontent.com/WilliamKarolDiCioccio/saturn/refs/heads/main/.github/images/logotype.svg" alt="Saturn Engine Logotype" />
 </p>
-
-# 🎮 Saturn Game Engine
 
 **Saturn** is a modern, cross-platform game engine written in **C++23**, built both as a learning journey and as the foundation for something greater.
 
