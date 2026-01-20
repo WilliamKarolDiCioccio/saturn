@@ -3,13 +3,13 @@ import { defineConfig } from "astro/config";
 
 // Official integrations
 
-import starlight from "@astrojs/starlight";
 import react from "@astrojs/react";
+import starlight from "@astrojs/starlight";
+import tailwindcss from "@tailwindcss/vite";
 
 // Unofficial integrations
 
 import icon from "astro-icon";
-import starlightThemeBlack from "starlight-theme-black";
 import starlightKbd from "starlight-kbd";
 import starlightScrollToTop from "starlight-scroll-to-top";
 
@@ -141,20 +141,11 @@ export default defineConfig({
         },
       },
       plugins: [
-        starlightThemeBlack({
-          navLinks: [
-            {
-              label: "Docs",
-              link: "/intro/overview",
-            },
-          ],
-          footerText:
-            "Built & designed by [shadcn](https://twitter.com/shadcn). Ported to Astro Starlight by [Adrián UB](https://github.com/adrian-ub). The source code is available on [GitHub](https://github.com/adrian-ub/starlight-theme-black).",
-        }),
         starlightKbd({
           types: [
-            { id: "mac", label: "macOS" },
             { id: "windows", label: "Windows", default: true },
+            { id: "linux", label: "Linux" },
+            { id: "mac", label: "macOS" },
           ],
           globalPicker: false,
         }),
@@ -171,4 +162,5 @@ export default defineConfig({
     react(),
     sitemap(),
   ],
+  vite: { plugins: [tailwindcss()] },
 });
