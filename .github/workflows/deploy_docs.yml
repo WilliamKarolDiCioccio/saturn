@@ -19,7 +19,7 @@ jobs:
         run: npx puppeteer browsers install chrome-headless-shell
 
       - name: Install, build, and upload your site
-        uses: withastro/action@v3
+        uses: withastro/action@v5
         with:
           path: ./docs
           package-manager: pnpm@latest
