@@ -1,0 +1,7 @@
+#pragma once
+
+#define SATURN_VERSION_MAJOR 0
+#define SATURN_VERSION_MINOR 0
+#define SATURN_VERSION_PATCH 1
+#define SATURN_VERSION_TWEAK
+#define SATURN_VERSION "0.0.1"
