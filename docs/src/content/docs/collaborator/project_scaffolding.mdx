@@ -1,0 +1,348 @@
+---
+title: Project Scaffolding
+description: Overview of the file structure and architectural organization of the Mosaic monorepo.
+---
+
+import { Aside, Badge, FileTree } from "@astrojs/starlight/components";
+import MermaidDiagram from "../../../components/mmd_diagram";
+
+## Monorepo structure
+
+The Mosaic [repository](https://github.com/WilliamKarolDiCioccio/mosaic) is a **monorepo**, not a single project. It contains multiple first-class projects unified by shared philosophy and tooling, each with distinct responsibility boundaries.
+
+This organization reflects an intentional architecture: a cohesive ecosystem where the engine (`mosaic/`), utilities (`pieces/`), tooling (`codex/`, `docsgen/`), sandbox (`testbed/`), and editor (`editor/`) coordinate around common design patterns while maintaining clear separation of concerns.
+
+### Top-level projects
+
+The repository contains six major top-level projects:
+
+- <Badge text="WIP" variant="note" /> **`pieces/`** — STL-like header-only
+  utility library
+- **`mosaic/`** — Game engine core
+- <Badge text="WIP" variant="note" /> **`codex/`** — C++ source code parser
+- <Badge text="WIP" variant="note" /> **`docsgen/`** — Documentation generation
+  tool
+- <Badge text="Future" variant="success" /> **`metagen/`** — Code generation
+  tool
+- <Badge text="Future" variant="success" /> **`editor/`** — Mosaic Editor
+  (Flutter + native Mosaic integration)
+- **`testbed/`** — Sandbox application for engine feature validation
+
+The documentation website:
+
+- `docs/` — Astro 5 + Starlight documentation website (deployed to GitHub Pages)
+
+And supporting directories:
+
+- `scripts/` — Build and development scripts
+- `cmake/` — CMake configuration and utilities
+- `assets/` — Shared assets (branding, design, etc.)
+- <Badge text="Deprecated" variant="danger" /> `vendor/` — Third-party libraries
+  (vendored dependencies, _submodules_ soon to be replaced with _CMake
+  FetchContent_)
+
+---
+
+## General C++ project structure
+
+Each C++ project follows a consistent directory structure:
+
+<FileTree>
+
+- project_name/ — Root source directory
+  - include/project_name/ — Public headers
+  - src/ — Private source files
+  - tests/ — Unit and integration tests, fuzzing
+    - unit/ — Unit tests
+    - integration/ — Integration tests
+    - CMakeLists.txt — CMake build configuration
+  - bench/ — Benchmarks
+  - CMakeLists.txt — CMake build configuration
+
+</FileTree>
+
+In order **to speed up compilation times targets may be split into multiple libraries that do not conform to the above structure** for the sake of simplicity.
+
+<FileTree>
+
+- project_name/ — Root source directory
+  - include/project_name/
+    - sub_project/ — Public headers for sub-project
+  - src/ — Private source files
+    - sub_project/ — Source files for sub-project
+      - tests/ — Unit and integration tests, fuzzing
+      - bench/ — Benchmarks
+      - CMakeLists.txt — CMake build configuration for sub-project
+
+</FileTree>
+
+---
+
+## General Flutter project structure
+
+Each Flutter project follows a consistent directory structure:
+
+<FileTree>
+
+- lib/
+  - main.dart — App entry point (minimal: runApp + bootstrap)
+  - app.dart — Root widget (MaterialApp / MaterialApp.router)
+  - bootstrap/ — App startup & initialization
+    - app_bootstrap.dart — Dependency initialization
+    - bindings.dart — Service locator / DI wiring
+    - env.dart — Environment config (dev, prod)
+    - observers.dart — Global observers (Bloc, Navigator)
+  - core/ — Framework-agnostic foundations
+    - platform/ — Platform abstractions (web, mobile, desktop)
+    - errors/ — Error types, failures, exception mapping
+    - logging/ — Logging & crash reporting
+    - utils/ — Pure utilities & extensions (no Flutter imports)
+    - constants/ — App-wide constants
+    - types/ — Shared typedefs & base interfaces
+  - design/ — Design system (no business logic)
+    - tokens/ — Colors, spacing, typography scales
+    - themes/ — App themes (light/dark/high-contrast)
+    - components/ — Reusable design components
+    - icons/ — Custom icon definitions
+  - shared/ — Cross-feature reusable Flutter code
+    - widgets/ — Generic UI widgets (buttons, loaders)
+    - layout/ — Responsive/layout helpers
+    - navigation/ — App-level navigation abstractions
+    - state/ — Shared state (auth session, app settings)
+    - services/ — Cross-cutting services (analytics, permissions)
+  - features/ — Feature-first vertical slices
+    - project_management/
+      - data/
+        - models/ — DTOs & data models
+        - sources/ — Local / remote data sources
+        - repositories/ — Repository implementations
+      - domain/
+        - entities/ — Domain entities
+        - repositories/ — Repository interfaces
+        - use_cases/ — Business rules
+      - presentation/
+        - pages/ — Screens
+        - widgets/ — Feature-specific widgets
+        - state/ — Cubit / Bloc / Notifier
+        - routes.dart — Feature routes
+      - feature.dart — Feature registration / exports
+    - scene_editor/
+      - data/
+      - domain/
+      - presentation/
+      - feature.dart
+  - localization/ — i18n & l10n
+    - app_localizations.dart
+    - arb/
+
+</FileTree>
+
+While this scales really well it can be a bit verbose for small features. In those cases feel free to **collapse** the `data/domain/presentation` layers into a single directory.
+
+**Smaller packages and tools may not require the full structure above**. Use discretion to avoid unnecessary complexity.
+
+---
+
+## `pieces/` — Header-only utilities
+
+- **Type:** C++23 header-only library
+- **Dependencies:** utf8cpp (string utilities only)
+- **Responsibility:** Core data structures and patterns shared across all Mosaic projects
+
+`pieces/` provides STL-like utilities with zero runtime coupling to the engine:
+
+- **General purpose containers**: `SparseSet`, `TypelessVector`, `BitSet`, `CircularBuffer`, `ConstexprMap`
+- **Memory allocators**: `PoolAllocator`, `ContiguousAllocator`, `ProxyAllocator`
+- **Error handling**: `Result<T, E>` and `RefResult<T, E>` for Railway-Oriented Programming
+- **Async utilities**: `Task<T>` for C++20 coroutines
+- **String utilities**: UTF-8 conversion, `string_view` helpers
+- **Performance tools**: SIMD intrinsics wrappers, cache-line alignment
+
+<FileTree>
+
+- `containers/` — SparseSet,, CircularBuffer, etc.
+- `memory/` — Allocators and pool memory management
+- `core/` — Result types, type traits, utility macros
+- `utils/` — Coroutines, SIMD, string utilities
+
+</FileTree>
+
+---
+
+## `mosaic/` — Game engine core
+
+- **Type:** Shared library (desktop/mobile), static library (web)
+- **Dependencies:** pieces, Vulkan SDK, fmt, glm, glfw, nlohmann-json, etc.
+- **Responsibility:** Rendering, input, execution, scene management, platform abstraction
+
+The engine is organized into subsystems, each with clear ownership and invariants:
+
+<FileTree>
+
+- core/ — Application lifecycle, system registry, events
+- ecs/ — Entity-Component-System (archetypal, type-erased)
+- exec/ — ThreadPool, TaskFuture, TaskScheduler (async execution)
+- graphics/ — RHI abstraction and high-level rendering API
+- resources/ — Asset management and resource loading
+- input/ — Input system (three-layer architecture)
+- window/ — Window management abstraction
+- platform/ — Platform abstraction (Win32/POSIX/AGDK/Emscripten)
+- scene/ — Scene graph (in development)
+
+</FileTree>
+
+### Core architecture
+
+**Entity-Component-System:** Archetypal storage with type-erased components. Entities with identical component signatures live contiguously in the same archetype, maximizing data locality.
+
+**Multi-threaded execution:** Work-stealing `ThreadPool` with `TaskFuture<T>` and `TaskScheduler` for dependency-based task graphs. Supports cancellation and worker affinity.
+
+**Rendering:** Backend abstraction via `RenderContext` base class. Two implementations: Vulkan (desktop/mobile) and WebGPU (web + desktop via Dawn).
+
+**Input system:** Three-layer architecture separating platform input sources, window-specific input context, and high-level action bindings.
+
+**Platform abstraction:** Conditional compilation for Win32, POSIX (Linux), Android (AGDK), WebAssembly (Emscripten), and GLFW (cross-platform).
+
+---
+
+## `codex/` — C++ parser and documentation extractor
+
+- **Type:** Static library
+- **Dependencies:** pieces, tree-sitter, tree-sitter-cpp, fmt
+- **Responsibility:** Parsing C++ source code and extracting structured documentation data
+
+`codex` uses tree-sitter to build an Abstract Syntax Tree (AST) from C++ source files, then extracts structured information for documentation generation. It is intentionally decoupled from the Mosaic engine and can parse any C++ project.
+
+<Aside type="note">
+  Codex performs **syntax-only analysis**. It does not resolve types,
+  instantiate templates, or evaluate preprocessor conditionals. This limitation
+  keeps it simple and enables fast parsing of large codebases.
+</Aside>
+
+---
+
+## `docsgen/` — Documentation generation tool
+
+- **Type:** Executable (CLI tool)
+- **Dependencies:** codex, bfgroup-lyra, STL
+- **Responsibility:** Converting codex AST output into MDX documentation files
+
+`docsgen` consumes `codex` output and generates MDX (Markdown + JSX) files suitable for the Astro documentation site. It is the pipeline terminal: FilesCollector → Parser → MDXGenerator.
+
+**Invocation:**
+
+```bash
+./build/docsgen/docsgen --input ./mosaic/include --output ./docs/src/content/docs/reference
+```
+
+This generates API reference pages from the engine headers. The tool guarantees deterministic output (same input = same output) and respects the `--input` and `--output` directories.
+
+<Aside type="note">
+  API reference generation is **in development**. The MDXGenerator
+  implementation is currently stubbed and awaits implementation.
+</Aside>
+
+---
+
+## `testbed/` — Sandbox application
+
+- **Type:** Executable application
+- **Dependencies:** mosaic, pieces
+- **Responsibility:** Validating engine features and experimenting with APIs
+
+`testbed` is a lightweight test application that links against `mosaic` and exercises engine functionality. It serves as both a proof-of-concept and a safe sandbox for feature validation without disrupting the main codebase.
+
+The testbed follows the standard Mosaic application pattern: subclass `Application`, override lifecycle methods, and use `MOSAIC_ENTRY_POINT(MyApp)` for platform-specific entry point generation.
+
+---
+
+## `editor/` — Mosaic Editor
+
+- **Type:** Flutter application + native integration
+- **Dependencies:** mosaic (via FFI), Flutter SDK, Dart packages
+- **Responsibility:** Interactive game development interface with native Mosaic engine integration
+
+The editor is deliberately built with a **different technology stack** (Flutter + Dart) to maintain separation from the C++ engine core. This architectural choice allows:
+
+- Rapid UI iteration without affecting engine stability
+- Clear native/managed boundary with explicit FFI bindings
+- Independent release cycles for editor and engine
+- Reusable Flutter packages for common editor widgets
+
+### Using Melos for monorepo management
+
+The editor project uses [Melos](https://melos.invertase.dev/) to manage multiple Flutter/Dart packages within the `editor/` directory. Melos simplifies dependency management, versioning, and script execution across the monorepo.
+
+### Editor app (`app/`)
+
+The main Mosaic Editor application written in Flutter. It is a standard Flutter project with platform-specific implementations for Windows, Linux, and macOS.
+
+Each feature owns its data layer, domain logic, and presentation layer. This structure enables independent feature development and testing.
+
+### Packages (`packages/`)
+
+<Aside type="note">
+  The `fl_nodes` package is included as a **Git submodule**, allowing
+  independent versioning and reuse in other projects.
+</Aside>
+
+The `packages/` directory contains reusable Flutter/Dart libraries:
+
+- **`fl_nodes`** — Node-based visual programming library (graph editor, node management, connections)
+- **Future packages** — `fl_panels`, `fl_inspector`, `fl_scene_viewport`, etc.
+
+These packages follow clean architecture with separate data, domain, and presentation layers. Each can be versioned independently and published to pub.dev for community use.
+
+### Tools (`tools/`)
+
+Reserved for CLI tools and small standalone utilities useful for game development (currently empty, available for future expansion).
+
+---
+
+## `docs/` — Documentation website
+
+- **Type:** Astro 5 + Starlight static site
+- **Deployment:** GitHub Pages at `/mosaic/`
+- **Responsibility:** Engine and editor documentation for users and contributors
+
+The documentation site is built with Astro (static site generator) and Starlight (documentation theme). It features:
+
+- **Multi-language support:** English (en) and Italian (it)
+- **Mermaid diagrams:** Pre-rendered to dual-theme SVG (light/dark mode)
+- **Custom React components:** MermaidDiagram component with theme awareness
+- **Content collections:** Type-safe MDX with frontmatter schema validation
+
+<FileTree>
+
+- intro/ — Introduction and overview
+- user/ — User guides (WIP)
+- collaborator/ — Contributor guides
+- engineering/ — Design patterns and architecture
+- reference/ — API reference (autogenerated)
+
+</FileTree>
+
+<Aside type="note">
+The documentation build process:
+
+1. Write diagram code in `src/mmds/*.mmd`
+2. Run `pnpm run dev` (includes Mermaid sync)
+3. Reference diagram via `<MermaidDiagram name="diagram_name" />`
+4. Pre-renderer generates dual-theme SVGs automatically
+5. React component displays theme-aware SVG on page load
+
+All diagrams are **pre-rendered to static SVG**. No client-side Mermaid library is shipped, keeping the bundle size minimal.
+
+</Aside>
+
+---
+
+## Dependency hierarchy
+
+The monorepo maintains a strict dependency hierarchy to prevent cycles and enforce modularity:
+
+<MermaidDiagram
+  name="dependency_hierarchy"
+  alt="Dependency Hierarchy Diagram"
+  client:visible
+/>
