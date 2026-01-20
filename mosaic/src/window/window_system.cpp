@@ -1,4 +1,4 @@
-#include "mosaic/window/window_system.hpp"
+#include "saturn/window/window_system.hpp"
 
 #include <cassert>
 #include <memory>
@@ -8,18 +8,18 @@
 
 #include <pieces/core/result.hpp>
 
-#include "mosaic/tools/logger.hpp"
-#include "mosaic/core/system.hpp"
-#include "mosaic/defines.hpp"
-#include "mosaic/window/window.hpp"
+#include "saturn/tools/logger.hpp"
+#include "saturn/core/system.hpp"
+#include "saturn/defines.hpp"
+#include "saturn/window/window.hpp"
 
-#if defined(MOSAIC_PLATFORM_DESKTOP) || defined(MOSAIC_PLATFORM_WEB)
+#if defined(SATURN_PLATFORM_DESKTOP) || defined(SATURN_PLATFORM_WEB)
 #include "platform/GLFW/glfw_window_system.hpp"
-#elif defined(MOSAIC_PLATFORM_ANDROID)
+#elif defined(SATURN_PLATFORM_ANDROID)
 #include "platform/AGDK/agdk_window_system.hpp"
 #endif
 
-namespace mosaic
+namespace saturn
 {
 namespace window
 {
@@ -47,9 +47,9 @@ WindowSystem ::~WindowSystem()
 
 std::unique_ptr<WindowSystem> WindowSystem::create()
 {
-#if defined(MOSAIC_PLATFORM_DESKTOP) || defined(MOSAIC_PLATFORM_WEB)
+#if defined(SATURN_PLATFORM_DESKTOP) || defined(SATURN_PLATFORM_WEB)
     return std::make_unique<platform::glfw::GLFWWindowSystem>();
-#elif defined(MOSAIC_PLATFORM_ANDROID)
+#elif defined(SATURN_PLATFORM_ANDROID)
     return std::make_unique<platform::agdk::AGDKWindowSystem>();
 #endif
 }
@@ -61,7 +61,7 @@ pieces::Result<Window*, std::string> WindowSystem::createWindow(const std::strin
 
     if (windows.find(_windowId) != windows.end())
     {
-        MOSAIC_WARN("InputSystem: Window already registered");
+        SATURN_WARN("InputSystem: Window already registered");
 
         return pieces::Ok<Window*, std::string>(windows.at(_windowId).get());
     }
@@ -113,4 +113,4 @@ void WindowSystem::destroyAllWindows()
 [[nodiscard]] size_t WindowSystem::getWindowCount() const { return m_impl->windows.size(); }
 
 } // namespace window
-} // namespace mosaic
+} // namespace saturn

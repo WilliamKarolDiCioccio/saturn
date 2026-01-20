@@ -1,6 +1,6 @@
 #include "emscripten_sys_info.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -85,4 +85,4 @@ std::vector<core::MonitorInfo> EmscriptenSystemInfo::getMonitors()
 
 } // namespace emscripten
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

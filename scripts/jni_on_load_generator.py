@@ -34,8 +34,8 @@ def parse_arguments():
     parser.add_argument(
         "--helper-class",
         type=str,
-        default="mosaic::platform::agdk::JNIHelper",
-        help="JNI helper class name (default: mosaic::platform::agdk::JNIHelper)"
+        default="saturn::platform::agdk::JNIHelper",
+        help="JNI helper class name (default: saturn::platform::agdk::JNIHelper)"
     )
     
     parser.add_argument(
@@ -309,7 +309,7 @@ def generate_cpp_file(class_methods: Dict[str, List[Tuple[str, str]]], output_pa
         
         f.write("JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved)\n")
         f.write("{\n")
-        f.write("    mosaic::tools::Logger::initialize();\n\n")
+        f.write("    saturn::tools::Logger::initialize();\n\n")
         
         f.write(f"    auto helper = {helper_class}::getInstance();\n\n")
         
@@ -322,7 +322,7 @@ def generate_cpp_file(class_methods: Dict[str, List[Tuple[str, str]]], output_pa
             f.write(f"        auto clazzRef = helper->findClass(\"{class_name}\");\n")
             f.write(f"        if (!clazzRef)\n")
             f.write(f"        {{\n")
-            f.write(f"            MOSAIC_ERROR(\"Failed to find {class_name.split('/')[-1]} class\");\n")
+            f.write(f"            SATURN_ERROR(\"Failed to find {class_name.split('/')[-1]} class\");\n")
             f.write(f"            return JNI_ERR;\n")
             f.write(f"        }}\n\n")
             
@@ -340,8 +340,8 @@ def generate_cpp_file(class_methods: Dict[str, List[Tuple[str, str]]], output_pa
         
         f.write("\nJNIEXPORT void JNICALL JNI_OnUnload(JavaVM* vm, void* /*reserved*/)\n")
         f.write("{\n")
-        f.write("    mosaic::platform::agdk::JNIHelper::getInstance()->shutdown();\n\n")
-        f.write("    mosaic::tools::Logger::shutdown();\n")
+        f.write("    saturn::platform::agdk::JNIHelper::getInstance()->shutdown();\n\n")
+        f.write("    saturn::tools::Logger::shutdown();\n")
         f.write("}\n")
 
 def main():

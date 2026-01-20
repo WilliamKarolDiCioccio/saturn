@@ -5,7 +5,7 @@
 
 #include <pieces/containers/bitset.hpp>
 
-namespace mosaic
+namespace saturn
 {
 namespace ecs
 {
@@ -48,7 +48,7 @@ using With = TypeList<Components...>;
 } // namespace detail
 
 } // namespace ecs
-} // namespace mosaic
+} // namespace saturn
 
 namespace std
 {

@@ -1,10 +1,10 @@
 #pragma once
 
-#include "mosaic/input/sources/mouse_input_source.hpp"
+#include "saturn/input/sources/mouse_input_source.hpp"
 
 #include <GLFW/glfw3.h>
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -36,4 +36,4 @@ class GLFWMouseInputSource : public input::MouseInputSource
 
 } // namespace glfw
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

@@ -3,13 +3,13 @@
 #include <vector>
 #include <fstream>
 
-#if defined(MOSAIC_PLATFORM_ANDROID)
+#if defined(SATURN_PLATFORM_ANDROID)
 #include <android/asset_manager.h>
-#include <mosaic/core/platform.hpp>
-#include <mosaic/platform/AGDK/agdk_platform.hpp>
+#include <saturn/core/platform.hpp>
+#include <saturn/platform/AGDK/agdk_platform.hpp>
 #endif
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -18,8 +18,8 @@ namespace vulkan
 
 static std::vector<char> readFile(const std::string& _filename)
 {
-#if defined(MOSAIC_PLATFORM_WINDOWS) || defined(MOSAIC_PLATFORM_LINUX) || \
-    defined(MOSAIC_PLATFORM_MACOS)
+#if defined(SATURN_PLATFORM_WINDOWS) || defined(SATURN_PLATFORM_LINUX) || \
+    defined(SATURN_PLATFORM_MACOS)
 
     std::ifstream file(_filename, std::ios::ate | std::ios::binary);
     if (!file.is_open()) throw std::runtime_error("Failed to open shader file: " + _filename);
@@ -33,9 +33,9 @@ static std::vector<char> readFile(const std::string& _filename)
 
     return buffer;
 
-#elif defined(MOSAIC_PLATFORM_ANDROID)
+#elif defined(SATURN_PLATFORM_ANDROID)
 
-    auto platform = mosaic::core::Platform::getInstance();
+    auto platform = saturn::core::Platform::getInstance();
     auto platformContext =
         static_cast<platform::agdk::AGDKPlatformContext*>(platform->getPlatformContext());
 
@@ -86,4 +86,4 @@ void destroyShaderModule(ShaderModule& _shaderModule)
 
 } // namespace vulkan
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

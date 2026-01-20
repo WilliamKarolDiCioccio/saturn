@@ -2,7 +2,7 @@
 
 #include <GLFW/glfw3.h>
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -119,4 +119,4 @@ enum class GLFWMouseButton : uint32_t
 
 } // namespace glfw
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

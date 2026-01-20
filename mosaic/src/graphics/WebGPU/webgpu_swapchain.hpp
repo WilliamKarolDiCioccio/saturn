@@ -2,7 +2,7 @@
 
 #include "webgpu_common.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -14,4 +14,4 @@ void configureSwapchain(WGPUAdapter _adapter, WGPUDevice _device, WGPUSurface _s
 
 } // namespace webgpu
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

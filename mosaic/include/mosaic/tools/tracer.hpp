@@ -1,6 +1,6 @@
 #pragma once
 
-#include "mosaic/defines.hpp"
+#include "saturn/defines.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -11,13 +11,13 @@
 #include <unordered_map>
 #include <vector>
 
-MOSAIC_DISABLE_ALL_WARNINGS
+SATURN_DISABLE_ALL_WARNINGS
 #include <nlohmann/json.hpp>
-MOSAIC_POP_WARNINGS
+SATURN_POP_WARNINGS
 
 #include "logger.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace tools
 {
@@ -96,7 +96,7 @@ constexpr std::array<const char*, 13> c_phaseNames = {
 /**
  * @brief RAII helper for automatic trace scoping.
  */
-class MOSAIC_API ScopedTrace final
+class SATURN_API ScopedTrace final
 {
    private:
     bool m_valid;
@@ -114,7 +114,7 @@ class MOSAIC_API ScopedTrace final
 /**
  * @brief Manages tracing functionality, including trace storage, metadata, and configuration.
  */
-class MOSAIC_API Tracer final
+class SATURN_API Tracer final
 {
    public:
     /**
@@ -269,58 +269,58 @@ class MOSAIC_API Tracer final
 };
 
 } // namespace tools
-} // namespace mosaic
+} // namespace saturn
 
-#if defined(MOSAIC_DEBUG_BUILD) || defined(MOSAIC_DEV_BUILD)
+#if defined(SATURN_DEBUG_BUILD) || defined(SATURN_DEV_BUILD)
 
-#define MOSAIC_TRACE_FUNCTION() \
-    mosaic::tools::ScopedTrace _trace(__FUNCTION__, mosaic::tools::TraceCategory::function)
+#define SATURN_TRACE_FUNCTION() \
+    saturn::tools::ScopedTrace _trace(__FUNCTION__, saturn::tools::TraceCategory::function)
 
-#define MOSAIC_TRACE_SCOPE(_Name) \
-    mosaic::tools::ScopedTrace _trace(_Name, mosaic::tools::TraceCategory::scope)
+#define SATURN_TRACE_SCOPE(_Name) \
+    saturn::tools::ScopedTrace _trace(_Name, saturn::tools::TraceCategory::scope)
 
-#define MOSAIC_TRACE_BEGIN(_Name, _Category) \
-    mosaic::tools::Tracer::getInstance()->beginTrace(_Name, _Category)
+#define SATURN_TRACE_BEGIN(_Name, _Category) \
+    saturn::tools::Tracer::getInstance()->beginTrace(_Name, _Category)
 
-#define MOSAIC_TRACE_END() mosaic::tools::Tracer::getInstance()->endTrace()
+#define SATURN_TRACE_END() saturn::tools::Tracer::getInstance()->endTrace()
 
-#define MOSAIC_TRACE_INSTANT(_Name, _Category) \
-    mosaic::tools::Tracer::getInstance()->instantTrace(_Name, _Category)
+#define SATURN_TRACE_INSTANT(_Name, _Category) \
+    saturn::tools::Tracer::getInstance()->instantTrace(_Name, _Category)
 
-#define MOSAIC_TRACE_COUNTER(_Name, _Value) \
-    mosaic::tools::Tracer::getInstance()->counterTrace(_Name, _Value)
+#define SATURN_TRACE_COUNTER(_Name, _Value) \
+    saturn::tools::Tracer::getInstance()->counterTrace(_Name, _Value)
 
-#define MOSAIC_TRACE_METADATA(_Name, _Value) \
-    mosaic::tools::Tracer::getInstance()->metadataTrace(_Name, _Value)
+#define SATURN_TRACE_METADATA(_Name, _Value) \
+    saturn::tools::Tracer::getInstance()->metadataTrace(_Name, _Value)
 
-#define MOSAIC_TRACE_OBJECT_CREATED(_Name, _Args) \
-    mosaic::tools::Tracer::getInstance()->objectCreated(_Name, _Args)
-#define MOSAIC_TRACE_OBJECT_SNAPSHOT(_Name, _Args) \
-    mosaic::tools::Tracer::getInstance()->objectSnapshot(_Name, _Args)
-#define MOSAIC_TRACE_OBJECT_DESTROYED(_Name, _Args) \
-    mosaic::tools::Tracer::getInstance()->objectDestroyed(_Name, _Args)
+#define SATURN_TRACE_OBJECT_CREATED(_Name, _Args) \
+    saturn::tools::Tracer::getInstance()->objectCreated(_Name, _Args)
+#define SATURN_TRACE_OBJECT_SNAPSHOT(_Name, _Args) \
+    saturn::tools::Tracer::getInstance()->objectSnapshot(_Name, _Args)
+#define SATURN_TRACE_OBJECT_DESTROYED(_Name, _Args) \
+    saturn::tools::Tracer::getInstance()->objectDestroyed(_Name, _Args)
 
-#define MOSAIC_TRACE_FLOW_BEGIN(_Name, _Category) \
-    mosaic::tools::Tracer::getInstance()->beginFlowTrace(_Name, _Category)
-#define MOSAIC_TRACE_FLOW_STEP(_FlowID, _Name) \
-    mosaic::tools::Tracer::getInstance()->stepFlowTrace(_FlowID, _Name)
-#define MOSAIC_TRACE_FLOW_END(_FlowID, _Name) \
-    mosaic::tools::Tracer::getInstance()->endFlowTrace(_FlowID, _Name)
+#define SATURN_TRACE_FLOW_BEGIN(_Name, _Category) \
+    saturn::tools::Tracer::getInstance()->beginFlowTrace(_Name, _Category)
+#define SATURN_TRACE_FLOW_STEP(_FlowID, _Name) \
+    saturn::tools::Tracer::getInstance()->stepFlowTrace(_FlowID, _Name)
+#define SATURN_TRACE_FLOW_END(_FlowID, _Name) \
+    saturn::tools::Tracer::getInstance()->endFlowTrace(_FlowID, _Name)
 
 #else
 
-#define MOSAIC_TRACE_FUNCTION() ((void)0)
-#define MOSAIC_TRACE_SCOPE(name) ((void)0)
-#define MOSAIC_TRACE_BEGIN(_Name, _Category) ((void)0)
-#define MOSAIC_TRACE_END() ((void)0)
-#define MOSAIC_TRACE_INSTANT(_Name, _Category) ((void)0)
-#define MOSAIC_TRACE_COUNTER(_Name, _Value) ((void)0)
-#define MOSAIC_TRACE_METADATA(_Name, _Value) ((void)0)
-#define MOSAIC_TRACE_OBJECT_CREATED(_Name, _Args) ((void)0)
-#define MOSAIC_TRACE_OBJECT_SNAPSHOT(_Name, _Args) ((void)0)
-#define MOSAIC_TRACE_OBJECT_DESTROYED(_Name, _Args) ((void)0)
-#define MOSAIC_TRACE_FLOW_BEGIN(_Name, _Category) 0
-#define MOSAIC_TRACE_FLOW_STEP(_FlowID, _Name) ((void)0)
-#define MOSAIC_TRACE_FLOW_END(_FlowID, _Name) ((void)0)
+#define SATURN_TRACE_FUNCTION() ((void)0)
+#define SATURN_TRACE_SCOPE(name) ((void)0)
+#define SATURN_TRACE_BEGIN(_Name, _Category) ((void)0)
+#define SATURN_TRACE_END() ((void)0)
+#define SATURN_TRACE_INSTANT(_Name, _Category) ((void)0)
+#define SATURN_TRACE_COUNTER(_Name, _Value) ((void)0)
+#define SATURN_TRACE_METADATA(_Name, _Value) ((void)0)
+#define SATURN_TRACE_OBJECT_CREATED(_Name, _Args) ((void)0)
+#define SATURN_TRACE_OBJECT_SNAPSHOT(_Name, _Args) ((void)0)
+#define SATURN_TRACE_OBJECT_DESTROYED(_Name, _Args) ((void)0)
+#define SATURN_TRACE_FLOW_BEGIN(_Name, _Category) 0
+#define SATURN_TRACE_FLOW_STEP(_FlowID, _Name) ((void)0)
+#define SATURN_TRACE_FLOW_END(_FlowID, _Name) ((void)0)
 
 #endif

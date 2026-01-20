@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.mosaic.engine_bridge"
+    namespace = "com.saturn.engine_bridge"
     compileSdk = 36
 
     defaultConfig {

@@ -8,7 +8,7 @@
 
 #include <pieces/utils/enum_flags.hpp>
 
-namespace mosaic
+namespace saturn
 {
 namespace input
 {
@@ -24,7 +24,7 @@ enum class InputEventType : uint32_t
     standalone = 1 << 2,
 };
 
-MOSAIC_DEFINE_ENUM_FLAGS_OPERATORS(InputEventType)
+SATURN_DEFINE_ENUM_FLAGS_OPERATORS(InputEventType)
 
 /**
  * @brief The `ActionableState` enum class defines the possible states for buttons, keys, or other
@@ -39,7 +39,7 @@ enum class ActionableState : uint32_t
     double_press = 1 << 3
 };
 
-MOSAIC_DEFINE_ENUM_FLAGS_OPERATORS(ActionableState)
+SATURN_DEFINE_ENUM_FLAGS_OPERATORS(ActionableState)
 
 /**
  * @brief The `GestureType` enum class defines the types of gestures that can be recognized. It uses
@@ -53,7 +53,7 @@ enum class GestureType : uint32_t
     rotate = 1 << 3,
 };
 
-MOSAIC_DEFINE_ENUM_FLAGS_OPERATORS(GestureType)
+SATURN_DEFINE_ENUM_FLAGS_OPERATORS(GestureType)
 
 /**
  * @brief The `GestureDirection` enum class defines the possible movement directions for mouse and
@@ -68,7 +68,7 @@ enum GestureDirection : uint32_t
     right = 1 << 3
 };
 
-MOSAIC_DEFINE_ENUM_FLAGS_OPERATORS(GestureDirection)
+SATURN_DEFINE_ENUM_FLAGS_OPERATORS(GestureDirection)
 
 /**
  * @brief The `InputEventMetadata` struct contains meta-data for input events.
@@ -255,4 +255,4 @@ struct IMEEvent
 };
 
 } // namespace input
-} // namespace mosaic
+} // namespace saturn

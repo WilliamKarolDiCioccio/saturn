@@ -9,9 +9,9 @@
 
 #include <glm/glm.hpp>
 
-#include "mosaic/defines.hpp"
+#include "saturn/defines.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace window
 {
@@ -166,7 +166,7 @@ enum class WindowCallbackType
  * @see WindowProperties
  * @see CursorProperties
  */
-class MOSAIC_API Window
+class SATURN_API Window
 {
    private:
     struct Impl;
@@ -234,4 +234,4 @@ class MOSAIC_API Window
 };
 
 } // namespace window
-} // namespace mosaic
+} // namespace saturn

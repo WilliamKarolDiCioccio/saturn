@@ -1,10 +1,10 @@
 #pragma once
 
-#include "mosaic/core/sys_info.hpp"
+#include "saturn/core/sys_info.hpp"
 
 #include <emscripten.h>
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -26,4 +26,4 @@ class EmscriptenSystemInfo : public core::SystemInfo::SystemInfoImpl
 
 } // namespace emscripten
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

@@ -1,9 +1,9 @@
-package com.mosaic.testbed
+package com.saturn.testbed
 
 import android.view.View
 import com.google.androidgamesdk.GameActivity
 
-import com.mosaic.engine_bridge.EngineBridge
+import com.saturn.engine_bridge.EngineBridge
 
 class MainActivity : GameActivity() {
     companion object {

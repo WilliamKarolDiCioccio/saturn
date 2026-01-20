@@ -1,11 +1,11 @@
 #pragma once
 
-#include "mosaic/graphics/render_system.hpp"
+#include "saturn/graphics/render_system.hpp"
 
 #include "webgpu_instance.hpp"
 #include "webgpu_device.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -25,4 +25,4 @@ class WebGPURenderSystem : public RenderSystem
 
 } // namespace webgpu
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

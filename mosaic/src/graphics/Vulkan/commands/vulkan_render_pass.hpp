@@ -5,7 +5,7 @@
 #include "vulkan_command_pool.hpp"
 #include "vulkan_command_buffer.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -31,4 +31,4 @@ void endRenderPass(VkCommandBuffer commandBuffer);
 
 } // namespace vulkan
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

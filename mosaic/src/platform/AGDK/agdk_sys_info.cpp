@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <sys/statvfs.h>
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -142,4 +142,4 @@ std::vector<core::MonitorInfo> AGDKSystemInfo::getMonitors()
 
 } // namespace agdk
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

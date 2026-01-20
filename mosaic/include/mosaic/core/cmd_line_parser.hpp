@@ -1,8 +1,8 @@
 #pragma once
 
-#include "mosaic/defines.hpp"
+#include "saturn/defines.hpp"
 
-#include "mosaic/tools/logger.hpp"
+#include "saturn/tools/logger.hpp"
 
 #include <functional>
 #include <unordered_map>
@@ -15,7 +15,7 @@
 // Needed for type traits used in templates
 #include <type_traits>
 
-namespace mosaic
+namespace saturn
 {
 namespace core
 {
@@ -108,7 +108,7 @@ class CommandLineParser
               parsed(false) {};
     };
 
-    MOSAIC_API static CommandLineParser* s_instance;
+    SATURN_API static CommandLineParser* s_instance;
 
     Config m_config;
     std::string m_executableName;
@@ -136,8 +136,8 @@ class CommandLineParser
     CommandLineParser& operator=(CommandLineParser&&) = delete;
 
    public:
-    MOSAIC_API static bool initialize(const Config& _config = Config()) noexcept;
-    MOSAIC_API static void shutdown() noexcept;
+    SATURN_API static bool initialize(const Config& _config = Config()) noexcept;
+    SATURN_API static void shutdown() noexcept;
 
     /**
      * @brief Parse command line arguments from vector
@@ -145,7 +145,7 @@ class CommandLineParser
      * @param _args Vector of argument strings
      * @return ParseResult indicating success or failure details
      */
-    MOSAIC_API std::optional<std::string> parseCommandLine(const std::vector<std::string>& _args);
+    SATURN_API std::optional<std::string> parseCommandLine(const std::vector<std::string>& _args);
 
     /**
      * @brief Register a command line option with enhanced features
@@ -181,53 +181,53 @@ class CommandLineParser
     /**
      * @brief Unregister a command line option
      */
-    MOSAIC_API bool unregisterOption(const std::string& _optionName);
+    SATURN_API bool unregisterOption(const std::string& _optionName);
 
     /**
      * @brief Unregister all options (including built-ins)
      */
-    MOSAIC_API void unregisterAllOptions();
+    SATURN_API void unregisterAllOptions();
 
     /**
      * @brief Reset parser state for re-use
      */
-    MOSAIC_API void reset();
+    SATURN_API void reset();
 
     /**
      * @brief Set parser configuration
      */
-    MOSAIC_API void setConfig(const Config& _config) { m_config = _config; }
+    SATURN_API void setConfig(const Config& _config) { m_config = _config; }
 
     /**
      * @brief Get current configuration
      */
-    MOSAIC_API const Config& getConfig() noexcept { return m_config; }
+    SATURN_API const Config& getConfig() noexcept { return m_config; }
 
    public:
-    MOSAIC_API [[nodiscard]] bool shouldTerminate() noexcept;
+    SATURN_API [[nodiscard]] bool shouldTerminate() noexcept;
 
-    MOSAIC_API [[nodiscard]] const std::vector<std::string> getArgs() noexcept;
+    SATURN_API [[nodiscard]] const std::vector<std::string> getArgs() noexcept;
 
-    MOSAIC_API [[nodiscard]] size_t getArgsCount() noexcept;
+    SATURN_API [[nodiscard]] size_t getArgsCount() noexcept;
 
-    MOSAIC_API [[nodiscard]] const std::string& getExecutableName() noexcept;
+    SATURN_API [[nodiscard]] const std::string& getExecutableName() noexcept;
 
-    MOSAIC_API [[nodiscard]] const std::string& getExecutablePath() noexcept;
+    SATURN_API [[nodiscard]] const std::string& getExecutablePath() noexcept;
 
     /**
      * @brief Check if a specific option was parsed
      */
-    MOSAIC_API [[nodiscard]] bool wasOptionParsed(const std::string& _optionName);
+    SATURN_API [[nodiscard]] bool wasOptionParsed(const std::string& _optionName);
 
     /**
      * @brief Get help text for all registered options
      */
-    MOSAIC_API [[nodiscard]] std::string getHelpText();
+    SATURN_API [[nodiscard]] std::string getHelpText();
 
     /**
      * @brief Get list of all registered option names
      */
-    MOSAIC_API [[nodiscard]] std::vector<std::string> getRegisteredOptions();
+    SATURN_API [[nodiscard]] std::vector<std::string> getRegisteredOptions();
 
     [[nodiscard]] static inline CommandLineParser* getInstance() { return s_instance; }
 
@@ -315,4 +315,4 @@ std::optional<std::string> CommandLineParser::registerTypedOption(
 }
 
 } // namespace core
-} // namespace mosaic
+} // namespace saturn

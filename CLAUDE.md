@@ -14,9 +14,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Team Structure
 
 **LEAD Agent (default for all engine work):**
+
 - `engine-architect` — Conservative C++23 systems engineer. Coordinates specialist team. Authority over planning, implementation, cross-package refactors.
 
 **Specialist Team (coordinated by LEAD):**
+
 - `performance-specialist` — Performance analysis, profiling, bottleneck identification (analysis only, NO code modification)
 - `test-ci-agent` — Unit tests, integration tests, CI/GTest infrastructure (tests YES, production code NO)
 - `doc-context-manager` — CLAUDE.md files, documentation, comments, Astro website (docs YES, runtime code NO)
@@ -25,7 +27,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Default Delegation Rules
 
 **For any task involving:**
-- C++ engine code (mosaic/, pieces/, codex/)
+
+- C++ engine code (saturn/, pieces/, codex/)
 - Architecture planning/implementation
 - Core systems (ECS, rendering, exec, input, platform)
 - Cross-package changes
@@ -35,6 +38,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Direct Specialist Delegation (bypass LEAD)
 
 Only delegate directly to specialists when:
+
 - **Standalone documentation work** → `doc-context-manager`
 - **Standalone test work (no engine changes)** → `test-ci-agent`
 - **Performance analysis only (no implementation)** → `performance-specialist`
@@ -47,26 +51,33 @@ Only delegate directly to specialists when:
 **See `GEMINI.md` for full rules.** Gemini is a support agent, not a peer.
 
 ### Mandatory Large File Rule
+
 Before reading ANY file, check line count:
+
 ```bash
 python .claude/skills/invoke-gemini/scripts/check_line_count.py <file>
 ```
+
 - `>1000 lines` → Gemini MUST analyze first; Claude MUST NOT read directly
 - `<=1000 lines` → Claude proceeds normally
 
 ### Gemini Use Cases
+
 **Use Gemini for:**
+
 - Large file structural analysis (>1000 lines)
 - Flutter UI / Dart binding boilerplate
 - Repetitive code generation (serialization, adapters)
 - Platform scaffolding
 
 **Never use Gemini for:**
+
 - ECS, renderer, threading, memory management
 - Architectural decisions
 - Any deep reasoning task
 
 ### Workflow
+
 1. Claude defines spec/constraints
 2. Gemini generates bulk output
 3. Claude reviews and integrates
@@ -78,6 +89,7 @@ python .claude/skills/invoke-gemini/scripts/check_line_count.py <file>
 ### Rules for Claude
 
 **ALWAYS:**
+
 1. When working in a subdirectory with a CLAUDE.md, load and consult that file FIRST
 2. Treat package-level files as **authoritative** for local decisions (invariants, constraints, modification rules)
 3. Use package-level "Owns/Does NOT Own" sections to determine responsibility boundaries
@@ -85,11 +97,13 @@ python .claude/skills/invoke-gemini/scripts/check_line_count.py <file>
 5. Follow package-level "Modification Rules" for scope determination
 
 **Precedence:**
+
 - Package-level CLAUDE.md > Root CLAUDE.md (for local decisions)
 - Root CLAUDE.md > Package-level (for global patterns, build system, cross-cutting concerns)
 - In conflicts: Package-level invariants override general guidance
 
 **Fallback to Root:**
+
 - Build system (CMake, vcpkg, compilation)
 - Cross-package architecture
 - Platform-specific build notes
@@ -99,44 +113,50 @@ python .claude/skills/invoke-gemini/scripts/check_line_count.py <file>
 ### Package-Level CLAUDE.md Locations
 
 **Top-Level Modules:**
+
 - `pieces/CLAUDE.md` — Header-only utility library (zero dependencies)
 - `codex/CLAUDE.md` — C++ parser tool
 - `docsgen/CLAUDE.md` — Documentation generator
 
-**Engine Subsystems (`mosaic/`):**
-- `mosaic/core/CLAUDE.md` — Application lifecycle, system registry
-- `mosaic/ecs/CLAUDE.md` — Entity-Component-System (archetypal, type-erased)
-- `mosaic/exec/CLAUDE.md` — Multi-threaded execution (ThreadPool, TaskFuture)
-- `mosaic/graphics/CLAUDE.md` — Rendering (Vulkan/WebGPU backends)
-- `mosaic/input/CLAUDE.md` — Input system (three-layer architecture)
-- `mosaic/platform/CLAUDE.md` — Platform abstraction (Win32/POSIX/AGDK/Emscripten/GLFW)
-- `mosaic/window/CLAUDE.md` — Window management
-- `mosaic/scene/CLAUDE.md` — Scene graph (in development - stub files)
+**Engine Subsystems (`saturn/`):**
+
+- `saturn/core/CLAUDE.md` — Application lifecycle, system registry
+- `saturn/ecs/CLAUDE.md` — Entity-Component-System (archetypal, type-erased)
+- `saturn/exec/CLAUDE.md` — Multi-threaded execution (ThreadPool, TaskFuture)
+- `saturn/graphics/CLAUDE.md` — Rendering (Vulkan/WebGPU backends)
+- `saturn/input/CLAUDE.md` — Input system (three-layer architecture)
+- `saturn/platform/CLAUDE.md` — Platform abstraction (Win32/POSIX/AGDK/Emscripten/GLFW)
+- `saturn/window/CLAUDE.md` — Window management
+- `saturn/scene/CLAUDE.md` — Scene graph (in development - stub files)
 
 ### When to Consult Package Files
 
 **Before modifying code:**
+
 - Check if file is in a package with CLAUDE.md
 - Read "Invariants (NEVER violate)" section
 - Review "Modification Rules" → "Safe to Change" vs "Requires Coordination"
 
 **When adding features:**
+
 - Check "Owns/Does NOT Own" to verify responsibility
 - Review "Architectural Constraints" → "Dependency Rules"
 - Follow "How Claude Should Help" guidance
 
 **When debugging:**
+
 - Consult "Common Pitfalls" section for known footguns
 - Check "Performance Traps" if issue is performance-related
 
 **When unsure:**
+
 - Package-level "Almost Never Change" lists load-bearing code
 - "Expected Tasks" clarifies what Claude should assist with
 - "Conservative Approach Required" highlights danger zones
 
 ## Project Overview
 
-Mosaic is a modern, cross-platform game engine written in C++23. It's built from the ground up with handcrafted core systems including a cache-friendly ECS, layered input system, Vulkan/WebGPU renderer, and async-aware execution layer.
+Saturn is a modern, cross-platform game engine written in C++23. It's built from the ground up with handcrafted core systems including a cache-friendly ECS, layered input system, Vulkan/WebGPU renderer, and async-aware execution layer.
 
 ## Build System
 
@@ -190,19 +210,19 @@ ctest --test-dir build
 **Specific test executable:**
 
 ```bash
-./build/mosaic/tests/mosaic_tests
+./build/saturn/tests/saturn_tests
 ```
 
 **Individual test suite:**
 
 ```bash
-./build/mosaic/tests/mosaic_tests --gtest_filter=ECS*
+./build/saturn/tests/saturn_tests --gtest_filter=ECS*
 ```
 
 ### Running Benchmarks
 
 ```bash
-./build/mosaic/bench/mosaic_bench
+./build/saturn/bench/saturn_bench
 ```
 
 ### Building Documentation
@@ -210,7 +230,7 @@ ctest --test-dir build
 The `docsgen` tool generates API documentation:
 
 ```bash
-./build/docsgen/docsgen --input ./mosaic/include --output ./docs
+./build/docsgen/docsgen --input ./saturn/include --output ./docs
 ```
 
 ### Shader Compilation
@@ -229,7 +249,6 @@ Manual compilation is rarely needed as CMake handles this.
 The codebase is organized into four main modules:
 
 1. **pieces** (`pieces/`)
-
    - Header-only utility library with zero dependencies
    - Core building blocks: type-erased containers, memory allocators, result types, string utilities
    - Key components:
@@ -240,8 +259,7 @@ The codebase is organized into four main modules:
      - Performance: SIMD intrinsics wrapper, cache-line alignment utilities
      - Strings: UTF-8 support and conversion utilities
 
-2. **mosaic** (`mosaic/`)
-
+2. **saturn** (`saturn/`)
    - Main game engine library (shared library on desktop, static on mobile/web)
    - Organized by system:
      - `core/`: Application lifecycle, platform abstraction, system registry
@@ -259,7 +277,6 @@ The codebase is organized into four main modules:
      - `GLFW/`: Cross-platform windowing (desktop only)
 
 3. **codex** (`codex/`)
-
    - C++ source code parser and documentation extractor
    - Uses tree-sitter for parsing
    - Generates structured data for documentation tooling
@@ -324,18 +341,18 @@ The codebase is organized into four main modules:
 
 ### Entry Point and Application Lifecycle
 
-Applications use `MOSAIC_ENTRY_POINT(AppClass)` macro which provides platform-specific entry points (WinMain, main, android_main).
+Applications use `SATURN_ENTRY_POINT(AppClass)` macro which provides platform-specific entry points (WinMain, main, android_main).
 
 **Application Base Class:**
 
 ```cpp
-class MyGame : public mosaic::Application {
+class MyGame : public saturn::Application {
     void onInitialize() override { /* setup */ }
     void onUpdate() override { /* game loop */ }
     void onShutdown() override { /* cleanup */ }
 };
 
-MOSAIC_ENTRY_POINT(MyGame)
+SATURN_ENTRY_POINT(MyGame)
 ```
 
 **System Lifecycle:**
@@ -364,7 +381,7 @@ auto result = initialize()
     .andThen([](auto& sys) { return sys.start(); });
 
 if (result.isErr()) {
-    mosaic::Logger::error("Failed: {}", result.error());
+    saturn::Logger::error("Failed: {}", result.error());
 }
 ```
 
@@ -375,29 +392,29 @@ Also supports `RefResult<T, E>` for reference wrappers.
 Use the centralized logger (fmt-based):
 
 ```cpp
-#include <mosaic/tools/logger.hpp>
-mosaic::Logger::info("Message: {}", value);
-mosaic::Logger::error("Error: {}", error);
+#include <saturn/tools/logger.hpp>
+saturn::Logger::info("Message: {}", value);
+saturn::Logger::error("Error: {}", error);
 ```
 
 ### Platform-Specific Code
 
 Platform code should be isolated in:
 
-- `mosaic/src/platform/<Platform>/` for implementations
+- `saturn/src/platform/<Platform>/` for implementations
 - Conditional compilation in CMakeLists.txt (not #ifdef in headers when possible)
 
 ### Testing
 
 - Unit tests use Google Test framework
-- Tests located in `mosaic/tests/unit/`
-- Mocks available in `mosaic/tests/mocks/`
+- Tests located in `saturn/tests/unit/`
+- Mocks available in `saturn/tests/mocks/`
 - Test naming: `<feature>_test.cpp`
 
 ### Benchmarks
 
 - Use Google Benchmark framework
-- Located in `mosaic/bench/` and `pieces/bench/`
+- Located in `saturn/bench/` and `pieces/bench/`
 
 ## Design Patterns Used
 

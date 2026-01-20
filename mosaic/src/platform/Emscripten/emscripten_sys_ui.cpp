@@ -1,6 +1,6 @@
 #include "emscripten_sys_ui.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -69,4 +69,4 @@ void EmscriptenSystemUI::hideSoftwareKeyboard() const {}
 
 } // namespace emscripten
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

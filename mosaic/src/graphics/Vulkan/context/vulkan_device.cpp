@@ -4,7 +4,7 @@
 #include <vector>
 #include <set>
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -113,17 +113,17 @@ VkPhysicalDevice pickVulkanPhysicalDevice(const Instance& _instance, const VkSur
 
     if (physicalDevice == nullptr)
     {
-        MOSAIC_CRITICAL("No suitable Vulkan physical device found!");
+        SATURN_CRITICAL("No suitable Vulkan physical device found!");
         return nullptr;
     }
 
     VkPhysicalDeviceProperties deviceProperties;
     vkGetPhysicalDeviceProperties(physicalDevice, &deviceProperties);
 
-    MOSAIC_INFO("Vulkan pysical device name: '{}'", deviceProperties.deviceName);
-    MOSAIC_INFO("Vulkan pysical device type: '{}'",
+    SATURN_INFO("Vulkan pysical device name: '{}'", deviceProperties.deviceName);
+    SATURN_INFO("Vulkan pysical device type: '{}'",
                 getDeviceTypeString(deviceProperties.deviceType));
-    MOSAIC_INFO("Vulkan pysical driver version: '{}'", deviceProperties.driverVersion);
+    SATURN_INFO("Vulkan pysical driver version: '{}'", deviceProperties.driverVersion);
 
     if (physicalDevice == nullptr)
     {
@@ -241,7 +241,7 @@ void checkDeviceExtensionsSupport(Device& _device)
         }
         else
         {
-            MOSAIC_WARN("Optional Vulkan device extension '{}' is not supported!",
+            SATURN_WARN("Optional Vulkan device extension '{}' is not supported!",
                         optionalExtension);
         }
     }
@@ -334,4 +334,4 @@ void destroyDevice(Device& _device) { vkDestroyDevice(_device.device, nullptr); 
 
 } // namespace vulkan
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

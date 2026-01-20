@@ -1,6 +1,6 @@
 #include "agdk_window.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -84,7 +84,7 @@ void AGDKWindow::setResizeable([[maybe_unused]] bool _resizeable)
 
 void AGDKWindow::setVSync([[maybe_unused]] bool _enabled)
 {
-    MOSAIC_WARN("AGDKWindow::setVSync: Not implemented for AGDK platform.");
+    SATURN_WARN("AGDKWindow::setVSync: Not implemented for AGDK platform.");
 }
 
 void AGDKWindow::setCursorMode([[maybe_unused]] window::CursorMode _mode)
@@ -133,14 +133,14 @@ void AGDKWindow::setClipboardString([[maybe_unused]] const std::string& _string)
     JNIEnv* env = helper->getEnv();
     if (!env)
     {
-        MOSAIC_ERROR("AGDKWindow::setClipboardString: JNI environment is not available.");
+        SATURN_ERROR("AGDKWindow::setClipboardString: JNI environment is not available.");
         return;
     }
 
     jstring jContent = helper->stringToJstring(_string);
 
     // See SystemServices.setClipboardString(String content)
-    helper->callStaticVoidMethod("com/mosaic/engine_bridge/SystemServices", "setClipboard",
+    helper->callStaticVoidMethod("com/saturn/engine_bridge/SystemServices", "setClipboard",
                                  "(Ljava/lang/String;)V", jContent);
 
     if (jContent) env->DeleteLocalRef(jContent);
@@ -153,16 +153,16 @@ std::string AGDKWindow::getClipboardString() const
     JNIEnv* env = helper->getEnv();
     if (!env)
     {
-        MOSAIC_ERROR("AGDKWindow::getClipboardString: JNI environment is not available.");
+        SATURN_ERROR("AGDKWindow::getClipboardString: JNI environment is not available.");
         return std::string();
     }
 
-    jstring jContent = helper->callStaticMethod<jstring>("com/mosaic/engine_bridge/SystemServices",
+    jstring jContent = helper->callStaticMethod<jstring>("com/saturn/engine_bridge/SystemServices",
                                                          "getClipboard", "()Ljava/lang/String;");
 
     if (!jContent)
     {
-        MOSAIC_ERROR("AGDKWindow::getClipboardString: Failed to get clipboard content.");
+        SATURN_ERROR("AGDKWindow::getClipboardString: Failed to get clipboard content.");
         return std::string();
     }
 
@@ -173,4 +173,4 @@ std::string AGDKWindow::getClipboardString() const
 
 } // namespace agdk
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

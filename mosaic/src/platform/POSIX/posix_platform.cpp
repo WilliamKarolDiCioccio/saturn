@@ -4,7 +4,7 @@
 
 #pragma comment(lib, "ole32.lib")
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -55,4 +55,4 @@ void POSIXPlatform::shutdown() { getApplication()->shutdown(); }
 
 } // namespace posix
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

@@ -1,5 +1,5 @@
-name: mosaic_editor
-description: "The Mosaic game engine editor application."
+name: saturn_editor
+description: "The Saturn game engine editor application."
 publish_to: "none"
 version: 0.0.1
 maintainer: William Karol Di Cioccio

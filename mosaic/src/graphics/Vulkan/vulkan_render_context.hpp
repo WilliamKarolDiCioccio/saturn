@@ -1,6 +1,6 @@
 #pragma once
 
-#include "mosaic/graphics/render_context.hpp"
+#include "saturn/graphics/render_context.hpp"
 
 #include "context/vulkan_instance.hpp"
 #include "context/vulkan_device.hpp"
@@ -12,7 +12,7 @@
 #include "commands/vulkan_command_pool.hpp"
 #include "commands/vulkan_command_buffer.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -74,4 +74,4 @@ class VulkanRenderContext : public RenderContext
 
 } // namespace vulkan
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

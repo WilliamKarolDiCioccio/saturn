@@ -24,9 +24,9 @@
       "args": [
         "./scripts/jni_on_load_generator.py",
         "-i",
-        ".\\mosaic_bridge_android\\src\\main\\java\\com\\mosaic\\",
+        ".\\saturn_bridge_android\\src\\main\\java\\com\\saturn\\",
         "-o",
-        ".\\mosaic\\include\\mosaic\\platform\\AGDK\\jni_loader.cpp"
+        ".\\saturn\\include\\saturn\\platform\\AGDK\\jni_loader.cpp"
       ],
       "problemMatcher": [],
       "isBackground": false,

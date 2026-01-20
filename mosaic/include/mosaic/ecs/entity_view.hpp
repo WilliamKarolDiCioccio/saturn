@@ -11,7 +11,7 @@
 #include "archetype.hpp"
 #include "component_registry.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace ecs
 {
@@ -163,4 +163,4 @@ class EntityView
 };
 
 } // namespace ecs
-} // namespace mosaic
+} // namespace saturn

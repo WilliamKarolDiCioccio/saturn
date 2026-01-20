@@ -6,9 +6,11 @@ argument-hint: [message]
 # /commit
 
 ## Purpose
+
 Generate conventional commit message from git changes. Analyze staged changes (or stage all if none staged). Infer type and scope from files modified. Craft subject line (max 72 chars) and optional body explaining what/why. Present message for approval before committing.
 
 ## Contract
+
 **Inputs:** `[message]` — optional commit message override
 **Outputs:** `STATUS=<OK|FAIL> COMMIT=<hash> [ERROR=<message>]`
 
@@ -27,25 +29,25 @@ git status --short
 2. **Determine commit type from changes:**
    - `feat:` — new files in src/, new public APIs
    - `fix:` — bug fixes, patches
-   - `docs:` — changes to *.md, comments, docsgen/
+   - `docs:` — changes to \*.md, comments, docsgen/
    - `style:` — formatting, whitespace
    - `refactor:` — code restructuring without behavior change
    - `perf:` — performance improvements
-   - `test:` — changes to */tests/*, */bench/*
+   - `test:` — changes to _/tests/_, _/bench/_
    - `build:` — CMakeLists.txt, vcpkg.json, cmake/
    - `ci:` — .github/, CI configs
    - `chore:` — maintenance, tooling
 
 3. **Infer scope from file paths:**
    - `pieces/` → scope: pieces
-   - `mosaic/src/ecs/` → scope: ecs
-   - `mosaic/src/input/` → scope: input
-   - `mosaic/src/graphics/` → scope: graphics
-   - `mosaic/src/platform/` → scope: platform
-   - `mosaic/src/window/` → scope: window
-   - `mosaic/src/exec/` → scope: exec
-   - `mosaic/src/core/` → scope: core
-   - `mosaic/src/scene/` → scope: scene
+   - `saturn/src/ecs/` → scope: ecs
+   - `saturn/src/input/` → scope: input
+   - `saturn/src/graphics/` → scope: graphics
+   - `saturn/src/platform/` → scope: platform
+   - `saturn/src/window/` → scope: window
+   - `saturn/src/exec/` → scope: exec
+   - `saturn/src/core/` → scope: core
+   - `saturn/src/scene/` → scope: scene
    - `codex/` → scope: codex
    - `docsgen/` → scope: docsgen
    - Multiple scopes → omit scope or use broader category
@@ -81,6 +83,7 @@ git commit -m "<message>"
 
 **Changes:** Added ECS archetype iteration
 **Message:**
+
 ```
 feat(ecs): add archetype iteration support
 
@@ -90,6 +93,7 @@ Provides type-safe component access during iteration.
 
 **Changes:** Fixed input context memory leak
 **Message:**
+
 ```
 fix(input): resolve context memory leak
 
@@ -98,11 +102,13 @@ InputContext now properly releases sources on destruction.
 
 **Changes:** Updated build documentation
 **Message:**
+
 ```
 docs(build): update CMake preset instructions
 ```
 
 ## Constraints
+
 - Idempotent: checks for changes before committing
 - No network tools
 - Interactive approval required unless message provided

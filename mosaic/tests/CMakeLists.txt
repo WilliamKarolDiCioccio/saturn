@@ -4,25 +4,25 @@ set(TEST_SOURCES
   "unit/typeless_sparse_set_test.cpp"
   "unit/thread_pool_test.cpp")
 
-add_executable(mosaic_tests ${TEST_SOURCES} "main.cpp")
+add_executable(saturn_tests ${TEST_SOURCES} "main.cpp")
 
-target_include_directories(mosaic_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/mocks")
+target_include_directories(saturn_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/mocks")
 
 target_link_libraries(
-  mosaic_tests PRIVATE mosaic GTest::gtest GTest::gtest_main GTest::gmock
+  saturn_tests PRIVATE saturn GTest::gtest GTest::gtest_main GTest::gmock
                        GTest::gmock_main)
 
-add_test(NAME mosaic_tests COMMAND test_mosaic)
+add_test(NAME saturn_tests COMMAND test_saturn)
 
 if(WIN32)
   add_custom_command(
-    TARGET mosaic_tests
+    TARGET saturn_tests
     POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:mosaic_tests>
-            $<TARGET_FILE_DIR:mosaic_tests>
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:saturn_tests>
+            $<TARGET_FILE_DIR:saturn_tests>
     COMMAND_EXPAND_LISTS)
 endif()
 
 include("${CMAKE_SOURCE_DIR}/cmake/ConfigureForBuildType.cmake")
 
-configure_for_build_type(mosaic_tests)
+configure_for_build_type(saturn_tests)

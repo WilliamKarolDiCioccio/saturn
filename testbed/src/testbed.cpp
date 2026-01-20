@@ -3,12 +3,12 @@
 #include <chrono>
 #include <iostream>
 
-#include <mosaic/tools/logger.hpp>
-#include <mosaic/core/timer.hpp>
-#include <mosaic/window/window_system.hpp>
-#include <mosaic/input/input_system.hpp>
-#include <mosaic/graphics/render_system.hpp>
-#include <mosaic/ecs/entity_registry.hpp>
+#include <saturn/tools/logger.hpp>
+#include <saturn/core/timer.hpp>
+#include <saturn/window/window_system.hpp>
+#include <saturn/input/input_system.hpp>
+#include <saturn/graphics/render_system.hpp>
+#include <saturn/ecs/entity_registry.hpp>
 
 #include <pieces/utils/string.hpp>
 
@@ -25,7 +25,7 @@ void TestbedApplication::onInitialize()
 
     auto inputContext = getInputSystem()->getContext(window);
 
-#ifndef MOSAIC_PLATFORM_ANDROID
+#ifndef SATURN_PLATFORM_ANDROID
     inputContext->updateVirtualKeyboardKeys({
         {"closeApp", input::KeyboardKey::key_escape},
         {"moveLeft", input::KeyboardKey::key_a},
@@ -132,14 +132,14 @@ void TestbedApplication::onInitialize()
     });
 #endif
 
-    MOSAIC_INFO("Testbed initialized.");
+    SATURN_INFO("Testbed initialized.");
 }
 
 void TestbedApplication::onUpdate() {}
 
-void TestbedApplication::onPause() { MOSAIC_INFO("Testbed paused."); }
+void TestbedApplication::onPause() { SATURN_INFO("Testbed paused."); }
 
-void TestbedApplication::onResume() { MOSAIC_INFO("Testbed resumed."); }
+void TestbedApplication::onResume() { SATURN_INFO("Testbed resumed."); }
 
 void TestbedApplication::onShutdown()
 {
@@ -147,7 +147,7 @@ void TestbedApplication::onShutdown()
     getInputSystem()->unregisterAllWindows();
     getWindowSystem()->destroyAllWindows();
 
-    MOSAIC_INFO("Testbed shutdown.");
+    SATURN_INFO("Testbed shutdown.");
 }
 
 void TestbedApplication::onPollInputs()
@@ -156,11 +156,11 @@ void TestbedApplication::onPollInputs()
 
     auto inputContext = getInputSystem()->getContext(window);
 
-    if (inputContext->isActionTriggered("moveLeft")) MOSAIC_INFO("Moving left.");
-    if (inputContext->isActionTriggered("moveRight")) MOSAIC_INFO("Moving right.");
-    if (inputContext->isActionTriggered("moveUp")) MOSAIC_INFO("Moving up.");
-    if (inputContext->isActionTriggered("moveDown")) MOSAIC_INFO("Moving down.");
-    if (inputContext->isActionTriggered("resetCamera")) MOSAIC_INFO("Resetting camera.");
+    if (inputContext->isActionTriggered("moveLeft")) SATURN_INFO("Moving left.");
+    if (inputContext->isActionTriggered("moveRight")) SATURN_INFO("Moving right.");
+    if (inputContext->isActionTriggered("moveUp")) SATURN_INFO("Moving up.");
+    if (inputContext->isActionTriggered("moveDown")) SATURN_INFO("Moving down.");
+    if (inputContext->isActionTriggered("resetCamera")) SATURN_INFO("Resetting camera.");
 
     if (window->shouldClose() || inputContext->isActionTriggered("closeApp"))
     {

@@ -22,7 +22,7 @@ endif()
 # Dependencies
 # ----------------------------------------
 
-target_link_libraries(testbed PRIVATE mosaic fmt::fmt)
+target_link_libraries(testbed PRIVATE saturn fmt::fmt)
 
 # ----------------------------------------
 # Emscripten Settings

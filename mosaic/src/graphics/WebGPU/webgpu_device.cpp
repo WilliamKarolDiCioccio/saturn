@@ -1,6 +1,6 @@
 #include "webgpu_device.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -29,7 +29,7 @@ WGPUAdapter requestAdapter(WGPUInstance _instance, WGPUSurface _surface)
         }
         else
         {
-            MOSAIC_ERROR("Could not request WebGPU adapter: {}", _message.data);
+            SATURN_ERROR("Could not request WebGPU adapter: {}", _message.data);
         }
 
         userData.requestEnded = true;
@@ -74,7 +74,7 @@ bool isAdapterSuitable(WGPUAdapter _adapter)
 #error "Unknown WebGPU backend!"
 #endif
     {
-        MOSAIC_ERROR("Could not get WebGPU adapter limits!");
+        SATURN_ERROR("Could not get WebGPU adapter limits!");
         return false;
     }
 #endif
@@ -85,7 +85,7 @@ bool isAdapterSuitable(WGPUAdapter _adapter)
 
     if (supportedFeatures.featureCount == 0)
     {
-        MOSAIC_ERROR("Could not get WebGPU adapter features!");
+        SATURN_ERROR("Could not get WebGPU adapter features!");
         return false;
     }
 
@@ -93,11 +93,11 @@ bool isAdapterSuitable(WGPUAdapter _adapter)
 
     wgpuAdapterGetInfo(_adapter, &infos);
 
-    MOSAIC_INFO("WebGPU adapter device: {}", infos.device.data);
-    MOSAIC_INFO("WebGPU adapter vendor: {}", infos.vendor.data);
-    MOSAIC_INFO("WebGPU adapter description: {}", infos.description.data);
-    MOSAIC_INFO("WebGPU adapter type: {}", static_cast<int>(infos.adapterType));
-    MOSAIC_INFO("WebGPU adapter backendType: {}", static_cast<int>(infos.backendType));
+    SATURN_INFO("WebGPU adapter device: {}", infos.device.data);
+    SATURN_INFO("WebGPU adapter vendor: {}", infos.vendor.data);
+    SATURN_INFO("WebGPU adapter description: {}", infos.description.data);
+    SATURN_INFO("WebGPU adapter type: {}", static_cast<int>(infos.adapterType));
+    SATURN_INFO("WebGPU adapter backendType: {}", static_cast<int>(infos.backendType));
 
     return true;
 }
@@ -124,7 +124,7 @@ WGPUDevice createDevice(WGPUAdapter _adapter)
         }
         else
         {
-            MOSAIC_ERROR("Could not request WebGPU device: {}", _message.data);
+            SATURN_ERROR("Could not request WebGPU device: {}", _message.data);
         }
 
         userData1.requestEnded = true;
@@ -133,7 +133,7 @@ WGPUDevice createDevice(WGPUAdapter _adapter)
     WGPUDeviceLostCallback onDeviceLost = [](const WGPUDevice* _device,
                                              WGPUDeviceLostReason _reason, WGPUStringView _message,
                                              void* _userData1, void* _userData2)
-    { MOSAIC_ERROR("WebGPU device lost: {}", _message.data); };
+    { SATURN_ERROR("WebGPU device lost: {}", _message.data); };
 
     WGPUDeviceLostCallbackInfo onDeviceLostCallbackInfo = {
         .callback = onDeviceLost,
@@ -148,16 +148,16 @@ WGPUDevice createDevice(WGPUAdapter _adapter)
         switch (_type)
         {
             case WGPUErrorType_Validation:
-                MOSAIC_ERROR("WebGPU validation error: {}", _message.data);
+                SATURN_ERROR("WebGPU validation error: {}", _message.data);
                 break;
             case WGPUErrorType_OutOfMemory:
-                MOSAIC_ERROR("WebGPU out of memory: {}", _message.data);
+                SATURN_ERROR("WebGPU out of memory: {}", _message.data);
                 break;
             case WGPUErrorType_Unknown:
-                MOSAIC_ERROR("WebGPU unknown error: {}", _message.data);
+                SATURN_ERROR("WebGPU unknown error: {}", _message.data);
                 break;
             default:
-                MOSAIC_ERROR("WebGPU error: {}", _message.data);
+                SATURN_ERROR("WebGPU error: {}", _message.data);
                 break;
         }
     };
@@ -196,4 +196,4 @@ WGPUDevice createDevice(WGPUAdapter _adapter)
 
 } // namespace webgpu
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

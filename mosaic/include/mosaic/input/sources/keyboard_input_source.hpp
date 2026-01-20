@@ -2,7 +2,7 @@
 
 #include "input_source.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace input
 {
@@ -16,7 +16,7 @@ namespace input
  *
  * @see InputSource
  */
-class MOSAIC_API KeyboardInputSource : public InputSource
+class SATURN_API KeyboardInputSource : public InputSource
 {
    protected:
     // Events
@@ -53,4 +53,4 @@ class MOSAIC_API KeyboardInputSource : public InputSource
 };
 
 } // namespace input
-} // namespace mosaic
+} // namespace saturn

@@ -32,7 +32,7 @@ Requirements:
 - Do NOT refactor logic
 - Do NOT introduce new abstractions
 - Provide clear split plan with filenames and responsibilities
-- Assume Mosaic conventions per CLAUDE.md
+- Assume Saturn conventions per CLAUDE.md
 
 Intent: {args.intent}
 

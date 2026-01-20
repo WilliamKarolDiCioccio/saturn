@@ -4,9 +4,9 @@
 #include <functional>
 #include <string>
 
-#include "mosaic/defines.hpp"
+#include "saturn/defines.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace core
 {
@@ -32,7 +32,7 @@ struct ScheduledCallback
  * @brief The `Timer` class provides both a static interface for getting the current time and an
  * object instance interface for scheduling callbacks to be executed after a certain delay.
  */
-class MOSAIC_API Timer
+class SATURN_API Timer
 {
    private:
     struct Impl;
@@ -98,4 +98,4 @@ class MOSAIC_API Timer
 };
 
 } // namespace core
-} // namespace mosaic
+} // namespace saturn

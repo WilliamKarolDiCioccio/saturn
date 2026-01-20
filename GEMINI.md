@@ -1,22 +1,22 @@
 # GEMINI.md
 
-Gemini CLI integration rules for Mosaic Game Engine.
+Gemini CLI integration rules for Saturn Game Engine.
 
 **Gemini is a SUBORDINATE support tool. Claude Code is sole authority.**
 
 ## Role
 
-| Authority | Responsibility |
-|-----------|---------------|
-| Claude Code | Architecture, design, validation, integration, acceptance |
-| Gemini CLI | Large file analysis, structural splitting, bulk generation |
+| Authority   | Responsibility                                             |
+| ----------- | ---------------------------------------------------------- |
+| Claude Code | Architecture, design, validation, integration, acceptance  |
+| Gemini CLI  | Large file analysis, structural splitting, bulk generation |
 
 ## Configuration
 
-| Setting | Value |
-|---------|-------|
-| LARGE_FILE_LINE_THRESHOLD | 1000 |
-| DEFAULT_GEMINI_MODEL | gemini-2.5-flash |
+| Setting                   | Value            |
+| ------------------------- | ---------------- |
+| LARGE_FILE_LINE_THRESHOLD | 1000             |
+| DEFAULT_GEMINI_MODEL      | gemini-2.5-flash |
 
 ## Mandatory Pre-Check
 
@@ -32,11 +32,13 @@ python .claude/skills/invoke-gemini/scripts/check_line_count.py <file>
 ## Permitted Operations
 
 ### 1. Large File Analysis (>1000 lines)
+
 - Identify structures (classes, functions, modules)
 - Document invariants, assumptions, coupling
 - NO code rewriting, NO design suggestions
 
 ### 2. Structural File Splitting
+
 - Propose split boundaries
 - Preserve dependencies and execution order
 - NO logic refactoring, NO new abstractions
@@ -44,12 +46,14 @@ python .claude/skills/invoke-gemini/scripts/check_line_count.py <file>
 ### 3. Bulk Code Generation
 
 **Encouraged:**
+
 - Flutter UI, Dart bindings
 - Adapters, glue code, serialization
 - Repetitive C++ declarations
 - Platform boilerplate
 
 **Forbidden:**
+
 - Renderer internals
 - ECS
 - Threading / async
@@ -73,19 +77,20 @@ python .claude/skills/invoke-gemini/scripts/check_line_count.py <file>
 ## Context Rules
 
 All Gemini prompts MUST:
+
 - Reference relevant CLAUDE.md files
-- Assume Mosaic conventions
+- Assume Saturn conventions
 - Prohibit new patterns
 - Prohibit architectural decisions
 
 ## Guardrails
 
-| Violation | Action |
-|-----------|--------|
-| Claude read >1000 line file | Restart with Gemini |
-| Gemini made arch decision | Reject, re-prompt |
-| Output integrated without review | Rollback |
-| CLAUDE.md bypassed | Reject entirely |
+| Violation                        | Action              |
+| -------------------------------- | ------------------- |
+| Claude read >1000 line file      | Restart with Gemini |
+| Gemini made arch decision        | Reject, re-prompt   |
+| Output integrated without review | Rollback            |
+| CLAUDE.md bypassed               | Reject entirely     |
 
 ## Skill Location
 

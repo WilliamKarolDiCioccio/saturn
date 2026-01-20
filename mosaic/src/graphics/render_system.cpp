@@ -1,4 +1,4 @@
-#include "mosaic/graphics/render_system.hpp"
+#include "saturn/graphics/render_system.hpp"
 
 #include <cassert>
 #include <memory>
@@ -8,23 +8,23 @@
 
 #include <pieces/core/result.hpp>
 
-#include "mosaic/tools/logger.hpp"
-#include "mosaic/core/system.hpp"
-#include "mosaic/graphics/render_context.hpp"
-#include "mosaic/window/window.hpp"
-#include "mosaic/defines.hpp"
+#include "saturn/tools/logger.hpp"
+#include "saturn/core/system.hpp"
+#include "saturn/graphics/render_context.hpp"
+#include "saturn/window/window.hpp"
+#include "saturn/defines.hpp"
 
-#ifndef MOSAIC_PLATFORM_ANDROID
+#ifndef SATURN_PLATFORM_ANDROID
 #include "WebGPU/webgpu_render_context.hpp"
 #include "WebGPU/webgpu_render_system.hpp"
 #endif
 
-#ifndef MOSAIC_PLATFORM_EMSCRIPTEN
+#ifndef SATURN_PLATFORM_EMSCRIPTEN
 #include "Vulkan/vulkan_render_context.hpp"
 #include "Vulkan/vulkan_render_system.hpp"
 #endif
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -57,13 +57,13 @@ std::unique_ptr<RenderSystem> RenderSystem::create(RendererAPIType _apiType)
     switch (_apiType)
     {
         case RendererAPIType::web_gpu:
-#ifndef MOSAIC_PLATFORM_ANDROID
+#ifndef SATURN_PLATFORM_ANDROID
             return std::make_unique<webgpu::WebGPURenderSystem>();
 #else
             throw std::runtime_error("WebGPU backend is not supported on Android platform");
 #endif
         case RendererAPIType::vulkan:
-#ifndef MOSAIC_PLATFORM_EMSCRIPTEN
+#ifndef SATURN_PLATFORM_EMSCRIPTEN
             return std::make_unique<vulkan::VulkanRenderSystem>();
 #else
             throw std::runtime_error("Vulkan backend is not supported on Emscripten platform");
@@ -78,14 +78,14 @@ pieces::Result<RenderContext*, std::string> RenderSystem::createContext(
 
     if (contexts.find(_window) != contexts.end())
     {
-        MOSAIC_WARN("RenderSystem: Context already exists for this window");
+        SATURN_WARN("RenderSystem: Context already exists for this window");
 
         return pieces::Ok<RenderContext*, std::string>(contexts[_window].get());
     }
 
     switch (m_impl->apiType)
     {
-#ifndef MOSAIC_PLATFORM_ANDROID
+#ifndef SATURN_PLATFORM_ANDROID
         case RendererAPIType::web_gpu:
         {
             if (contexts.size() > 1)
@@ -100,7 +100,7 @@ pieces::Result<RenderContext*, std::string> RenderSystem::createContext(
             break;
         }
 #endif
-#ifndef MOSAIC_PLATFORM_EMSCRIPTEN
+#ifndef SATURN_PLATFORM_EMSCRIPTEN
         case RendererAPIType::vulkan:
         {
             contexts[_window] = std::make_unique<vulkan::VulkanRenderContext>(
@@ -164,4 +164,4 @@ RenderContext* RenderSystem::getContext(const window::Window* _window) const
 }
 
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

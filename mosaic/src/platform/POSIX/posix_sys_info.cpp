@@ -1,6 +1,6 @@
 #include "posix_sys_info.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -51,4 +51,4 @@ std::vector<core::MonitorInfo> POSIXSystemInfo::getMonitors()
 
 } // namespace posix
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

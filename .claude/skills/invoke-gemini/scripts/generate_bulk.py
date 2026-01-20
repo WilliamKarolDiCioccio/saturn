@@ -20,7 +20,7 @@ def main():
     prompt = f"""Generate code per specification.
 
 Constraints:
-- Follow Mosaic conventions per CLAUDE.md
+- Follow Saturn conventions per CLAUDE.md
 - Do NOT introduce new patterns
 - Do NOT make architectural decisions
 - Match existing style exactly

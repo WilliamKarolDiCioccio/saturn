@@ -1,17 +1,17 @@
 #pragma once
 
-#include "mosaic/defines.hpp"
+#include "saturn/defines.hpp"
 
 #include <pieces/core/result.hpp>
 #include <pieces/utils/enum_flags.hpp>
 
-#include "mosaic/tools/logger.hpp"
-#include "mosaic/core/sys_info.hpp"
+#include "saturn/tools/logger.hpp"
+#include "saturn/core/sys_info.hpp"
 
 #include "task_future.hpp"
 #include "move_only_task.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace exec
 {
@@ -31,7 +31,7 @@ enum class WorkerSharingMode : uint8_t
     global_consumer = 1 << 6, /// Can pull tasks directly from the global queue.
 };
 
-MOSAIC_DEFINE_ENUM_FLAGS_OPERATORS(WorkerSharingMode)
+SATURN_DEFINE_ENUM_FLAGS_OPERATORS(WorkerSharingMode)
 
 /// Common presets for worker behavior.
 namespace worker_sharing_presets
@@ -104,7 +104,7 @@ class ThreadWorker;
  *
  * @see ThreadWorker
  */
-class MOSAIC_API ThreadPool
+class SATURN_API ThreadPool
 {
    private:
     static ThreadPool* g_instance;
@@ -124,7 +124,7 @@ class MOSAIC_API ThreadPool
 
    public:
     pieces::RefResult<ThreadPool, std::string> initialize(
-        const mosaic::core::CPUInfo& _cpuInfo) noexcept;
+        const saturn::core::CPUInfo& _cpuInfo) noexcept;
     void shutdown() noexcept;
 
     /**
@@ -259,7 +259,7 @@ class MOSAIC_API ThreadPool
 
     [[nodiscard]] static inline ThreadPool* getInstance()
     {
-        if (!g_instance) MOSAIC_ERROR("ThreadPool has not been created yet!");
+        if (!g_instance) SATURN_ERROR("ThreadPool has not been created yet!");
 
         return g_instance;
     }
@@ -306,4 +306,4 @@ class MOSAIC_API ThreadPool
 };
 
 } // namespace exec
-} // namespace mosaic
+} // namespace saturn

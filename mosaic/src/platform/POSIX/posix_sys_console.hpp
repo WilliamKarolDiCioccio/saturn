@@ -1,6 +1,6 @@
-#include "mosaic/core/sys_console.hpp"
+#include "saturn/core/sys_console.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -30,4 +30,4 @@ class POSIXSystemConsole : public core::SystemConsole::SystemConsoleImpl
 
 } // namespace posix
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

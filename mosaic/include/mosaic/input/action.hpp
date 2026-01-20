@@ -8,7 +8,7 @@
 #include "events.hpp"
 #include "mappings.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace input
 {
@@ -36,4 +36,4 @@ struct Action
 };
 
 } // namespace input
-} // namespace mosaic
+} // namespace saturn

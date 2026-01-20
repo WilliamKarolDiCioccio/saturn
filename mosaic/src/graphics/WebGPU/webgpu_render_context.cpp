@@ -9,7 +9,7 @@
 #include "webgpu_commands.hpp"
 #include "webgpu_swapchain.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -52,18 +52,18 @@ pieces::RefResult<RenderContext, std::string> WebGPURenderContext::initialize(
         switch (status)
         {
             case WGPUQueueWorkDoneStatus_Success:
-                MOSAIC_INFO("WebGPU queue work done successfully!");
+                SATURN_INFO("WebGPU queue work done successfully!");
                 break;
             case WGPUQueueWorkDoneStatus_Error:
-                MOSAIC_ERROR("WebGPU queue work done with error!");
+                SATURN_ERROR("WebGPU queue work done with error!");
                 break;
 #if defined(WEBGPU_BACKEND_WGPU)
             case WGPUQueueWorkDoneStatus_Unknown:
-                MOSAIC_ERROR("WebGPU queue work done with unknown status!");
+                SATURN_ERROR("WebGPU queue work done with unknown status!");
                 break;
 #endif
             default:
-                MOSAIC_ERROR("WebGPU queue work done with default status!");
+                SATURN_ERROR("WebGPU queue work done with default status!");
                 break;
         }
     };
@@ -96,7 +96,7 @@ void WebGPURenderContext::shutdown()
 
 void WebGPURenderContext::resizeFramebuffer() {}
 
-void mosaic::graphics::webgpu::WebGPURenderContext::recreateSurface() {}
+void saturn::graphics::webgpu::WebGPURenderContext::recreateSurface() {}
 
 void WebGPURenderContext::getNextSurfaceViewData()
 {
@@ -200,4 +200,4 @@ void WebGPURenderContext::endFrame()
 
 } // namespace webgpu
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

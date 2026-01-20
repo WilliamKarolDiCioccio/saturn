@@ -1,8 +1,8 @@
 #pragma once
 
-#include "mosaic/input/sources/text_input_source.hpp"
+#include "saturn/input/sources/text_input_source.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -26,4 +26,4 @@ class AGDKTextInputSource : public input::TextInputSource
 
 } // namespace agdk
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

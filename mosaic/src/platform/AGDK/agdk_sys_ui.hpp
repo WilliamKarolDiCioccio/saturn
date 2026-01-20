@@ -1,9 +1,9 @@
-#include "mosaic/core/sys_ui.hpp"
+#include "saturn/core/sys_ui.hpp"
 
-#include "mosaic/platform/AGDK/jni_helper.hpp"
-#include "mosaic/platform/AGDK/agdk_platform.hpp"
+#include "saturn/platform/AGDK/jni_helper.hpp"
+#include "saturn/platform/AGDK/agdk_platform.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -29,4 +29,4 @@ class AGDKSystemUI : public core::SystemUI::SystemUIImpl
 
 } // namespace agdk
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

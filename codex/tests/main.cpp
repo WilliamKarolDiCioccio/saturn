@@ -1,7 +1,5 @@
 #include <gtest/gtest.h>
 
-#include <mosaic/core/application.hpp>
-
 int main(int argc, char **argv)
 {
     testing::InitGoogleTest(&argc, argv);

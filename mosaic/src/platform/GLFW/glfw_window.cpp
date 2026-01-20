@@ -7,9 +7,9 @@
 #include <stb_image.h>
 #include <stb_image_resize2.h>
 
-#include "mosaic/tools/logger.hpp"
+#include "saturn/tools/logger.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -23,7 +23,7 @@ pieces::RefResult<window::Window, std::string> GLFWWindow::initialize(
 
     props = _properties;
 
-#ifdef MOSAIC_PLATFORM_EMSCRIPTEN
+#ifdef SATURN_PLATFORM_EMSCRIPTEN
     static int windowCount = 0;
     if (windowCount > 0)
     {
@@ -41,7 +41,7 @@ pieces::RefResult<window::Window, std::string> GLFWWindow::initialize(
                                        ? GLFW_TRUE
                                        : GLFW_FALSE); // Remove decoration for fullscreen
 
-#ifndef MOSAIC_PLATFORM_EMSCRIPTEN
+#ifndef SATURN_PLATFORM_EMSCRIPTEN
     // Set window position hints if supported
     glfwWindowHint(GLFW_POSITION_X, props.position.x);
     glfwWindowHint(GLFW_POSITION_Y, props.position.y);
@@ -74,7 +74,7 @@ pieces::RefResult<window::Window, std::string> GLFWWindow::initialize(
         throw std::runtime_error("Failed to create GLFW window.");
     }
 
-#ifndef MOSAIC_PLATFORM_EMSCRIPTEN
+#ifndef SATURN_PLATFORM_EMSCRIPTEN
     // Move window if not in fullscreen (fullscreen ignores position)
     if (!props.isFullscreen)
     {
@@ -90,7 +90,7 @@ pieces::RefResult<window::Window, std::string> GLFWWindow::initialize(
 
     registerCallbacks();
 
-    MOSAIC_DEBUG("Window created: {0} ({1} x {2})", props.title, props.size.x, props.size.y);
+    SATURN_DEBUG("Window created: {0} ({1} x {2})", props.title, props.size.x, props.size.y);
 
     return pieces::OkRef<window::Window, std::string>(*this);
 }
@@ -99,7 +99,7 @@ void GLFWWindow::shutdown()
 {
     if (!m_glfwHandle)
     {
-        MOSAIC_ERROR("Window already destroyed.");
+        SATURN_ERROR("Window already destroyed.");
         return;
     }
 
@@ -108,7 +108,7 @@ void GLFWWindow::shutdown()
     glfwDestroyWindow(m_glfwHandle);
     m_glfwHandle = nullptr;
 
-    MOSAIC_DEBUG("Window destroyed.");
+    SATURN_DEBUG("Window destroyed.");
 }
 
 void* GLFWWindow::getNativeHandle() const { return static_cast<void*>(m_glfwHandle); }
@@ -182,7 +182,7 @@ void GLFWWindow::setWindowIcon(const std::string& _path, int _width, int _height
 
     if (!data)
     {
-        MOSAIC_ERROR("Failed to load window icon: {0}", _path.c_str());
+        SATURN_ERROR("Failed to load window icon: {0}", _path.c_str());
         return;
     }
 
@@ -195,7 +195,7 @@ void GLFWWindow::setWindowIcon(const std::string& _path, int _width, int _height
 
         if (!resized)
         {
-            MOSAIC_ERROR("Failed to resize window icon: {0}", _path.c_str());
+            SATURN_ERROR("Failed to resize window icon: {0}", _path.c_str());
             stbi_image_free(data);
             return;
         }
@@ -226,10 +226,10 @@ void GLFWWindow::setCursorMode(window::CursorMode _mode)
             glfwSetInputMode(m_glfwHandle, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
             break;
         case window::CursorMode::captured:
-#ifndef MOSAIC_PLATFORM_EMSCRIPTEN
+#ifndef SATURN_PLATFORM_EMSCRIPTEN
             glfwSetInputMode(m_glfwHandle, GLFW_CURSOR, GLFW_CURSOR_CAPTURED);
 #else
-            MOSAIC_ERROR("GLFW_CURSOR_CAPTURED is not supported in Emscripten builds.");
+            SATURN_ERROR("GLFW_CURSOR_CAPTURED is not supported in Emscripten builds.");
 #endif
             break;
         case window::CursorMode::hidden:
@@ -269,7 +269,7 @@ void GLFWWindow::setCursorIcon(const std::string& _path, int _width, int _height
 
     if (!data)
     {
-        MOSAIC_ERROR("Failed to load cursor icon: {0}", _path.c_str());
+        SATURN_ERROR("Failed to load cursor icon: {0}", _path.c_str());
         return;
     }
 
@@ -282,7 +282,7 @@ void GLFWWindow::setCursorIcon(const std::string& _path, int _width, int _height
 
         if (!resized)
         {
-            MOSAIC_ERROR("Failed to resize cursor icon: {0}", _path.c_str());
+            SATURN_ERROR("Failed to resize cursor icon: {0}", _path.c_str());
             stbi_image_free(data);
             return;
         }
@@ -303,7 +303,7 @@ void GLFWWindow::setCursorIcon(const std::string& _path, int _width, int _height
 
     if (!cursor)
     {
-        MOSAIC_ERROR("Failed to create cursor from image: {0}", _path.c_str());
+        SATURN_ERROR("Failed to create cursor from image: {0}", _path.c_str());
         stbi_image_free(data);
         return;
     }
@@ -374,7 +374,7 @@ void GLFWWindow::windowCloseCallback(GLFWwindow* window)
     }
     else
     {
-        MOSAIC_ERROR("GLFWWindow::windowCloseCallback(): callback receiver is null.");
+        SATURN_ERROR("GLFWWindow::windowCloseCallback(): callback receiver is null.");
     }
 }
 
@@ -388,7 +388,7 @@ void GLFWWindow::windowFocusCallback(GLFWwindow* window, int focused)
     }
     else
     {
-        MOSAIC_ERROR("GLFWWindow::windowFocusCallback(): callback receiver is null.");
+        SATURN_ERROR("GLFWWindow::windowFocusCallback(): callback receiver is null.");
     }
 }
 
@@ -403,7 +403,7 @@ void GLFWWindow::windowSizeCallback(GLFWwindow* window, int width, int height)
     }
     else
     {
-        MOSAIC_ERROR("GLFWWindow::windowSizeCallback(): callback receiver is null.");
+        SATURN_ERROR("GLFWWindow::windowSizeCallback(): callback receiver is null.");
     }
 }
 
@@ -417,7 +417,7 @@ void GLFWWindow::windowRefreshCallback(GLFWwindow* window)
     }
     else
     {
-        MOSAIC_ERROR("GLFWWindow::windowRefreshCallback(): callback receiver is null.");
+        SATURN_ERROR("GLFWWindow::windowRefreshCallback(): callback receiver is null.");
     }
 }
 
@@ -432,7 +432,7 @@ void GLFWWindow::windowIconifyCallback(GLFWwindow* window, int iconified)
     }
     else
     {
-        MOSAIC_ERROR("GLFWWindow::windowIconifyCallback(): callback receiver is null.");
+        SATURN_ERROR("GLFWWindow::windowIconifyCallback(): callback receiver is null.");
     }
 }
 
@@ -447,7 +447,7 @@ void GLFWWindow::windowMaximizeCallback(GLFWwindow* window, int maximized)
     }
     else
     {
-        MOSAIC_ERROR("GLFWWindow::windowMaximizeCallback(): callback receiver is null.");
+        SATURN_ERROR("GLFWWindow::windowMaximizeCallback(): callback receiver is null.");
     }
 }
 
@@ -461,7 +461,7 @@ void GLFWWindow::windowDropCallback(GLFWwindow* window, int count, const char** 
     }
     else
     {
-        MOSAIC_ERROR("GLFWWindow::windowDropCallback(): callback receiver is null.");
+        SATURN_ERROR("GLFWWindow::windowDropCallback(): callback receiver is null.");
     }
 }
 
@@ -475,7 +475,7 @@ void GLFWWindow::windowScrollCallback(GLFWwindow* window, double xoffset, double
     }
     else
     {
-        MOSAIC_ERROR("GLFWWindow::windowScrollCallback(): callback receiver is null.");
+        SATURN_ERROR("GLFWWindow::windowScrollCallback(): callback receiver is null.");
     }
 }
 
@@ -489,7 +489,7 @@ void GLFWWindow::windowCursorEnterCallback(GLFWwindow* window, int entered)
     }
     else
     {
-        MOSAIC_ERROR("GLFWWindow::windowCursorEnterCallback(): callback receiver is null.");
+        SATURN_ERROR("GLFWWindow::windowCursorEnterCallback(): callback receiver is null.");
     }
 }
 
@@ -504,7 +504,7 @@ void GLFWWindow::windowPosCallback(GLFWwindow* window, int x, int y)
     }
     else
     {
-        MOSAIC_ERROR("GLFWWindow::windowPosCallback(): callback receiver is null.");
+        SATURN_ERROR("GLFWWindow::windowPosCallback(): callback receiver is null.");
     }
 }
 
@@ -518,7 +518,7 @@ void GLFWWindow::windowContentScaleCallback(GLFWwindow* window, float xscale, fl
     }
     else
     {
-        MOSAIC_ERROR("GLFWWindow::windowContentScaleCallback(): callback receiver is null.");
+        SATURN_ERROR("GLFWWindow::windowContentScaleCallback(): callback receiver is null.");
     }
 }
 
@@ -532,10 +532,10 @@ void GLFWWindow::windowCharCallback(GLFWwindow* _window, unsigned int _codepoint
     }
     else
     {
-        MOSAIC_ERROR("GLFWWindow::windowCharCallback(): callback receiver is null.");
+        SATURN_ERROR("GLFWWindow::windowCharCallback(): callback receiver is null.");
     }
 }
 
 } // namespace glfw
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

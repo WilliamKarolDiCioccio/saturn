@@ -1,6 +1,6 @@
 #include "vulkan_pipeline.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -165,4 +165,4 @@ void bindGraphicsPipeline(const Pipeline& _pipeline, const CommandBuffer& _comma
 
 } // namespace vulkan
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

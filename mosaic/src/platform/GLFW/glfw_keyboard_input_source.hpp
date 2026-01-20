@@ -1,10 +1,10 @@
 #pragma once
 
-#include "mosaic/input/sources/keyboard_input_source.hpp"
+#include "saturn/input/sources/keyboard_input_source.hpp"
 
 #include <GLFW/glfw3.h>
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -33,4 +33,4 @@ class GLFWKeyboardInputSource : public input::KeyboardInputSource
 
 } // namespace glfw
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

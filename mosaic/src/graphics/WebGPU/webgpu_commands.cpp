@@ -1,6 +1,6 @@
 #include "webgpu_commands.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -70,4 +70,4 @@ void submitCommands(WGPUQueue _queue, std::vector<WGPUCommandBuffer>& _commands)
 
 } // namespace webgpu
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

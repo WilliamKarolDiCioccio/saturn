@@ -1,4 +1,4 @@
-#include "mosaic/core/timer.hpp"
+#include "saturn/core/timer.hpp"
 
 #include <algorithm>
 #include <atomic>
@@ -10,7 +10,7 @@
 #include <thread>
 #include <vector>
 
-namespace mosaic
+namespace saturn
 {
 namespace core
 {
@@ -175,4 +175,4 @@ void Timer::sleepFor(std::chrono::duration<double> _seconds) { Impl::sleepFor(_s
 void Timer::tick() { Impl::tick(); }
 
 } // namespace core
-} // namespace mosaic
+} // namespace saturn

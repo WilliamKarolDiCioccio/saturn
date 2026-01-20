@@ -1,10 +1,10 @@
 #pragma once
 
-#include "mosaic/window/window.hpp"
+#include "saturn/window/window.hpp"
 
 #include <GLFW/glfw3.h>
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -17,7 +17,7 @@ namespace glfw
  * This class provides concrete implementation of window functionality using GLFW.
  * It handles GLFW-specific operations and maintains the GLFW window handle.
  */
-class MOSAIC_API GLFWWindow : public window::Window
+class SATURN_API GLFWWindow : public window::Window
 {
    private:
     GLFWwindow* m_glfwHandle;
@@ -74,4 +74,4 @@ class MOSAIC_API GLFWWindow : public window::Window
 
 } // namespace glfw
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

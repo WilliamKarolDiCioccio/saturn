@@ -2,18 +2,18 @@
 
 #include <memory>
 
-#include <mosaic/core/sys_ui.hpp>
-#include <mosaic/core/sys_console.hpp>
-#include <mosaic/tools/logger.hpp>
-#include <mosaic/tools/logger_default_sink.hpp>
-#include <mosaic/tools/tracer.hpp>
-#include <mosaic/core/cmd_line_parser.hpp>
-#include <mosaic/core/platform.hpp>
-#include <mosaic/core/application.hpp>
+#include <saturn/core/sys_ui.hpp>
+#include <saturn/core/sys_console.hpp>
+#include <saturn/tools/logger.hpp>
+#include <saturn/tools/logger_default_sink.hpp>
+#include <saturn/tools/tracer.hpp>
+#include <saturn/core/cmd_line_parser.hpp>
+#include <saturn/core/platform.hpp>
+#include <saturn/core/application.hpp>
 
-#ifndef MOSAIC_PLATFORM_ANDROID
+#ifndef SATURN_PLATFORM_ANDROID
 
-namespace mosaic
+namespace saturn
 {
 
 template <typename AppType, typename... Args>
@@ -60,7 +60,7 @@ int runApp(const std::vector<std::string>& _cmdLineArgs, Args&&... _appConstucto
 
         if (result.isErr())
         {
-            MOSAIC_ERROR(result.error().c_str());
+            SATURN_ERROR(result.error().c_str());
             core::SystemConsole::destroy();
             return 1;
         }
@@ -77,17 +77,17 @@ int runApp(const std::vector<std::string>& _cmdLineArgs, Args&&... _appConstucto
     return 0;
 }
 
-} // namespace mosaic
+} // namespace saturn
 
 #endif
 
-#if defined(MOSAIC_PLATFORM_WINDOWS)
+#if defined(SATURN_PLATFORM_WINDOWS)
 
 #include <windows.h>
 
-#include <mosaic/platform/Win32/wstring.hpp>
+#include <saturn/platform/Win32/wstring.hpp>
 
-#define MOSAIC_ENTRY_POINT(AppType, ...)                                            \
+#define SATURN_ENTRY_POINT(AppType, ...)                                            \
     int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,  \
                        _In_ PSTR lpCmdLine, _In_ int nCmdShow)                      \
     {                                                                               \
@@ -96,7 +96,7 @@ int runApp(const std::vector<std::string>& _cmdLineArgs, Args&&... _appConstucto
                                                                                     \
         if (argv_w == nullptr)                                                      \
         {                                                                           \
-            mosaic::core::SystemUI::showErrorDialog("Error parsing cmd line args!", \
+            saturn::core::SystemUI::showErrorDialog("Error parsing cmd line args!", \
                                                     "argv_w is nullptr.");          \
             return 1;                                                               \
         }                                                                           \
@@ -105,18 +105,18 @@ int runApp(const std::vector<std::string>& _cmdLineArgs, Args&&... _appConstucto
         args.reserve(argc);                                                         \
         for (int i = 0; i < argc; ++i)                                              \
         {                                                                           \
-            args.emplace_back(mosaic::platform::win32::WStringToString(argv_w[i])); \
+            args.emplace_back(saturn::platform::win32::WStringToString(argv_w[i])); \
         }                                                                           \
                                                                                     \
         LocalFree(argv_w);                                                          \
                                                                                     \
-        return mosaic::runApp<AppType>(args __VA_OPT__(, __VA_ARGS__));             \
+        return saturn::runApp<AppType>(args __VA_OPT__(, __VA_ARGS__));             \
     }
 
-#elif defined(MOSAIC_PLATFORM_LINUX) || defined(MOSAIC_PLATFORM_MACOS) || \
-    defined(MOSAIC_PLATFORM_EMSCRIPTEN)
+#elif defined(SATURN_PLATFORM_LINUX) || defined(SATURN_PLATFORM_MACOS) || \
+    defined(SATURN_PLATFORM_EMSCRIPTEN)
 
-#define MOSAIC_ENTRY_POINT(AppType, ...)                                \
+#define SATURN_ENTRY_POINT(AppType, ...)                                \
     int main(int _argc, char** _argv)                                   \
     {                                                                   \
         std::vector<std::string> args;                                  \
@@ -126,14 +126,14 @@ int runApp(const std::vector<std::string>& _cmdLineArgs, Args&&... _appConstucto
             args.emplace_back(_argv[i]);                                \
         }                                                               \
                                                                         \
-        return mosaic::runApp<AppType>(args __VA_OPT__(, __VA_ARGS__)); \
+        return saturn::runApp<AppType>(args __VA_OPT__(, __VA_ARGS__)); \
     }
 
-#elif defined(MOSAIC_PLATFORM_ANDROID)
+#elif defined(SATURN_PLATFORM_ANDROID)
 
-#include <mosaic/platform/AGDK/jni_helper.hpp>
-#include <mosaic/platform/AGDK/jni_loader.cpp>
-#include <mosaic/platform/AGDK/agdk_platform.hpp>
+#include <saturn/platform/AGDK/jni_helper.hpp>
+#include <saturn/platform/AGDK/jni_loader.cpp>
+#include <saturn/platform/AGDK/agdk_platform.hpp>
 
 extern "C"
 {
@@ -144,8 +144,8 @@ extern "C"
      */
     void handle_cmd(android_app* _pApp, int32_t _cmd)
     {
-        auto platform = mosaic::core::Platform::getInstance();
-        auto context = static_cast<mosaic::platform::agdk::AGDKPlatformContext*>(
+        auto platform = saturn::core::Platform::getInstance();
+        auto context = static_cast<saturn::platform::agdk::AGDKPlatformContext*>(
             platform->getPlatformContext());
 
         static bool platformInitialized = false;
@@ -154,7 +154,7 @@ extern "C"
         {
             case APP_CMD_START:
             {
-                MOSAIC_DEBUG("Android: APP_CMD_START");
+                SATURN_DEBUG("Android: APP_CMD_START");
 
                 context->setApp(_pApp);
             }
@@ -162,13 +162,13 @@ extern "C"
 
             case APP_CMD_RESUME:
             {
-                MOSAIC_DEBUG("Android: APP_CMD_RESUME");
+                SATURN_DEBUG("Android: APP_CMD_RESUME");
             }
             break;
 
             case APP_CMD_PAUSE:
             {
-                MOSAIC_DEBUG("Android: APP_CMD_PAUSE");
+                SATURN_DEBUG("Android: APP_CMD_PAUSE");
 
                 platform->pause();
             }
@@ -176,7 +176,7 @@ extern "C"
 
             case APP_CMD_STOP:
             {
-                MOSAIC_DEBUG("Android: APP_CMD_STOP");
+                SATURN_DEBUG("Android: APP_CMD_STOP");
 
                 platform->pause();
             }
@@ -184,7 +184,7 @@ extern "C"
 
             case APP_CMD_DESTROY:
             {
-                MOSAIC_DEBUG("Android: APP_CMD_DESTROY");
+                SATURN_DEBUG("Android: APP_CMD_DESTROY");
 
                 platform->shutdown();
             }
@@ -192,7 +192,7 @@ extern "C"
 
             case APP_CMD_INIT_WINDOW:
             {
-                MOSAIC_DEBUG("Android: APP_CMD_INIT_WINDOW");
+                SATURN_DEBUG("Android: APP_CMD_INIT_WINDOW");
 
                 if (_pApp->window != nullptr)
                 {
@@ -212,7 +212,7 @@ extern "C"
 
                     if (result.isErr())
                     {
-                        MOSAIC_ERROR("Platform initialization failed: {}", result.error());
+                        SATURN_ERROR("Platform initialization failed: {}", result.error());
                         _pApp->destroyRequested = true;
                         return;
                     }
@@ -226,7 +226,7 @@ extern "C"
 
             case APP_CMD_TERM_WINDOW:
             {
-                MOSAIC_DEBUG("Android: APP_CMD_TERM_WINDOW");
+                SATURN_DEBUG("Android: APP_CMD_TERM_WINDOW");
 
                 context->updateWindow(nullptr);
 
@@ -278,16 +278,16 @@ extern "C"
     }
 }
 
-#define MOSAIC_ENTRY_POINT(AppType, ...)                                                       \
+#define SATURN_ENTRY_POINT(AppType, ...)                                                       \
     extern "C"                                                                                 \
     {                                                                                          \
         void android_main(struct android_app* _pApp)                                           \
         {                                                                                      \
-            mosaic::tools::Logger::getInstance()->addSink<mosaic::tools::DefaultSink>(         \
-                "default", mosaic::tools::DefaultSink());                                      \
+            saturn::tools::Logger::getInstance()->addSink<saturn::tools::DefaultSink>(         \
+                "default", saturn::tools::DefaultSink());                                      \
                                                                                                \
             auto app = std::make_unique<AppType>(__VA_ARGS__);                                 \
-            auto platform = mosaic::core::Platform::create(app.get());                         \
+            auto platform = saturn::core::Platform::create(app.get());                         \
                                                                                                \
             _pApp->onAppCmd = handle_cmd;                                                      \
             android_app_set_motion_event_filter(_pApp, motion_event_filter_func);              \
@@ -312,7 +312,7 @@ extern "C"
                     }                                                                          \
                     else if (pollResult == ALOOPER_EVENT_ERROR)                                \
                     {                                                                          \
-                        MOSAIC_ERROR("ALooper_pollOnce returned an error");                    \
+                        SATURN_ERROR("ALooper_pollOnce returned an error");                    \
                         break;                                                                 \
                     }                                                                          \
                     else if (pSource != nullptr)                                               \
@@ -328,13 +328,13 @@ extern "C"
                                                                                                \
                     if (runResult.isErr())                                                     \
                     {                                                                          \
-                        MOSAIC_ERROR("Platform run failed: {}", runResult.error());            \
+                        SATURN_ERROR("Platform run failed: {}", runResult.error());            \
                         break;                                                                 \
                     }                                                                          \
                 }                                                                              \
             }                                                                                  \
                                                                                                \
-            MOSAIC_DEBUG("Android main loop exiting");                                         \
+            SATURN_DEBUG("Android main loop exiting");                                         \
         }                                                                                      \
     }
 

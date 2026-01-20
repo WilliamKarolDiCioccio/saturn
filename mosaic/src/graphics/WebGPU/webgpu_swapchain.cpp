@@ -1,6 +1,6 @@
 #include "webgpu_swapchain.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -14,7 +14,7 @@ void configureSwapchain(WGPUAdapter _adapter, WGPUDevice _device, WGPUSurface _s
 
     if (wgpuSurfaceGetCapabilities(_surface, _adapter, &surfaceCapabilities) != WGPUStatus_Success)
     {
-        MOSAIC_ERROR("Could not get WebGPU surface capabilities!");
+        SATURN_ERROR("Could not get WebGPU surface capabilities!");
         return;
     }
 
@@ -22,13 +22,13 @@ void configureSwapchain(WGPUAdapter _adapter, WGPUDevice _device, WGPUSurface _s
                    surfaceCapabilities.formats + surfaceCapabilities.formatCount,
                    WGPUTextureFormat_RGBA8UnormSrgb))
     {
-        MOSAIC_ERROR("WebGPU surface does not support RGBA8UnormSrgb!");
+        SATURN_ERROR("WebGPU surface does not support RGBA8UnormSrgb!");
         return;
     }
 
     if (!(surfaceCapabilities.usages & WGPUTextureUsage_RenderAttachment))
     {
-        MOSAIC_ERROR("Surface texture does not support RenderAttachment usage!");
+        SATURN_ERROR("Surface texture does not support RenderAttachment usage!");
         return;
     }
 
@@ -49,4 +49,4 @@ void configureSwapchain(WGPUAdapter _adapter, WGPUDevice _device, WGPUSurface _s
 
 } // namespace webgpu
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

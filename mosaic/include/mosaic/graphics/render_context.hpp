@@ -2,9 +2,9 @@
 
 #include <pieces/core/result.hpp>
 
-#include "mosaic/window/window.hpp"
+#include "saturn/window/window.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -54,4 +54,4 @@ class RenderContext
 };
 
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

@@ -2,9 +2,9 @@
 
 #include <memory>
 
-#include <mosaic/ecs/entity_registry.hpp>
+#include <saturn/ecs/entity_registry.hpp>
 
-using namespace mosaic::ecs;
+using namespace saturn::ecs;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Test Components

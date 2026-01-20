@@ -2,7 +2,7 @@
 
 #include <chrono>
 
-namespace mosaic
+namespace saturn
 {
 namespace input
 {
@@ -33,4 +33,4 @@ constexpr auto k_mouseCursorNumSamples = 16;
 constexpr auto k_eventHistoryMaxSize = 8;
 
 } // namespace input
-} // namespace mosaic
+} // namespace saturn

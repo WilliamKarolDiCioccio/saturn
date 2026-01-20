@@ -1,8 +1,8 @@
-#include "mosaic/core/sys_ui.hpp"
+#include "saturn/core/sys_ui.hpp"
 
 #include <emscripten.h>
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -28,4 +28,4 @@ class EmscriptenSystemUI : public core::SystemUI::SystemUIImpl
 
 } // namespace emscripten
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

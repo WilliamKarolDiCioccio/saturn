@@ -4,7 +4,7 @@
 
 #include "vulkan_common.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -18,4 +18,4 @@ void destroyAllocator(VmaAllocator& allocator);
 
 } // namespace vulkan
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

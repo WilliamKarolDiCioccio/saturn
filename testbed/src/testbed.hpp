@@ -1,11 +1,11 @@
-#include <mosaic/core/application.hpp>
+#include <saturn/core/application.hpp>
 
 namespace testbed
 {
 
-using namespace mosaic;
+using namespace saturn;
 
-class TestbedApplication : public mosaic::core::Application
+class TestbedApplication : public saturn::core::Application
 {
    public:
     TestbedApplication() : Application("Testbed") {}

@@ -8,7 +8,7 @@
 
 #include <pieces/memory/contiguous_allocator.hpp>
 
-namespace mosaic
+namespace saturn
 {
 namespace ecs
 {
@@ -269,4 +269,4 @@ class TypelessVector final
 };
 
 } // namespace ecs
-} // namespace mosaic
+} // namespace saturn

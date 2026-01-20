@@ -1,12 +1,12 @@
-#include "mosaic/input/sources/mouse_input_source.hpp"
+#include "saturn/input/sources/mouse_input_source.hpp"
 
-#if defined(MOSAIC_PLATFORM_DESKTOP) || defined(MOSAIC_PLATFORM_WEB)
+#if defined(SATURN_PLATFORM_DESKTOP) || defined(SATURN_PLATFORM_WEB)
 #include "platform/GLFW/glfw_mouse_input_source.hpp"
 #endif
 
 using namespace std::chrono_literals;
 
-namespace mosaic
+namespace saturn
 {
 namespace input
 {
@@ -47,7 +47,7 @@ MouseInputSource::MouseInputSource(window::Window* _window)
 
 std::unique_ptr<MouseInputSource> MouseInputSource::create(window::Window* _window)
 {
-#if defined(MOSAIC_PLATFORM_DESKTOP) || defined(MOSAIC_PLATFORM_WEB)
+#if defined(SATURN_PLATFORM_DESKTOP) || defined(SATURN_PLATFORM_WEB)
     return std::make_unique<platform::glfw::GLFWMouseInputSource>(_window);
 #else
     throw std::runtime_error("Mouse input source not supported on mobile devices");
@@ -390,4 +390,4 @@ GestureDirection MouseInputSource::getCursorGestureDirection() const
 }
 
 } // namespace input
-} // namespace mosaic
+} // namespace saturn

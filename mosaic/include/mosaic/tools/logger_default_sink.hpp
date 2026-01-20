@@ -1,12 +1,12 @@
 #pragma once
 
-#include "mosaic/defines.hpp"
+#include "saturn/defines.hpp"
 
 #include <pieces/core/result.hpp>
 
-#include "mosaic/tools/logger.hpp"
+#include "saturn/tools/logger.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace tools
 {
@@ -14,7 +14,7 @@ namespace tools
 /**
  * @brief Default logging sink that outputs logs to the console.
  */
-class MOSAIC_API DefaultSink final : public Sink
+class SATURN_API DefaultSink final : public Sink
 {
    public:
     ~DefaultSink() override = default;
@@ -31,4 +31,4 @@ class MOSAIC_API DefaultSink final : public Sink
 };
 
 } // namespace tools
-} // namespace mosaic
+} // namespace saturn

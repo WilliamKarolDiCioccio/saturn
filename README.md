@@ -1,14 +1,14 @@
-# 🎮 Mosaic Game Engine
+# 🎮 Saturn Game Engine
 
-**Mosaic** is a modern, cross-platform game engine written in **C++23**, built both as a learning journey and as the foundation for something greater.
+**Saturn** is a modern, cross-platform game engine written in **C++23**, built both as a learning journey and as the foundation for something greater.
 
-Like all of my projects, Mosaic is first and foremost an exploration — a deep dive into systems programming, computer graphics, and game architecture. But it’s not just a toy. The engine is designed with the long-term goal of becoming a stable, professional-grade platform for interactive experiences: games, simulations, creative tools, and more.
+Like all of my projects, Saturn is first and foremost an exploration — a deep dive into systems programming, computer graphics, and game architecture. But it’s not just a toy. The engine is designed with the long-term goal of becoming a stable, professional-grade platform for interactive experiences: games, simulations, creative tools, and more.
 
-Unlike many hobby engines that simply wrap existing libraries, Mosaic takes a bottom-up approach. Its **core systems are built from scratch** — from a cache-friendly **Entity-Component-System (ECS)** and **layered input system**, to a **Vulkan/WebGPU-based renderer**, an **async-aware I/O layer**, and eventually a full **editor and asset pipeline**. It’s about understanding, not just using.
+Unlike many hobby engines that simply wrap existing libraries, Saturn takes a bottom-up approach. Its **core systems are built from scratch** — from a cache-friendly **Entity-Component-System (ECS)** and **layered input system**, to a **Vulkan/WebGPU-based renderer**, an **async-aware I/O layer**, and eventually a full **editor and asset pipeline**. It’s about understanding, not just using.
 
-Mosaic is still under heavy development, but the foundation is solid — and contributions or discussions are always welcome.
+Saturn is still under heavy development, but the foundation is solid — and contributions or discussions are always welcome.
 
-For documentation, guides, and API references, visit the [Mosaic Docs](https://williamkaroldicioccio.github.io/mosaic/).
+For documentation, guides, and API references, visit the [Saturn Docs](https://williamkaroldicioccio.github.io/saturn/).
 
 ---
 

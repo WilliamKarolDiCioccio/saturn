@@ -1,7 +1,7 @@
-# Package: mosaic/graphics
+# Package: saturn/graphics
 
-**Location:** `mosaic/include/mosaic/graphics/`, `mosaic/src/graphics/`
-**Type:** Part of mosaic shared/static library
+**Location:** `saturn/include/saturn/graphics/`, `saturn/src/graphics/`
+**Type:** Part of saturn shared/static library
 **Dependencies:** pieces (Result), window/ (Window), core/ (System), Vulkan SDK (volk, VMA), WebGPU (Dawn/Emscripten)
 
 ---
@@ -9,6 +9,7 @@
 ## Purpose & Responsibility
 
 ### Owns
+
 - Rendering abstraction layer (RenderSystem, RenderContext)
 - Backend implementations (Vulkan, WebGPU)
 - Frame lifecycle (beginFrame → updateResources → drawScene → endFrame)
@@ -20,6 +21,7 @@
 - Per-window render contexts (multi-window support)
 
 ### Does NOT Own
+
 - Window creation (window/ package)
 - Input handling (input/ package)
 - Scene graph or entity management (scene/ and ecs/ packages)
@@ -31,12 +33,14 @@
 ## Key Abstractions & Invariants
 
 ### Core Types
+
 - **`RenderSystem`** (`render_system.hpp:26`) — EngineSystem base, owns contexts, factory pattern, singleton
 - **`RendererAPIType`** (`render_system.hpp:19`) — Enum: web_gpu, vulkan, none
 - **`RenderContext`** (`render_context.hpp:23`) — Per-window render target, frame lifecycle, Pimpl
 - **`RenderContextSettings`** (`render_context.hpp:12`) — enableDebugLayers, backbufferCount
 
 ### Vulkan Backend Types (src/graphics/Vulkan/)
+
 - **`VulkanInstance`** (`context/vulkan_instance.hpp`) — Vulkan instance, validation layers
 - **`VulkanDevice`** (`context/vulkan_device.hpp`) — Physical/logical device, queue families
 - **`VulkanSurface`** (`context/vulkan_surface.hpp`) — Window surface (Win32/Xlib/Wayland/Android)
@@ -50,6 +54,7 @@
 - **`VulkanFramebuffers`** (`vulkan_framebuffers.hpp`) — Framebuffer objects
 
 ### WebGPU Backend Types (src/graphics/WebGPU/)
+
 - **`WebGPUInstance`** (`webgpu_instance.hpp`) — WebGPU instance (Dawn or Emscripten)
 - **`WebGPUDevice`** (`webgpu_device.hpp`) — Device, adapter, queue
 - **`WebGPUSwapchain`** (`webgpu_swapchain.hpp`) — Swapchain, texture views
@@ -57,6 +62,7 @@
 - **`WebGPUPipeline`** (`webgpu_pipeline.hpp`) — Render pipeline
 
 ### Invariants (NEVER violate)
+
 1. **Backend exclusivity**: ONLY one backend active at compile time (Vulkan OR WebGPU, never both)
 2. **Platform constraints**: Vulkan on desktop/Android, WebGPU on web (+desktop via Dawn)
 3. **One context per window**: RenderSystem MUST maintain 1:1 mapping Window* → RenderContext*
@@ -69,6 +75,7 @@
 10. **Backend initialization**: RenderSystem subclass (VulkanRenderSystem/WebGPURenderSystem) MUST initialize backend before creating contexts
 
 ### Architectural Patterns
+
 - **Factory pattern**: RenderSystem::create(RendererAPIType) returns backend-specific subclass
 - **Pimpl**: RenderSystem and RenderContext hide implementation details
 - **Singleton**: RenderSystem::g_instance for global access
@@ -81,7 +88,9 @@
 ## Architectural Constraints
 
 ### Dependency Rules
+
 **Allowed:**
+
 - pieces (Result)
 - window/ (Window for surface creation)
 - core/ (System lifecycle, Logger)
@@ -90,30 +99,35 @@
 - glm (math library for shaders/transforms)
 
 **Forbidden:**
+
 - ❌ ecs/ — Rendering does NOT depend on ECS (scene/ may integrate both)
 - ❌ scene/ — Graphics is lower-level than scene graph
 - ❌ Direct VMA usage outside VulkanAllocator — Encapsulate in allocator
 - ❌ Static Vulkan linking — Use volk for dynamic loading
 
 ### Layering
+
 - window/ creates Window → graphics/ creates RenderContext for Window
 - Application owns RenderSystem (EngineSystem)
 - RenderContext wraps backend-specific rendering (Vulkan/WebGPU)
 
 ### Threading Model
+
 - **RenderSystem**: Single-threaded (called from Application::update())
 - **RenderContext**: Single-threaded frame lifecycle (beginFrame/endFrame not thread-safe)
 - **Command buffers**: Can be recorded in parallel (Vulkan supports secondary command buffers)
 - **VMA**: Thread-safe allocations (internal synchronization)
 
 ### Lifetime & Ownership
+
 - **RenderSystem**: Owned by Application, singleton g_instance
-- **RenderContext**: Owned by RenderSystem, mapped by Window*
+- **RenderContext**: Owned by RenderSystem, mapped by Window\*
 - **Swapchain**: Owned by RenderContext, recreated on resize
 - **Framebuffers**: Owned by RenderContext (Vulkan) or transient (WebGPU)
 - **Command pools/buffers**: Owned by RenderContext, per-frame-in-flight
 
 ### Platform Constraints
+
 - **Vulkan**: Windows, Linux, Android (requires Vulkan SDK)
 - **WebGPU**: Web (Emscripten), desktop (Dawn)
 - **No Vulkan on web**: Emscripten builds MUST use WebGPU backend
@@ -125,6 +139,7 @@
 ## Modification Rules
 
 ### Safe to Change
+
 - Add new shader types (compute, tessellation, geometry)
 - Extend RenderContextSettings (MSAA samples, depth/stencil format)
 - Optimize command buffer recording (secondary command buffers)
@@ -133,6 +148,7 @@
 - Add profiling markers (Vulkan debug utils, WebGPU labels)
 
 ### Requires Coordination
+
 - Changing frame lifecycle affects Application::update() loop
 - Modifying RenderContext API breaks window/ integration
 - Altering backend selection logic affects CMake platform conditionals
@@ -140,6 +156,7 @@
 - Changing swapchain format affects shader outputs
 
 ### Almost Never Change
+
 - **Frame lifecycle order** — beginFrame → endFrame is load-bearing for synchronization
 - **Backend exclusivity** — running both Vulkan + WebGPU simultaneously breaks
 - **Factory pattern** — RenderSystem::create() is standard creation path
@@ -151,6 +168,7 @@
 ## Common Pitfalls
 
 ### Footguns
+
 - ⚠️ **Calling drawScene() before beginFrame()**: Undefined behavior (command buffer not started)
 - ⚠️ **Not recreating swapchain on resize**: Renders to wrong resolution or crashes
 - ⚠️ **Missing fence/semaphore synchronization**: Frame-in-flight overlap causes corruption
@@ -160,6 +178,7 @@
 - ⚠️ **WebGPU on Android**: Not supported (Vulkan only)
 
 ### Performance Traps
+
 - 🐌 **Recreating pipelines every frame**: Compile shaders at startup (cache pipelines)
 - 🐌 **Small draw calls**: High CPU overhead (batch geometry, use instancing)
 - 🐌 **Synchronous resource uploads**: Blocks rendering (use staging buffers, upload async)
@@ -167,6 +186,7 @@
 - 🐌 **No descriptor set caching**: Recreating descriptor sets every frame is slow
 
 ### Historical Mistakes (Do NOT repeat)
+
 - **Static Vulkan linking**: Switched to volk for dynamic loading (smaller binary, runtime backend selection)
 - **No VMA**: Added VMA for GPU memory management (manual allocation was error-prone)
 - **Single-threaded command recording**: Exploring secondary command buffers for parallelism
@@ -176,6 +196,7 @@
 ## How Claude Should Help
 
 ### Expected Tasks
+
 - Add compute shader support (Vulkan compute pipelines, WebGPU compute passes)
 - Implement descriptor set caching (reduce per-frame allocations)
 - Add MSAA support (multisample attachments, resolve passes)
@@ -187,6 +208,7 @@
 - Implement render graph (automatic resource barriers, execution order)
 
 ### Conservative Approach Required
+
 - **Changing frame lifecycle**: Verify synchronization still correct (fences, semaphores)
 - **Modifying VMA usage**: Risk of memory leaks or corruption (test thoroughly)
 - **Altering backend factory**: May break platform-specific builds (test all platforms)
@@ -194,6 +216,7 @@
 - **Changing swapchain recreation logic**: May cause resize bugs (test extensively)
 
 ### Before Making Changes
+
 - [ ] Verify backend compiles on target platform (Vulkan: Windows/Linux/Android, WebGPU: Emscripten)
 - [ ] Test with validation layers enabled (catch Vulkan API misuse)
 - [ ] Run on multiple GPUs (NVIDIA, AMD, Intel) - driver differences matter
@@ -207,12 +230,15 @@
 ## Quick Reference
 
 ### Files
+
 **Public API:**
-- `include/mosaic/graphics/render_system.hpp` — RenderSystem, RendererAPIType
-- `include/mosaic/graphics/render_context.hpp` — RenderContext, RenderContextSettings
-- `include/mosaic/graphics/*.hpp` — Buffer, Shader, Texture, Pipeline (public abstractions)
+
+- `include/saturn/graphics/render_system.hpp` — RenderSystem, RendererAPIType
+- `include/saturn/graphics/render_context.hpp` — RenderContext, RenderContextSettings
+- `include/saturn/graphics/*.hpp` — Buffer, Shader, Texture, Pipeline (public abstractions)
 
 **Vulkan Backend (src/graphics/Vulkan/):**
+
 - `context/` — VulkanInstance, VulkanDevice, VulkanSurface
 - `commands/` — VulkanCommandPool, VulkanCommandBuffer, VulkanRenderPass
 - `pipelines/` — VulkanPipeline, VulkanShaderModule
@@ -224,6 +250,7 @@
 - `vulkan_common.hpp` — Shared Vulkan utilities
 
 **WebGPU Backend (src/graphics/WebGPU/):**
+
 - `webgpu_instance.{hpp,cpp}` — WebGPU instance
 - `webgpu_device.{hpp,cpp}` — Device, adapter, queue
 - `webgpu_swapchain.{hpp,cpp}` — Swapchain
@@ -234,11 +261,13 @@
 - `webgpu_common.hpp` — Shared WebGPU utilities
 
 **Tests:**
+
 - None currently (tests needed for backend abstraction, swapchain recreation)
 
 ### Key Functions/Methods
+
 - `RenderSystem::create(RendererAPIType)` → unique_ptr<RenderSystem> — Factory for backend
-- `RenderSystem::createContext(Window*)` → Result<RenderContext*, string> — Create context for window
+- `RenderSystem::createContext(Window*)` → Result<RenderContext\*, string> — Create context for window
 - `RenderContext::render()` — Executes frame lifecycle (internal: begin → update → draw → end)
 - `RenderContext::beginFrame()` — Acquire swapchain image, begin command buffer
 - `RenderContext::drawScene()` — Record draw commands
@@ -246,10 +275,12 @@
 - `RenderContext::resizeFramebuffer()` — Recreate swapchain on window resize
 
 ### Build Flags
-- `MOSAIC_PLATFORM_EMSCRIPTEN` — Forces WebGPU backend (no Vulkan)
-- `MOSAIC_ENABLE_VALIDATION_LAYERS` — Enables Vulkan validation (debug builds)
+
+- `SATURN_PLATFORM_EMSCRIPTEN` — Forces WebGPU backend (no Vulkan)
+- `SATURN_ENABLE_VALIDATION_LAYERS` — Enables Vulkan validation (debug builds)
 
 ---
 
 ## Status Notes
+
 **Stable** — Both Vulkan and WebGPU backends functional. High-level rendering API (materials, lights) not implemented (user code). Render graph and resource caching future work.

@@ -1,12 +1,12 @@
 #include "vulkan_render_context.hpp"
 
-#if defined(MOSAIC_PLATFORM_ANDROID)
-#include "mosaic/platform/AGDK/agdk_platform.hpp"
+#if defined(SATURN_PLATFORM_ANDROID)
+#include "saturn/platform/AGDK/agdk_platform.hpp"
 #endif
 
 #include "vulkan_render_system.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -44,12 +44,12 @@ pieces::RefResult<RenderContext, std::string> VulkanRenderContext::initialize(
 
     createFrames();
 
-#if defined(MOSAIC_PLATFORM_DESKTOP) || defined(MOSAIC_PLATFORM_WEB)
+#if defined(SATURN_PLATFORM_DESKTOP) || defined(SATURN_PLATFORM_WEB)
 
     window->registerWindowResizeCallback([this](int height, int width)
                                          { m_framebufferResized = true; });
 
-#elif defined(MOSAIC_PLATFORM_ANDROID)
+#elif defined(SATURN_PLATFORM_ANDROID)
 
     auto platform = static_cast<platform::agdk::AGDKPlatform*>(core::Platform::getInstance());
 
@@ -289,4 +289,4 @@ void VulkanRenderContext::destroyFrames()
 
 } // namespace vulkan
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

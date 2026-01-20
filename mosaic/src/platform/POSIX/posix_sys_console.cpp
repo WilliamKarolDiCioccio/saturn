@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -33,4 +33,4 @@ void POSIXSystemConsole::printCritical(const std::string& _message) const { std:
 
 } // namespace posix
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

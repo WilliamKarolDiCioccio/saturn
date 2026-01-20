@@ -1,6 +1,6 @@
 #include "posix_sys_ui.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -31,4 +31,4 @@ void POSIXSystemUI::hideSoftwareKeyboard() const {}
 
 } // namespace posix
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

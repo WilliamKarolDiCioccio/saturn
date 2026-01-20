@@ -1,10 +1,10 @@
 #pragma once
 
-#include "mosaic/graphics/render_context.hpp"
+#include "saturn/graphics/render_context.hpp"
 
 #include "webgpu_common.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -57,4 +57,4 @@ class WebGPURenderContext : public RenderContext
 
 } // namespace webgpu
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

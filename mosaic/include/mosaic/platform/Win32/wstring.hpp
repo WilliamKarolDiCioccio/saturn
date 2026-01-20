@@ -4,7 +4,7 @@
 
 #include <windows.h>
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -47,4 +47,4 @@ inline std::string WStringToString(const std::wstring& wstr)
 
 } // namespace win32
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

@@ -6,12 +6,12 @@
 
 #include <pieces/core/result.hpp>
 
-#include "mosaic/tools/logger.hpp"
-#include "mosaic/core/system.hpp"
+#include "saturn/tools/logger.hpp"
+#include "saturn/core/system.hpp"
 
 #include "window.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace window
 {
@@ -30,7 +30,7 @@ namespace window
  * @note This class is not meant to be instantiated directly. Use the static method
  * `create()` to obtain an instance.
  */
-class MOSAIC_API WindowSystem : public core::EngineSystem
+class SATURN_API WindowSystem : public core::EngineSystem
 {
    private:
     static WindowSystem* g_instance;
@@ -76,11 +76,11 @@ class MOSAIC_API WindowSystem : public core::EngineSystem
 
     [[nodiscard]] static inline WindowSystem* getInstance()
     {
-        if (!g_instance) MOSAIC_ERROR("WindowSystem has not been created yet!");
+        if (!g_instance) SATURN_ERROR("WindowSystem has not been created yet!");
 
         return g_instance;
     }
 };
 
 } // namespace window
-} // namespace mosaic
+} // namespace saturn

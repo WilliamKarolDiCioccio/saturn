@@ -1,6 +1,6 @@
-#include "mosaic/core/sys_ui.hpp"
+#include "saturn/core/sys_ui.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -26,4 +26,4 @@ class POSIXSystemUI : public core::SystemUI::SystemUIImpl
 
 } // namespace posix
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

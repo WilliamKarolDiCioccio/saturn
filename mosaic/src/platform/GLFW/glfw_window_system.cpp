@@ -1,6 +1,6 @@
 #include "glfw_window_system.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -33,4 +33,4 @@ pieces::RefResult<core::System, std::string> GLFWWindowSystem::update()
 
 } // namespace glfw
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

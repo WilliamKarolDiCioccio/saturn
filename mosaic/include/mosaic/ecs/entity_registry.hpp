@@ -12,7 +12,7 @@
 #include "entity_view.hpp"
 #include "entity_allocation_helper.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace ecs
 {
@@ -948,4 +948,4 @@ class EntityRegistry final
 };
 
 } // namespace ecs
-} // namespace mosaic
+} // namespace saturn

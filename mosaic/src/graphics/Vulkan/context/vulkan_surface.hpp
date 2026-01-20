@@ -4,7 +4,7 @@
 
 #include "vulkan_instance.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -24,4 +24,4 @@ void destroySurface(Surface& _surface, const Instance& _instance);
 
 } // namespace vulkan
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

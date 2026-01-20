@@ -1,6 +1,6 @@
 #pragma once
 
-#include "mosaic/defines.hpp"
+#include "saturn/defines.hpp"
 
 #include <memory>
 #include <string>
@@ -14,9 +14,9 @@
 
 #include <pieces/core/result.hpp>
 
-#include "mosaic/core/sys_console.hpp"
+#include "saturn/core/sys_console.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace tools
 {
@@ -120,7 +120,7 @@ class Logger final
     };
 
    private:
-    MOSAIC_API static Logger* s_instance;
+    SATURN_API static Logger* s_instance;
 
     std::unordered_map<std::string, std::shared_ptr<Sink>> m_sinks;
     std::mutex m_sinksMutex;
@@ -134,8 +134,8 @@ class Logger final
     ~Logger() = default;
 
    public:
-    MOSAIC_API static bool initialize(const Config& _config = Config()) noexcept;
-    MOSAIC_API static void shutdown() noexcept;
+    SATURN_API static bool initialize(const Config& _config = Config()) noexcept;
+    SATURN_API static void shutdown() noexcept;
 
     // Configurable options
 
@@ -251,33 +251,33 @@ class Logger final
     [[nodiscard]] static inline Logger* getInstance() { return s_instance; }
 
    private:
-    MOSAIC_API void logInternal(LogLevel _level, std::string _message) noexcept;
+    SATURN_API void logInternal(LogLevel _level, std::string _message) noexcept;
 };
 
 } // namespace tools
-} // namespace mosaic
+} // namespace saturn
 
-#if defined(MOSAIC_DEBUG_BUILD) || defined(MOSAIC_DEV_BUILD)
-#define MOSAIC_TRACE(_Msg, ...)                                               \
-    mosaic::tools::Logger::getInstance()->log(mosaic::tools::LogLevel::trace, \
+#if defined(SATURN_DEBUG_BUILD) || defined(SATURN_DEV_BUILD)
+#define SATURN_TRACE(_Msg, ...)                                               \
+    saturn::tools::Logger::getInstance()->log(saturn::tools::LogLevel::trace, \
                                               _Msg __VA_OPT__(, __VA_ARGS__))
-#define MOSAIC_DEBUG(_Msg, ...)                                               \
-    mosaic::tools::Logger::getInstance()->log(mosaic::tools::LogLevel::debug, \
+#define SATURN_DEBUG(_Msg, ...)                                               \
+    saturn::tools::Logger::getInstance()->log(saturn::tools::LogLevel::debug, \
                                               _Msg __VA_OPT__(, __VA_ARGS__))
 #else
-#define MOSAIC_TRACE(_Msg, ...) ((void)0)
-#define MOSAIC_DEBUG(_Msg, ...) ((void)0)
+#define SATURN_TRACE(_Msg, ...) ((void)0)
+#define SATURN_DEBUG(_Msg, ...) ((void)0)
 #endif
 
-#define MOSAIC_INFO(_Msg, ...)                                               \
-    mosaic::tools::Logger::getInstance()->log(mosaic::tools::LogLevel::info, \
+#define SATURN_INFO(_Msg, ...)                                               \
+    saturn::tools::Logger::getInstance()->log(saturn::tools::LogLevel::info, \
                                               _Msg __VA_OPT__(, __VA_ARGS__))
-#define MOSAIC_WARN(_Msg, ...)                                               \
-    mosaic::tools::Logger::getInstance()->log(mosaic::tools::LogLevel::warn, \
+#define SATURN_WARN(_Msg, ...)                                               \
+    saturn::tools::Logger::getInstance()->log(saturn::tools::LogLevel::warn, \
                                               _Msg __VA_OPT__(, __VA_ARGS__))
-#define MOSAIC_ERROR(_Msg, ...)                                               \
-    mosaic::tools::Logger::getInstance()->log(mosaic::tools::LogLevel::error, \
+#define SATURN_ERROR(_Msg, ...)                                               \
+    saturn::tools::Logger::getInstance()->log(saturn::tools::LogLevel::error, \
                                               _Msg __VA_OPT__(, __VA_ARGS__))
-#define MOSAIC_CRITICAL(_Msg, ...)                                               \
-    mosaic::tools::Logger::getInstance()->log(mosaic::tools::LogLevel::critical, \
+#define SATURN_CRITICAL(_Msg, ...)                                               \
+    saturn::tools::Logger::getInstance()->log(saturn::tools::LogLevel::critical, \
                                               _Msg __VA_OPT__(, __VA_ARGS__))

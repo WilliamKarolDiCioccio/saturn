@@ -2,7 +2,7 @@
 
 #include "../vulkan_common.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -23,11 +23,11 @@ struct Instance
     {
         requiredExtensions = {
             VK_KHR_SURFACE_EXTENSION_NAME,
-#if defined(MOSAIC_PLATFORM_WINDOWS)
+#if defined(SATURN_PLATFORM_WINDOWS)
             VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
-#elif defined(MOSAIC_PLATFORM_LINUX)
+#elif defined(SATURN_PLATFORM_LINUX)
             VK_KHR_XLIB_SURFACE_EXTENSION_NAME,
-#elif defined(MOSAIC_PLATFORM_ANDROID)
+#elif defined(SATURN_PLATFORM_ANDROID)
             VK_KHR_ANDROID_SURFACE_EXTENSION_NAME,
 #endif
         };
@@ -36,7 +36,7 @@ struct Instance
             VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME,
         };
 
-#if defined(MOSAIC_DEBUG_BUILD) || defined(MOSAIC_DEV_BUILD)
+#if defined(SATURN_DEBUG_BUILD) || defined(SATURN_DEV_BUILD)
         requiredExtensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
         requiredExtensions.emplace_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
 
@@ -53,4 +53,4 @@ void destroyInstance(Instance& _instance);
 
 } // namespace vulkan
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

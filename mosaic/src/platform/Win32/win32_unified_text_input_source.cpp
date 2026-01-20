@@ -8,7 +8,7 @@
 
 #pragma comment(lib, "imm32.lib")
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -386,4 +386,4 @@ void Win32UnifiedTextInputSource::updateCandidateWindowPosition()
 
 } // namespace win32
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

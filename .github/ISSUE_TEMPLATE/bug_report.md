@@ -1,4 +1,4 @@
-## 🐞 Bug Report – Mosaic Game Engine
+## 🐞 Bug Report – Saturn Game Engine
 
 ### Pre-Issue Checklist ✅
 
@@ -72,4 +72,4 @@ _Add anything else relevant: hardware quirks, custom CMake flags, whether you're
 
 ---
 
-Thanks for helping improve Mosaic! 💚
+Thanks for helping improve Saturn! 💚

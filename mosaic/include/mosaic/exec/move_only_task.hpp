@@ -6,7 +6,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace mosaic
+namespace saturn
 {
 namespace exec
 {
@@ -268,4 +268,4 @@ bool operator!=(std::nullptr_t, const MoveOnlyTask<R(Args...)>& task) noexcept
 }
 
 } // namespace exec
-} // namespace mosaic
+} // namespace saturn

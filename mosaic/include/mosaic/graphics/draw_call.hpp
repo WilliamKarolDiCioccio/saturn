@@ -7,7 +7,7 @@
 #include "texture.hpp"
 #include "pipeline.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -62,4 +62,4 @@ struct DrawCall
 };
 
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

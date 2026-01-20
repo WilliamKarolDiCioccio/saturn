@@ -11,10 +11,10 @@
 #include <tuple>
 #include <chrono>
 
-#include "mosaic/defines.hpp"
-#include "mosaic/exec/move_only_task.hpp"
+#include "saturn/defines.hpp"
+#include "saturn/exec/move_only_task.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace exec
 {
@@ -95,8 +95,8 @@ class SharedState
    private:
     static constexpr int k_spinCount = 100;
 
-    alignas(MOSAIC_CACHE_LINE_SIZE) mutable std::mutex m_mutex;
-    alignas(MOSAIC_CACHE_LINE_SIZE) std::condition_variable m_cv;
+    alignas(SATURN_CACHE_LINE_SIZE) mutable std::mutex m_mutex;
+    alignas(SATURN_CACHE_LINE_SIZE) std::condition_variable m_cv;
     std::atomic<FutureStatus> m_status;
     std::variant<std::monostate, StorageType, std::exception_ptr> m_storage;
     std::atomic<bool> m_future_retrieved;
@@ -722,4 +722,4 @@ inline auto makeTaskPair(F&& _f, Args&&... _args)
 }
 
 } // namespace exec
-} // namespace mosaic
+} // namespace saturn

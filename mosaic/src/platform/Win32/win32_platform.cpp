@@ -4,7 +4,7 @@
 
 #pragma comment(lib, "ole32.lib")
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -76,4 +76,4 @@ void Win32Platform::shutdown()
 
 } // namespace win32
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

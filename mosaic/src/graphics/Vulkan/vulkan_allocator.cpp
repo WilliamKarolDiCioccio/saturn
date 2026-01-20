@@ -1,6 +1,6 @@
 #include "vulkan_allocator.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -25,4 +25,4 @@ void destroyAllocator(VmaAllocator& _allocator) { vmaDestroyAllocator(_allocator
 
 } // namespace vulkan
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

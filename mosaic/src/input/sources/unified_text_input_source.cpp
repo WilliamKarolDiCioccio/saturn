@@ -1,12 +1,12 @@
-#include "mosaic/input/sources/unified_text_input_source.hpp"
+#include "saturn/input/sources/unified_text_input_source.hpp"
 
-#include "mosaic/tools/logger.hpp"
+#include "saturn/tools/logger.hpp"
 
-#ifdef MOSAIC_PLATFORM_WINDOWS
+#ifdef SATURN_PLATFORM_WINDOWS
 #include "platform/Win32/win32_unified_text_input_source.hpp"
 #endif
 
-namespace mosaic
+namespace saturn
 {
 namespace input
 {
@@ -16,7 +16,7 @@ std::unique_ptr<UnifiedTextInputSource> UnifiedTextInputSource::create(window::W
 #if defined(_WIN32)
     return std::make_unique<platform::win32::Win32UnifiedTextInputSource>(_window);
 #else
-    MOSAIC_WARN("UnifiedTextInputSource not implemented for this platform");
+    SATURN_WARN("UnifiedTextInputSource not implemented for this platform");
     return nullptr;
 #endif
 }
@@ -72,4 +72,4 @@ void UnifiedTextInputSource::processInput()
 }
 
 } // namespace input
-} // namespace mosaic
+} // namespace saturn
