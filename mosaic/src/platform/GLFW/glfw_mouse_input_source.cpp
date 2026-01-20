@@ -1,6 +1,6 @@
 #include "glfw_mouse_input_source.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -69,4 +69,4 @@ glm::vec2 GLFWMouseInputSource::queryWheelOffset()
 
 } // namespace glfw
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

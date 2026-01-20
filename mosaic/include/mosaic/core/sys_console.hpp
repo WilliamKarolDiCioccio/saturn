@@ -2,9 +2,9 @@
 
 #include <string>
 
-#include "mosaic/defines.hpp"
+#include "saturn/defines.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace core
 {
@@ -38,7 +38,7 @@ class SystemConsole
     };
 
    private:
-    MOSAIC_API static std::unique_ptr<SystemConsoleImpl> impl;
+    SATURN_API static std::unique_ptr<SystemConsoleImpl> impl;
 
    public:
     SystemConsole(const SystemConsole&) = delete;
@@ -47,19 +47,19 @@ class SystemConsole
     SystemConsole& operator=(SystemConsole&&) = delete;
 
    public:
-    MOSAIC_API static void attachParent();
-    MOSAIC_API static void detachParent();
-    MOSAIC_API static void create();
-    MOSAIC_API static void destroy();
+    SATURN_API static void attachParent();
+    SATURN_API static void detachParent();
+    SATURN_API static void create();
+    SATURN_API static void destroy();
 
-    MOSAIC_API static void print(const std::string& _message);
-    MOSAIC_API static void printTrace(const std::string& _message);
-    MOSAIC_API static void printDebug(const std::string& _message);
-    MOSAIC_API static void printInfo(const std::string& _message);
-    MOSAIC_API static void printWarn(const std::string& _message);
-    MOSAIC_API static void printError(const std::string& _message);
-    MOSAIC_API static void printCritical(const std::string& _message);
+    SATURN_API static void print(const std::string& _message);
+    SATURN_API static void printTrace(const std::string& _message);
+    SATURN_API static void printDebug(const std::string& _message);
+    SATURN_API static void printInfo(const std::string& _message);
+    SATURN_API static void printWarn(const std::string& _message);
+    SATURN_API static void printError(const std::string& _message);
+    SATURN_API static void printCritical(const std::string& _message);
 };
 
 } // namespace core
-} // namespace mosaic
+} // namespace saturn

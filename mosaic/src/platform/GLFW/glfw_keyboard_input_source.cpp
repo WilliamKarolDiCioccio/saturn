@@ -1,6 +1,6 @@
 #include "glfw_keyboard_input_source.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -42,4 +42,4 @@ input::InputAction GLFWKeyboardInputSource::queryKeyState(input::KeyboardKey _ke
 
 } // namespace glfw
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

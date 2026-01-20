@@ -1,4 +1,4 @@
-package com.mosaic.testbed
+package com.saturn.testbed
 
 import org.junit.Test
 

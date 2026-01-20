@@ -1,6 +1,6 @@
-#include "mosaic/core/sys_console.hpp"
+#include "saturn/core/sys_console.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -30,4 +30,4 @@ class Win32SystemConsole : public core::SystemConsole::SystemConsoleImpl
 
 } // namespace win32
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

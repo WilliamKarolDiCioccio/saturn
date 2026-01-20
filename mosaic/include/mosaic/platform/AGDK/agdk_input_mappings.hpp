@@ -1,6 +1,6 @@
 #pragma once
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -115,4 +115,4 @@ enum class AGDKMouseButton : uint32_t
 
 } // namespace agdk
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

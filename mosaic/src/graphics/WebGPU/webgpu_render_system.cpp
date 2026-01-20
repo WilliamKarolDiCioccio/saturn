@@ -1,6 +1,6 @@
 #include "webgpu_render_system.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -16,4 +16,4 @@ void WebGPURenderSystem::shutdown() { destroyAllContexts(); }
 
 } // namespace webgpu
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

@@ -1,4 +1,4 @@
-## 🔀 Pull Request – Mosaic Game Engine
+## 🔀 Pull Request – Saturn Game Engine
 
 ### Pre-PR Checklist ✅
 
@@ -71,4 +71,4 @@ This does not currently support controller input rebinding — planned for a sep
 
 ---
 
-Thanks for contributing to Mosaic! 💚
+Thanks for contributing to Saturn! 💚

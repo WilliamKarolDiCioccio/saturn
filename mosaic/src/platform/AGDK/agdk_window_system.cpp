@@ -1,6 +1,6 @@
 #include "agdk_window_system.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -18,4 +18,4 @@ pieces::RefResult<core::System, std::string> AGDKWindowSystem::update() {}
 
 } // namespace agdk
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

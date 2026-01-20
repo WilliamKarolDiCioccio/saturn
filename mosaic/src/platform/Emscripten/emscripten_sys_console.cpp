@@ -1,6 +1,6 @@
 #include "emscripten_sys_console.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -55,4 +55,4 @@ void EmscriptenSystemConsole::printCritical(const std::string& _message) const
 
 } // namespace emscripten
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

@@ -120,10 +120,10 @@ endif()
 # Target Definition
 # ----------------------------------------
 if(EMSCRIPTEN OR ANDROID)
-  add_library(mosaic STATIC ${FRAMEWORK_SRC})
+  add_library(saturn STATIC ${FRAMEWORK_SRC})
 else()
-  add_library(mosaic SHARED ${FRAMEWORK_SRC})
-  target_compile_definitions(mosaic PRIVATE _MOSAIC_BUILD_EXPORT_DLL)
+  add_library(saturn SHARED ${FRAMEWORK_SRC})
+  target_compile_definitions(saturn PRIVATE _SATURN_BUILD_EXPORT_DLL)
 endif()
 
 # ----------------------------------------
@@ -133,13 +133,13 @@ endif()
 # Platform-specific Vulkan and GLFW defines
 if(EMSCRIPTEN)
   target_compile_definitions(
-    mosaic
+    saturn
     PUBLIC GLM_FORCE_PURE
     PRIVATE WEBGPU_CPP_IMPLEMENTATION)
 else()
   if(CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_compile_definitions(
-      mosaic
+      saturn
       PRIVATE WIN32_LEAN_AND_MEAN
               NOMINMAX
               GLFW_EXPOSE_NATIVE_WIN32
@@ -149,17 +149,17 @@ else()
               WEBGPU_CPP_IMPLEMENTATION)
   elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
     target_compile_definitions(
-      mosaic
+      saturn
       PRIVATE GLFW_EXPOSE_NATIVE_X11 VK_NO_PROTOTYPES VOLK_STATIC_DEFINES
               VK_USE_PLATFORM_XLIB_KHR WEBGPU_CPP_IMPLEMENTATION)
   elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     target_compile_definitions(
-      mosaic
+      saturn
       PRIVATE GLFW_EXPOSE_NATIVE_COCOA VK_NO_PROTOTYPES VOLK_STATIC_DEFINES
               VK_USE_PLATFORM_MACOS_MVK WEBGPU_CPP_IMPLEMENTATION)
   elseif(CMAKE_SYSTEM_NAME MATCHES "Android")
     target_compile_definitions(
-      mosaic PRIVATE VK_NO_PROTOTYPES VOLK_STATIC_DEFINES
+      saturn PRIVATE VK_NO_PROTOTYPES VOLK_STATIC_DEFINES
                      VK_USE_PLATFORM_ANDROID_KHR)
   endif()
 endif()
@@ -169,13 +169,13 @@ endif()
 # ----------------------------------------
 
 target_include_directories(
-  mosaic
+  saturn
   PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src" "${Stb_INCLUDE_DIR}"
   PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 if(EMSCRIPTEN)
   target_include_directories(
-    mosaic PRIVATE "$ENV{EMSDK}/upstream/emscripten/cache/sysroot/include")
+    saturn PRIVATE "$ENV{EMSDK}/upstream/emscripten/cache/sysroot/include")
 endif()
 
 # ----------------------------------------
@@ -183,7 +183,7 @@ endif()
 # ----------------------------------------
 
 if(EMSCRIPTEN)
-  target_link_options(mosaic PRIVATE
+  target_link_options(saturn PRIVATE
                       -sEXPORTED_RUNTIME_METHODS=['ccall','cwrap'])
 endif()
 
@@ -191,14 +191,14 @@ endif()
 # Version Header
 # ----------------------------------------
 
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/mosaic/version.h.in"
-               "${CMAKE_CURRENT_SOURCE_DIR}/include/mosaic/version.h")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/saturn/version.h.in"
+               "${CMAKE_CURRENT_SOURCE_DIR}/include/saturn/version.h")
 
 # ----------------------------------------
 # Precompiled Headers
 # ----------------------------------------
 target_precompile_headers(
-  mosaic
+  saturn
   PRIVATE
   <vector>
   <string>
@@ -216,23 +216,23 @@ target_precompile_headers(
 # ----------------------------------------
 
 target_link_libraries(
-  mosaic PUBLIC pieces utf8cpp::utf8cpp fmt::fmt-header-only
+  saturn PUBLIC pieces utf8cpp::utf8cpp fmt::fmt-header-only
                 glm::glm-header-only nlohmann_json::nlohmann_json)
 
 if(EMSCRIPTEN)
-  target_link_libraries(mosaic PRIVATE webgpu glfw glfw3webgpu)
+  target_link_libraries(saturn PRIVATE webgpu glfw glfw3webgpu)
 elseif(ANDROID)
   target_link_libraries(
-    mosaic PUBLIC log android jnigraphics game-activity::game-activity
+    saturn PUBLIC log android jnigraphics game-activity::game-activity
                   volk::volk GPUOpen::VulkanMemoryAllocator)
 else()
   if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    target_link_libraries(mosaic PRIVATE stdc++_libbacktrace)
+    target_link_libraries(saturn PRIVATE stdc++_libbacktrace)
   endif()
 
   find_path(COLORCONSOLE_INCLUDE_DIRS "colorconsole.hpp")
-  target_include_directories(mosaic PRIVATE ${COLORCONSOLE_INCLUDE_DIRS})
-  target_link_libraries(mosaic PRIVATE glfw glfw3webgpu webgpu volk::volk
+  target_include_directories(saturn PRIVATE ${COLORCONSOLE_INCLUDE_DIRS})
+  target_link_libraries(saturn PRIVATE glfw glfw3webgpu webgpu volk::volk
                                        GPUOpen::VulkanMemoryAllocator)
 endif()
 
@@ -241,7 +241,7 @@ endif()
 # ----------------------------------------
 include("${CMAKE_SOURCE_DIR}/cmake/ConfigureForBuildType.cmake")
 
-configure_for_build_type(mosaic)
+configure_for_build_type(saturn)
 
 include("${CMAKE_SOURCE_DIR}/cmake/ConfigSIMD.cmake")
 
@@ -251,7 +251,7 @@ include("${CMAKE_SOURCE_DIR}/cmake/ConfigSIMD.cmake")
 
 if(NOT ANDROID)
   if(COMMAND target_copy_webgpu_binaries)
-    target_copy_webgpu_binaries(mosaic)
+    target_copy_webgpu_binaries(saturn)
   else()
     message(ERROR "target_copy_webgpu_binaries() is not defined!")
   endif()

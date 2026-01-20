@@ -4,7 +4,7 @@
 
 #include "shader.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -81,4 +81,4 @@ struct PipelineDescription
 };
 
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

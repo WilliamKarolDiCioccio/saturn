@@ -1,20 +1,20 @@
 #include <gtest/gtest.h>
 
-#include <mosaic/tools/logger.hpp>
-#include <mosaic/core/cmd_line_parser.hpp>
+#include <saturn/tools/logger.hpp>
+#include <saturn/core/cmd_line_parser.hpp>
 
 int main(int _argc, char** _argv)
 {
-    mosaic::core::CommandLineParser::initialize();
+    saturn::core::CommandLineParser::initialize();
 
-    mosaic::tools::Logger::initialize();
+    saturn::tools::Logger::initialize();
 
     ::testing::InitGoogleTest(&_argc, _argv);
     int result = RUN_ALL_TESTS();
 
-    mosaic::tools::Logger::shutdown();
+    saturn::tools::Logger::shutdown();
 
-    mosaic::core::CommandLineParser::shutdown();
+    saturn::core::CommandLineParser::shutdown();
 
     return result;
 }

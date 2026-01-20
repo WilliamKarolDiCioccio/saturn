@@ -7,7 +7,7 @@
 #include "vulkan_common.hpp"
 #include "context/vulkan_device.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -43,4 +43,4 @@ void destroySwapchain(Swapchain& _swapchain);
 
 } // namespace vulkan
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

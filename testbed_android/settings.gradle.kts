@@ -27,4 +27,4 @@ rootProject.name = "testbed"
 include(":app")
 include(":engine_bridge")
 
-project(":engine_bridge").projectDir = file("../mosaic_bridge_android")
+project(":engine_bridge").projectDir = file("../saturn_bridge_android")

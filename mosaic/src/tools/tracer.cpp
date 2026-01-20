@@ -1,4 +1,4 @@
-#include "mosaic/tools/tracer.hpp"
+#include "saturn/tools/tracer.hpp"
 
 #include <sstream>
 #include <iomanip>
@@ -13,12 +13,12 @@
 #include <thread>
 #include <nlohmann/json_fwd.hpp>
 
-#include "mosaic/defines.hpp"
-#include "mosaic/tools/logger.hpp"
-#include "mosaic/version.h"
-#include "mosaic/core/cmd_line_parser.hpp"
+#include "saturn/defines.hpp"
+#include "saturn/tools/logger.hpp"
+#include "saturn/version.h"
+#include "saturn/core/cmd_line_parser.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace tools
 {
@@ -70,7 +70,7 @@ bool Tracer::initialize(const Config& _config) noexcept
 
         metadata = nlohmann::json::object();
         metadata["version"] = "1.0";
-        metadata["engineVersion"] = MOSAIC_VERSION;
+        metadata["engineVersion"] = SATURN_VERSION;
 
         auto duration = instance.m_startTime - std::chrono::steady_clock::time_point();
         auto systemStartTime =
@@ -97,7 +97,7 @@ bool Tracer::initialize(const Config& _config) noexcept
     }
     catch (const std::exception& e)
     {
-        MOSAIC_ERROR(e.what());
+        SATURN_ERROR(e.what());
         return false;
     }
 }
@@ -134,7 +134,7 @@ void Tracer::beginTrace(const std::string& _name, TraceCategory _category,
     }
     catch (const std::exception& e)
     {
-        MOSAIC_ERROR(e.what());
+        SATURN_ERROR(e.what());
     }
 }
 
@@ -166,7 +166,7 @@ void Tracer::endTrace() noexcept
     }
     catch (const std::exception& e)
     {
-        MOSAIC_ERROR(e.what());
+        SATURN_ERROR(e.what());
     }
 }
 
@@ -192,7 +192,7 @@ void Tracer::instantTrace(const std::string& _name, TraceCategory _category,
     }
     catch (const std::exception& e)
     {
-        MOSAIC_ERROR(e.what());
+        SATURN_ERROR(e.what());
     }
 }
 
@@ -220,7 +220,7 @@ void Tracer::counterTrace(const std::string& _name, double _value, TraceCategory
     }
     catch (const std::exception& e)
     {
-        MOSAIC_ERROR(e.what());
+        SATURN_ERROR(e.what());
     }
 }
 
@@ -249,7 +249,7 @@ void Tracer::metadataTrace(const std::string& _name, const std::string& _value,
     }
     catch (const std::exception& e)
     {
-        MOSAIC_ERROR(e.what());
+        SATURN_ERROR(e.what());
     }
 }
 
@@ -275,7 +275,7 @@ void Tracer::objectCreated(const std::string& _name, const std::string& _args,
     }
     catch (const std::exception& e)
     {
-        MOSAIC_ERROR(e.what());
+        SATURN_ERROR(e.what());
     }
 }
 
@@ -301,7 +301,7 @@ void Tracer::objectSnapshot(const std::string& _name, const std::string& _args,
     }
     catch (const std::exception& e)
     {
-        MOSAIC_ERROR(e.what());
+        SATURN_ERROR(e.what());
     }
 }
 
@@ -327,7 +327,7 @@ void Tracer::objectDestroyed(const std::string& _name, const std::string& _args,
     }
     catch (const std::exception& e)
     {
-        MOSAIC_ERROR(e.what());
+        SATURN_ERROR(e.what());
     }
 }
 
@@ -355,7 +355,7 @@ uint64_t Tracer::beginFlowTrace(const std::string& _name, TraceCategory _categor
     }
     catch (const std::exception& e)
     {
-        MOSAIC_ERROR(e.what());
+        SATURN_ERROR(e.what());
         return 0;
     }
 }
@@ -381,7 +381,7 @@ void Tracer::stepFlowTrace(uint64_t _flowId, const std::string& _name) noexcept
     }
     catch (const std::exception& e)
     {
-        MOSAIC_ERROR(e.what());
+        SATURN_ERROR(e.what());
     }
 }
 
@@ -406,7 +406,7 @@ void Tracer::endFlowTrace(uint64_t _flowId, const std::string& _name) noexcept
     }
     catch (const std::exception& e)
     {
-        MOSAIC_ERROR(e.what());
+        SATURN_ERROR(e.what());
     }
 }
 
@@ -489,7 +489,7 @@ void Tracer::flushToFile() noexcept
     }
     catch (const std::exception& e)
     {
-        MOSAIC_ERROR(e.what());
+        SATURN_ERROR(e.what());
     }
 }
 
@@ -519,7 +519,7 @@ std::string Tracer::generateFileName() noexcept
     }
     catch (const std::exception& e)
     {
-        MOSAIC_ERROR(e.what());
+        SATURN_ERROR(e.what());
         return "./traces/trace_fallback.json";
     }
 }
@@ -556,7 +556,7 @@ nlohmann::json Tracer::traceToJson(const Trace& _trace) const noexcept
     }
     catch (const std::exception& e)
     {
-        MOSAIC_ERROR(e.what());
+        SATURN_ERROR(e.what());
         return nlohmann::json::object();
     }
 }
@@ -568,4 +568,4 @@ int64_t Tracer::getCurrentTimestamp() const noexcept
 }
 
 } // namespace tools
-} // namespace mosaic
+} // namespace saturn

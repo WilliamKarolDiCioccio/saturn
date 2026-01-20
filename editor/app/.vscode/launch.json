@@ -5,20 +5,20 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "mosaic_editor",
+      "name": "saturn_editor",
       "cwd": "./editor/app",
       "request": "launch",
       "type": "dart"
     },
     {
-      "name": "mosaic_editor (profile mode)",
+      "name": "saturn_editor (profile mode)",
       "cwd": "./editor/app",
       "request": "launch",
       "type": "dart",
       "flutterMode": "profile"
     },
     {
-      "name": "mosaic_editor (release mode)",
+      "name": "saturn_editor (release mode)",
       "cwd": "./editor/app",
       "request": "launch",
       "type": "dart",

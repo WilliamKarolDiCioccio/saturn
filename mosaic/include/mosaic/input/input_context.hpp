@@ -2,13 +2,13 @@
 
 #include "action.hpp"
 
-#include "mosaic/tools/logger.hpp"
+#include "saturn/tools/logger.hpp"
 #include "sources/input_source.hpp"
 #include "sources/mouse_input_source.hpp"
 #include "sources/keyboard_input_source.hpp"
 #include "sources/unified_text_input_source.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace input
 {
@@ -35,7 +35,7 @@ namespace input
  * @see KeyboardInputSource
  * @see TextInputSource
  */
-class MOSAIC_API InputContext
+class SATURN_API InputContext
 {
    private:
     struct Impl;
@@ -82,4 +82,4 @@ class MOSAIC_API InputContext
 };
 
 } // namespace input
-} // namespace mosaic
+} // namespace saturn

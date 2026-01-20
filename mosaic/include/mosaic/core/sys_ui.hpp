@@ -3,9 +3,9 @@
 #include <string>
 #include <optional>
 
-#include "mosaic/defines.hpp"
+#include "saturn/defines.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace core
 {
@@ -38,7 +38,7 @@ class SystemUI
     };
 
    private:
-    MOSAIC_API static std::unique_ptr<SystemUIImpl> impl;
+    SATURN_API static std::unique_ptr<SystemUIImpl> impl;
 
    public:
     SystemUI(const SystemUI&) = delete;
@@ -47,17 +47,17 @@ class SystemUI
     SystemUI& operator=(SystemUI&&) = delete;
 
    public:
-    MOSAIC_API [[nodiscard]] static std::optional<bool> showQuestionDialog(
+    SATURN_API [[nodiscard]] static std::optional<bool> showQuestionDialog(
         const std::string& _title, const std::string& _message, bool _allowCancel = false);
-    MOSAIC_API static void showInfoDialog(const std::string& _title, const std::string& _message);
-    MOSAIC_API static void showWarningDialog(const std::string& _title,
+    SATURN_API static void showInfoDialog(const std::string& _title, const std::string& _message);
+    SATURN_API static void showWarningDialog(const std::string& _title,
                                              const std::string& _message);
-    MOSAIC_API static void showErrorDialog(const std::string& _title, const std::string& _message);
-    MOSAIC_API static void showSoftwareKeyboard(const std::string& _text = "",
+    SATURN_API static void showErrorDialog(const std::string& _title, const std::string& _message);
+    SATURN_API static void showSoftwareKeyboard(const std::string& _text = "",
                                                 uint32_t _selectionStart = 0,
                                                 uint32_t _selectionEnd = 0);
-    MOSAIC_API static void hideSoftwareKeyboard();
+    SATURN_API static void hideSoftwareKeyboard();
 };
 
 } // namespace core
-} // namespace mosaic
+} // namespace saturn

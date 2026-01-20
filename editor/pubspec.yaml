@@ -1,5 +1,5 @@
-name: mosaic_workspace
-description: "Monorepo workspace for the Mosaic game engine editor and its tooling and supporting packages."
+name: saturn_workspace
+description: "Monorepo workspace for the Saturn game engine editor and its tooling and supporting packages."
 publish_to: none
 
 environment:
@@ -29,9 +29,9 @@ melos:
       updateGitTagRefs: true
 
   scripts:
-    mosaic_editor: cd app && fvm flutter run
-    mosaic_editor:profile: cd app && fvm flutter run --profile
-    mosaic_editor:release: cd app && fvm flutter run --release
+    saturn_editor: cd app && fvm flutter run
+    saturn_editor:profile: cd app && fvm flutter run --profile
+    saturn_editor:release: cd app && fvm flutter run --release
 
 flutter:
   uses-material-design: true

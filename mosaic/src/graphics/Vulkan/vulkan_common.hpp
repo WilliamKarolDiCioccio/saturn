@@ -1,20 +1,20 @@
 #pragma once
 
-#include "mosaic/tools/logger.hpp"
-#include "mosaic/window/window.hpp"
+#include "saturn/tools/logger.hpp"
+#include "saturn/window/window.hpp"
 
 #include <volk.h>
 #include <vulkan/vulkan.h>
 #include <vulkan/vk_enum_string_helper.h>
 
-#if defined(MOSAIC_PLATFORM_WINDOWS)
+#if defined(SATURN_PLATFORM_WINDOWS)
 #include <windows.h>
 #include <vulkan/vulkan_win32.h>
-#elif defined(MOSAIC_PLATFORM_ANDROID)
+#elif defined(SATURN_PLATFORM_ANDROID)
 #include <vulkan/vulkan_android.h>
 #endif
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -28,14 +28,14 @@ static void checkVkResult(VkResult _result)
     switch (_result)
     {
         case VK_SUCCESS:
-            MOSAIC_DEBUG("Vulkan result: VK_SUCCESS");
+            SATURN_DEBUG("Vulkan result: VK_SUCCESS");
             break;
         case VK_NOT_READY:
         case VK_TIMEOUT:
         case VK_EVENT_SET:
         case VK_EVENT_RESET:
         case VK_INCOMPLETE:
-            MOSAIC_WARN("Vulkan result: {}", resultStr);
+            SATURN_WARN("Vulkan result: {}", resultStr);
             break;
         case VK_ERROR_OUT_OF_HOST_MEMORY:
         case VK_ERROR_OUT_OF_DEVICE_MEMORY:
@@ -78,10 +78,10 @@ static void checkVkResult(VkResult _result)
         case VK_ERROR_COMPRESSION_EXHAUSTED_EXT:
         case VK_ERROR_INCOMPATIBLE_SHADER_BINARY_EXT:
         case VK_RESULT_MAX_ENUM:
-            MOSAIC_ERROR("Vulkan result: {}", resultStr);
+            SATURN_ERROR("Vulkan result: {}", resultStr);
             break;
         default:
-            MOSAIC_CRITICAL("Unknown Vulkan result: {}", resultStr);
+            SATURN_CRITICAL("Unknown Vulkan result: {}", resultStr);
             break;
     }
 
@@ -90,4 +90,4 @@ static void checkVkResult(VkResult _result)
 
 } // namespace vulkan
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

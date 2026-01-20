@@ -22,7 +22,7 @@
 #pragma comment(lib, "setupapi.lib")
 #pragma comment(lib, "shcore.lib")
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -656,4 +656,4 @@ BOOL CALLBACK Win32SystemInfo::monitorEnumProc(HMONITOR hMonitor, [[maybe_unused
 
 } // namespace win32
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

@@ -2,7 +2,7 @@
 
 #include "webgpu_common.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -13,4 +13,4 @@ WGPUInstance createInstance();
 
 } // namespace webgpu
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

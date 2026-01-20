@@ -1,4 +1,4 @@
-# mosaic_editor
+# saturn_editor
 
 A new Flutter project.
 

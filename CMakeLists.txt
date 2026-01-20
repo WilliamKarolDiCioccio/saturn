@@ -13,7 +13,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Project Metadata
 # ---------------------------
 project(
-  mosaic_framework
+  saturn_framework
   VERSION 0.0.1
   DESCRIPTION "A cross-platform game engine using modern C++"
   LANGUAGES C CXX)
@@ -97,7 +97,7 @@ endif()
 # Project Modules
 # ---------------------------
 add_subdirectory("pieces")
-add_subdirectory("mosaic")
+add_subdirectory("saturn")
 
 if (NOT ANDROID AND NOT EMSCRIPTEN)
   add_subdirectory("codex")
@@ -110,8 +110,8 @@ endif()
 add_subdirectory("testbed")
 
 if(NOT ANDROID)
-  add_subdirectory("mosaic/tests")
-  add_subdirectory("mosaic/bench")
+  add_subdirectory("saturn/tests")
+  add_subdirectory("saturn/bench")
   add_subdirectory("pieces/tests")
   add_subdirectory("pieces/bench")
   add_subdirectory("tests")

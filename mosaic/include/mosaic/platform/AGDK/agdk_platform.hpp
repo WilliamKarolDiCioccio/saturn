@@ -1,15 +1,15 @@
 #pragma once
 
-#include "mosaic/core/platform.hpp"
+#include "saturn/core/platform.hpp"
 
 #include <jni.h>
 #include <game-activity/GameActivity.h>
 #include <game-text-input/gametextinput.h>
 #include <game-activity/native_app_glue/android_native_app_glue.h>
 
-#include "mosaic/platform/AGDK/jni_helper.hpp"
+#include "saturn/platform/AGDK/jni_helper.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -66,4 +66,4 @@ class AGDKPlatform : public core::Platform
 
 } // namespace agdk
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

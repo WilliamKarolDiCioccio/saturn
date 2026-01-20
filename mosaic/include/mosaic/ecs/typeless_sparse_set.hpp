@@ -10,12 +10,12 @@
 
 #include <pieces/core/templates.hpp>
 
-#include "mosaic/defines.hpp"
+#include "saturn/defines.hpp"
 
 #include "entity.hpp"
 #include "typeless_vector.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace ecs
 {
@@ -495,4 +495,4 @@ class TypelessSparseSet final
 };
 
 } // namespace ecs
-} // namespace mosaic
+} // namespace saturn

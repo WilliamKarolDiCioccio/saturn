@@ -1,9 +1,9 @@
 #pragma once
 
-#include "mosaic/window/window.hpp"
-#include "mosaic/platform/AGDK/agdk_platform.hpp"
+#include "saturn/window/window.hpp"
+#include "saturn/platform/AGDK/agdk_platform.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -48,4 +48,4 @@ class AGDKWindow : public window::Window
 
 } // namespace agdk
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

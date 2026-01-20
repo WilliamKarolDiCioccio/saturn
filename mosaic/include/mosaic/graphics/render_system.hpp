@@ -4,14 +4,14 @@
 
 #include <pieces/core/result.hpp>
 
-#include "mosaic/defines.hpp"
-#include "mosaic/window/window.hpp"
-#include "mosaic/tools/logger.hpp"
-#include "mosaic/core/system.hpp"
+#include "saturn/defines.hpp"
+#include "saturn/window/window.hpp"
+#include "saturn/tools/logger.hpp"
+#include "saturn/core/system.hpp"
 
 #include "render_context.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -23,7 +23,7 @@ enum class RendererAPIType
     none
 };
 
-class MOSAIC_API RenderSystem : public core::EngineSystem
+class SATURN_API RenderSystem : public core::EngineSystem
 {
    private:
     struct Impl;
@@ -58,11 +58,11 @@ class MOSAIC_API RenderSystem : public core::EngineSystem
 
     [[nodiscard]] static inline RenderSystem* getInstance()
     {
-        if (!g_instance) MOSAIC_ERROR("RenderSystem has not been created yet!");
+        if (!g_instance) SATURN_ERROR("RenderSystem has not been created yet!");
 
         return g_instance;
     }
 };
 
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

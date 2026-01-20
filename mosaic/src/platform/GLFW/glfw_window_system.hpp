@@ -1,10 +1,10 @@
 #pragma once
 
-#include "mosaic/window/window_system.hpp"
+#include "saturn/window/window_system.hpp"
 
 #include <GLFW/glfw3.h>
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -25,4 +25,4 @@ class GLFWWindowSystem : public window::WindowSystem
 
 } // namespace glfw
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

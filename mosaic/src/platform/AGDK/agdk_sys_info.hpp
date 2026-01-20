@@ -1,14 +1,14 @@
 #pragma once
 
-#include "mosaic/core/sys_info.hpp"
+#include "saturn/core/sys_info.hpp"
 
 #include <fstream>
 #include <regex>
 
-#include "mosaic/platform/AGDK/jni_helper.hpp"
-#include "mosaic/platform/AGDK/agdk_platform.hpp"
+#include "saturn/platform/AGDK/jni_helper.hpp"
+#include "saturn/platform/AGDK/agdk_platform.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -33,4 +33,4 @@ class AGDKSystemInfo : public core::SystemInfo::SystemInfoImpl
 
 } // namespace agdk
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

@@ -8,7 +8,7 @@
 
 #include "component.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace ecs
 {
@@ -128,4 +128,4 @@ class ComponentRegistry final
 };
 
 } // namespace ecs
-} // namespace mosaic
+} // namespace saturn

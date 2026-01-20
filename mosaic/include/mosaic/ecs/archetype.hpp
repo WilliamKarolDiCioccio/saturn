@@ -6,7 +6,7 @@
 #include "component.hpp"
 #include "typeless_sparse_set.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace ecs
 {
@@ -202,4 +202,4 @@ class Archetype final
 };
 
 } // namespace ecs
-} // namespace mosaic
+} // namespace saturn

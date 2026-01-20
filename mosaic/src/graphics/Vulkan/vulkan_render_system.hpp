@@ -1,11 +1,11 @@
 #pragma once
 
-#include "mosaic/graphics/render_system.hpp"
+#include "saturn/graphics/render_system.hpp"
 
 #include "context/vulkan_instance.hpp"
 #include "context/vulkan_device.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -33,4 +33,4 @@ class VulkanRenderSystem : public RenderSystem
 
 } // namespace vulkan
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

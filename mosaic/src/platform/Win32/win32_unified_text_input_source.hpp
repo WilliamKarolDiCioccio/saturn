@@ -7,9 +7,9 @@
 #include <Windows.h>
 #include <imm.h>
 
-#include "mosaic/input/sources/unified_text_input_source.hpp"
+#include "saturn/input/sources/unified_text_input_source.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -75,4 +75,4 @@ class Win32UnifiedTextInputSource : public input::UnifiedTextInputSource
 
 } // namespace win32
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

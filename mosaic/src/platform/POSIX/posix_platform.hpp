@@ -1,12 +1,12 @@
 #pragma once
 
-#include "mosaic/core/platform.hpp"
+#include "saturn/core/platform.hpp"
 
 #include <string>
 #include <vector>
 #include <sstream>
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -29,4 +29,4 @@ class POSIXPlatform : public core::Platform
 
 } // namespace posix
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

@@ -3,7 +3,7 @@
 #include "../context/vulkan_device.hpp"
 #include "vulkan_command_pool.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -24,4 +24,4 @@ void endCommandBuffer(CommandBuffer& _commandPool);
 
 } // namespace vulkan
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

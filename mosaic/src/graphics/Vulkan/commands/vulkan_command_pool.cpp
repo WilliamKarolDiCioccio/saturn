@@ -1,6 +1,6 @@
 #include "vulkan_command_pool.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -31,4 +31,4 @@ void destroyCommandPool(CommandPool& _commandPool, const Device& _device)
 
 } // namespace vulkan
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

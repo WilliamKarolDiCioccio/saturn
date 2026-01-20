@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include "mosaic/exec/thread_pool.hpp"
+#include "saturn/exec/thread_pool.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -12,7 +12,7 @@
 #include <latch>
 #include <barrier>
 
-using namespace mosaic::exec;
+using namespace saturn::exec;
 using namespace std::chrono_literals;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -26,7 +26,7 @@ class ThreadPoolTest : public ::testing::Test
 
     void SetUp() override
     {
-        mosaic::core::CPUInfo mockCPUInfo;
+        saturn::core::CPUInfo mockCPUInfo;
         mockCPUInfo.logicalCores = 8;
         mockCPUInfo.physicalCores = 4;
 

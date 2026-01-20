@@ -3,10 +3,10 @@
 #include <memory>
 #include <vector>
 
-#include "mosaic/input/sources/input_source.hpp"
-#include "mosaic/input/events.hpp"
+#include "saturn/input/sources/input_source.hpp"
+#include "saturn/input/events.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace input
 {
@@ -166,4 +166,4 @@ class UnifiedTextInputSource : public InputSource
 };
 
 } // namespace input
-} // namespace mosaic
+} // namespace saturn

@@ -1,5 +1,5 @@
 #include "testbed.hpp"
 
-#include <mosaic/entry_point.hpp>
+#include <saturn/entry_point.hpp>
 
-MOSAIC_ENTRY_POINT(testbed::TestbedApplication)
+SATURN_ENTRY_POINT(testbed::TestbedApplication)

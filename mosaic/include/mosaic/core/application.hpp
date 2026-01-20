@@ -4,10 +4,10 @@
 
 #include <pieces/core/result.hpp>
 
-#include "mosaic/defines.hpp"
-#include "mosaic/version.hpp"
+#include "saturn/defines.hpp"
+#include "saturn/version.hpp"
 
-namespace mosaic
+namespace saturn
 {
 
 namespace window
@@ -44,7 +44,7 @@ concept IsApplication =
     std::derived_from<AppType, core::Application> && !std::is_abstract_v<AppType>;
 
 /**
- * @brief Base class for applications in the Mosaic framework.
+ * @brief Base class for applications in the Saturn framework.
  *
  * This class provides the main application lifecycle management, including
  * initialization, update, pause, resume, and shutdown methods. It also manages
@@ -55,9 +55,9 @@ concept IsApplication =
  * functionality for initialization, update, pause, resume, and shutdown.
  *
  * @note The application must not be instantiated directly. Instead, it created automatically
- * in the MOSAIC_ENTRY_POINT macro, which is the entry point for the application.
+ * in the SATURN_ENTRY_POINT macro, which is the entry point for the application.
  */
-class MOSAIC_API Application
+class SATURN_API Application
 {
    private:
     struct Impl;
@@ -102,4 +102,4 @@ class MOSAIC_API Application
 };
 
 } // namespace core
-} // namespace mosaic
+} // namespace saturn

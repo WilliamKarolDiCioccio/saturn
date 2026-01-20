@@ -4,51 +4,51 @@
 
 JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved)
 {
-    mosaic::tools::Logger::initialize();
+    saturn::tools::Logger::initialize();
 
-    auto helper = mosaic::platform::agdk::JNIHelper::getInstance();
+    auto helper = saturn::platform::agdk::JNIHelper::getInstance();
 
     helper->initialize(vm);
 
-    // Load methods for com/mosaic/engine_bridge/SystemUI
+    // Load methods for com/saturn/engine_bridge/SystemUI
     {
-        auto clazzRef = helper->findClass("com/mosaic/engine_bridge/SystemUI");
+        auto clazzRef = helper->findClass("com/saturn/engine_bridge/SystemUI");
         if (!clazzRef)
         {
-            MOSAIC_ERROR("Failed to find SystemUI class");
+            SATURN_ERROR("Failed to find SystemUI class");
             return JNI_ERR;
         }
 
         helper->createGlobalRef(clazzRef);
 
-        helper->getStaticMethodID("com/mosaic/engine_bridge/SystemUI", "showQuestionDialog",
+        helper->getStaticMethodID("com/saturn/engine_bridge/SystemUI", "showQuestionDialog",
                                   "(Ljava/lang/String;Ljava/lang/String;Z)Ljava/lang/Boolean;");
 
-        helper->getStaticMethodID("com/mosaic/engine_bridge/SystemUI", "showInfoDialog",
+        helper->getStaticMethodID("com/saturn/engine_bridge/SystemUI", "showInfoDialog",
                                   "(Ljava/lang/String;Ljava/lang/String;)V");
 
-        helper->getStaticMethodID("com/mosaic/engine_bridge/SystemUI", "showWarningDialog",
+        helper->getStaticMethodID("com/saturn/engine_bridge/SystemUI", "showWarningDialog",
                                   "(Ljava/lang/String;Ljava/lang/String;)V");
 
-        helper->getStaticMethodID("com/mosaic/engine_bridge/SystemUI", "showErrorDialog",
+        helper->getStaticMethodID("com/saturn/engine_bridge/SystemUI", "showErrorDialog",
                                   "(Ljava/lang/String;Ljava/lang/String;)V");
     }
 
-    // Load methods for com/mosaic/engine_bridge/SystemServices
+    // Load methods for com/saturn/engine_bridge/SystemServices
     {
-        auto clazzRef = helper->findClass("com/mosaic/engine_bridge/SystemServices");
+        auto clazzRef = helper->findClass("com/saturn/engine_bridge/SystemServices");
         if (!clazzRef)
         {
-            MOSAIC_ERROR("Failed to find SystemServices class");
+            SATURN_ERROR("Failed to find SystemServices class");
             return JNI_ERR;
         }
 
         helper->createGlobalRef(clazzRef);
 
-        helper->getStaticMethodID("com/mosaic/engine_bridge/SystemServices", "setClipboard",
+        helper->getStaticMethodID("com/saturn/engine_bridge/SystemServices", "setClipboard",
                                   "(Ljava/lang/String;)V");
 
-        helper->getStaticMethodID("com/mosaic/engine_bridge/SystemServices", "getClipboard",
+        helper->getStaticMethodID("com/saturn/engine_bridge/SystemServices", "getClipboard",
                                   "()Ljava/lang/String;");
     }
 
@@ -57,7 +57,7 @@ JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved)
 
 JNIEXPORT void JNICALL JNI_OnUnload(JavaVM* vm, void* /*reserved*/)
 {
-    mosaic::platform::agdk::JNIHelper::getInstance()->shutdown();
+    saturn::platform::agdk::JNIHelper::getInstance()->shutdown();
 
-    mosaic::tools::Logger::shutdown();
+    saturn::tools::Logger::shutdown();
 }

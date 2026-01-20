@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <mosaic/core/application.hpp>
+#include <saturn/core/application.hpp>
 
 int main(int argc, char **argv)
 {

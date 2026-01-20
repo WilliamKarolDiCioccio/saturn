@@ -10,7 +10,7 @@
  *
  * @param ENUMTYPE The enum class type to define the operators for.
  */
-#define MOSAIC_DEFINE_ENUM_FLAGS_OPERATORS(ENUMTYPE)                                               \
+#define SATURN_DEFINE_ENUM_FLAGS_OPERATORS(ENUMTYPE)                                               \
                                                                                                    \
     [[nodiscard]] constexpr ENUMTYPE operator|(ENUMTYPE lhs, ENUMTYPE rhs)                         \
     {                                                                                              \
@@ -54,7 +54,7 @@
         return lhs;                                                                                \
     }
 
-namespace mosaic
+namespace saturn
 {
 namespace utils
 {
@@ -68,4 +68,4 @@ template <typename E>
 }
 
 } // namespace utils
-} // namespace mosaic
+} // namespace saturn

@@ -5,9 +5,9 @@
 
 #include <glm/vec2.hpp>
 
-#include "mosaic/defines.hpp"
+#include "saturn/defines.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace core
 {
@@ -250,7 +250,7 @@ class SystemInfo
     };
 
    private:
-    MOSAIC_API static std::unique_ptr<SystemInfoImpl> impl;
+    SATURN_API static std::unique_ptr<SystemInfoImpl> impl;
 
    public:
     SystemInfo(const SystemInfo&) = delete;
@@ -259,13 +259,13 @@ class SystemInfo
     SystemInfo& operator=(SystemInfo&&) = delete;
 
    public:
-    MOSAIC_API [[nodiscard]] static OSInfo getOSInfo();
-    MOSAIC_API [[nodiscard]] static CPUInfo getCPUInfo();
-    MOSAIC_API [[nodiscard]] static MemoryMetrics getMemoryMetrics();
-    MOSAIC_API [[nodiscard]] static std::vector<StorageDeviceInfo> getStorageDevices();
-    MOSAIC_API [[nodiscard]] static LocaleInfo getLocaleInfo();
-    MOSAIC_API [[nodiscard]] static std::vector<MonitorInfo> getMonitors();
+    SATURN_API [[nodiscard]] static OSInfo getOSInfo();
+    SATURN_API [[nodiscard]] static CPUInfo getCPUInfo();
+    SATURN_API [[nodiscard]] static MemoryMetrics getMemoryMetrics();
+    SATURN_API [[nodiscard]] static std::vector<StorageDeviceInfo> getStorageDevices();
+    SATURN_API [[nodiscard]] static LocaleInfo getLocaleInfo();
+    SATURN_API [[nodiscard]] static std::vector<MonitorInfo> getMonitors();
 };
 
 } // namespace core
-} // namespace mosaic
+} // namespace saturn

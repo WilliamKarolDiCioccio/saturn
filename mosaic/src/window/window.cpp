@@ -1,18 +1,18 @@
-#include "mosaic/window/window.hpp"
+#include "saturn/window/window.hpp"
 
 #include <vector>
 #include <memory>
 #include <atomic>
 
-#include "mosaic/defines.hpp"
+#include "saturn/defines.hpp"
 
-#if defined(MOSAIC_PLATFORM_DESKTOP) || defined(MOSAIC_PLATFORM_WEB)
+#if defined(SATURN_PLATFORM_DESKTOP) || defined(SATURN_PLATFORM_WEB)
 #include "platform/GLFW/glfw_window.hpp"
-#elif defined(MOSAIC_PLATFORM_ANDROID)
+#elif defined(SATURN_PLATFORM_ANDROID)
 #include "platform/AGDK/agdk_window.hpp"
 #endif
 
-namespace mosaic
+namespace saturn
 {
 namespace window
 {
@@ -22,7 +22,7 @@ struct Window::Impl
     WindowProperties properties;
 
 #define DEFINE_CALLBACK(_Type, _Name, ...) std::vector<_Type> _Name##Callbacks;
-#include "mosaic/window/callbacks.def"
+#include "saturn/window/callbacks.def"
 #undef DEFINE_CALLBACK
 };
 
@@ -32,9 +32,9 @@ Window::~Window() { delete m_impl; }
 
 std::unique_ptr<Window> Window::create()
 {
-#if defined(MOSAIC_PLATFORM_DESKTOP) || defined(MOSAIC_PLATFORM_WEB)
+#if defined(SATURN_PLATFORM_DESKTOP) || defined(SATURN_PLATFORM_WEB)
     return std::make_unique<platform::glfw::GLFWWindow>();
-#elif defined(MOSAIC_PLATFORM_ANDROID)
+#elif defined(SATURN_PLATFORM_ANDROID)
     return std::make_unique<platform::agdk::AGDKWindow>();
 #endif
 }
@@ -77,9 +77,9 @@ CursorProperties& Window::getCursorPropertiesInternal()
         for (auto& cb : m_impl->_Name##Callbacks) cb.callback _Args;                        \
     }
 
-#include "mosaic/window/callbacks.def"
+#include "saturn/window/callbacks.def"
 
 #undef DEFINE_CALLBACK
 
 } // namespace window
-} // namespace mosaic
+} // namespace saturn

@@ -2,7 +2,7 @@
 
 #include "../context/vulkan_device.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -24,4 +24,4 @@ void destroyShaderModule(ShaderModule& _shaderModule);
 
 } // namespace vulkan
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

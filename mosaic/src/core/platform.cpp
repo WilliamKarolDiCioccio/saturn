@@ -1,23 +1,23 @@
-#include "mosaic/core/platform.hpp"
+#include "saturn/core/platform.hpp"
 
 #include <cassert>
 #include <memory>
 #include <vector>
 
-#if defined(MOSAIC_PLATFORM_WINDOWS)
+#if defined(SATURN_PLATFORM_WINDOWS)
 #include "platform/Win32/win32_platform.hpp"
-#elif defined(MOSAIC_PLATFORM_LINUX)
+#elif defined(SATURN_PLATFORM_LINUX)
 #include "platform/POSIX/posix_platform.hpp"
-#elif defined(MOSAIC_PLATFORM_EMSCRIPTEN)
+#elif defined(SATURN_PLATFORM_EMSCRIPTEN)
 #include "platform/emscripten/emscripten_platform.hpp"
-#elif defined(MOSAIC_PLATFORM_ANDROID)
-#include "mosaic/platform/AGDK/agdk_platform.hpp"
+#elif defined(SATURN_PLATFORM_ANDROID)
+#include "saturn/platform/AGDK/agdk_platform.hpp"
 #endif
 
-#include "mosaic/defines.hpp"
-#include "mosaic/core/application.hpp"
+#include "saturn/defines.hpp"
+#include "saturn/core/application.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace core
 {
@@ -48,7 +48,7 @@ struct Platform::Impl
 
 std::unique_ptr<PlatformContext> PlatformContext::create()
 {
-#if defined(MOSAIC_PLATFORM_ANDROID)
+#if defined(SATURN_PLATFORM_ANDROID)
     return std::make_unique<platform::agdk::AGDKPlatformContext>();
 #else
     return nullptr; // No platform context for non-Android platforms (at least for now)
@@ -72,13 +72,13 @@ Platform::~Platform()
 
 std::unique_ptr<Platform> Platform::create(Application* _app)
 {
-#if defined(MOSAIC_PLATFORM_WINDOWS)
+#if defined(SATURN_PLATFORM_WINDOWS)
     return std::make_unique<platform::win32::Win32Platform>(_app);
-#elif defined(MOSAIC_PLATFORM_LINUX)
+#elif defined(SATURN_PLATFORM_LINUX)
     return std::make_unique<platform::posix::POSIXPlatform>(_app);
-#elif defined(MOSAIC_PLATFORM_EMSCRIPTEN)
+#elif defined(SATURN_PLATFORM_EMSCRIPTEN)
     return std::make_unique<platform::emscripten::EmscriptenPlatform>(_app);
-#elif defined(MOSAIC_PLATFORM_ANDROID)
+#elif defined(SATURN_PLATFORM_ANDROID)
     return std::make_unique<platform::agdk::AGDKPlatform>(_app);
 #endif
 }
@@ -88,4 +88,4 @@ PlatformContext* Platform::getPlatformContext() { return m_impl->platformContext
 Application* Platform::getApplication() { return m_impl->app; }
 
 } // namespace core
-} // namespace mosaic
+} // namespace saturn

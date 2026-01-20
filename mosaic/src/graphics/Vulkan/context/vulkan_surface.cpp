@@ -1,20 +1,20 @@
 #include "vulkan_surface.hpp"
 
-#if defined(MOSAIC_PLATFORM_DESKTOP) || defined(MOSAIC_PLATFORM_WEB)
+#if defined(SATURN_PLATFORM_DESKTOP) || defined(SATURN_PLATFORM_WEB)
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
-#elif defined(MOSAIC_PLATFORM_ANDROID)
+#elif defined(SATURN_PLATFORM_ANDROID)
 #include <android/native_window.h>
 #endif
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
 namespace vulkan
 {
 
-#if defined(MOSAIC_PLATFORM_WINDOWS)
+#if defined(SATURN_PLATFORM_WINDOWS)
 
 VkResult createWin32Surface(VkInstance instance, const VkWin32SurfaceCreateInfoKHR* pCreateInfo,
                             const VkAllocationCallbacks* pAllocator, VkSurfaceKHR* pSurface)
@@ -32,7 +32,7 @@ VkResult createWin32Surface(VkInstance instance, const VkWin32SurfaceCreateInfoK
     }
 }
 
-#elif defined(MOSAIC_PLATFORM_LINUX)
+#elif defined(SATURN_PLATFORM_LINUX)
 
 VkResult createXlibSurface(VkInstance instance, const VkXlibSurfaceCreateInfoKHR* pCreateInfo,
                            const VkAllocationCallbacks* pAllocator, VkSurfaceKHR* pSurface)
@@ -50,7 +50,7 @@ VkResult createXlibSurface(VkInstance instance, const VkXlibSurfaceCreateInfoKHR
     }
 }
 
-#elif defined(MOSAIC_PLATFORM_ANDROID)
+#elif defined(SATURN_PLATFORM_ANDROID)
 
 VkResult createAndroidSurface(VkInstance instance, const VkAndroidSurfaceCreateInfoKHR* pCreateInfo,
                               const VkAllocationCallbacks* pAllocator, VkSurfaceKHR* pSurface)
@@ -72,7 +72,7 @@ VkResult createAndroidSurface(VkInstance instance, const VkAndroidSurfaceCreateI
 
 void createSurface(Surface& _surface, const Instance& _instance, void* _nativeWindowHandle)
 {
-#if defined(MOSAIC_PLATFORM_WINDOWS)
+#if defined(SATURN_PLATFORM_WINDOWS)
 
     const VkWin32SurfaceCreateInfoKHR surfaceCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,
@@ -87,7 +87,7 @@ void createSurface(Surface& _surface, const Instance& _instance, void* _nativeWi
         throw std::runtime_error("Failed to create Win32 Vulkan surface!");
     }
 
-#elif defined(MOSAIC_PLATFORM_LINUX)
+#elif defined(SATURN_PLATFORM_LINUX)
 
     const VkXlibSurfaceCreateInfoKHR surfaceCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR,
@@ -103,7 +103,7 @@ void createSurface(Surface& _surface, const Instance& _instance, void* _nativeWi
         throw std::runtime_error("Failed to create Xlib Vulkan surface!");
     }
 
-#elif defined(MOSAIC_PLATFORM_ANDROID)
+#elif defined(SATURN_PLATFORM_ANDROID)
 
     const VkAndroidSurfaceCreateInfoKHR surfaceCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR,
@@ -128,4 +128,4 @@ void destroySurface(Surface& _surface, const Instance& _instance)
 
 } // namespace vulkan
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

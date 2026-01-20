@@ -2,7 +2,7 @@
 
 #include <string>
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -24,4 +24,4 @@ struct BufferDescription
 };
 
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

@@ -3,7 +3,7 @@
 #include <pieces/core/result.hpp>
 #include <pieces/utils/enum_flags.hpp>
 
-namespace mosaic
+namespace saturn
 {
 namespace core
 {
@@ -24,7 +24,7 @@ enum class SystemState
 };
 
 /**
- * @brief Base interface that all systems in Mosaic must implement
+ * @brief Base interface that all systems in Saturn must implement
  *
  * This abstract class defines the core contract that every system must follow,
  * providing a unified interface for system lifecycle management. All systems
@@ -58,7 +58,7 @@ class System
  * @brief Enumeration of engine system types
  *
  * Defines the different types of core engine systems that are managed
- * internally by Mosaic. These systems provide fundamental engine functionality.
+ * internally by Saturn. These systems provide fundamental engine functionality.
  */
 enum class EngineSystemType
 {
@@ -72,7 +72,7 @@ enum class EngineSystemType
  * @brief Base class for internal engine systems
  *
  * Extends the System interface specifically for engine-managed systems.
- * Engine systems are internal to Mosaic and provide core functionality
+ * Engine systems are internal to Saturn and provide core functionality
  * like window management, input handling, and rendering. These systems
  * have default implementations for pause/resume as they typically don't
  * need custom pause behavior.
@@ -118,4 +118,4 @@ class ClientSystem : public System
 };
 
 } // namespace core
-} // namespace mosaic
+} // namespace saturn

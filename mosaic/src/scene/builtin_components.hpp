@@ -6,7 +6,7 @@
 
 #include "component.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace scene
 {
@@ -99,4 +99,4 @@ struct LightComponent
 };
 
 } // namespace scene
-} // namespace mosaic
+} // namespace saturn

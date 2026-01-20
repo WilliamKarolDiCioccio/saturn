@@ -1,4 +1,4 @@
-package com.mosaic.engine_bridge
+package com.saturn.engine_bridge
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -19,6 +19,6 @@ class ExampleInstrumentedTest {
     fun useAppContext() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("com.mosaic.engine_bridge.test", appContext.packageName)
+        assertEquals("com.saturn.engine_bridge.test", appContext.packageName)
     }
 }

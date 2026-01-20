@@ -1,4 +1,4 @@
-#include "mosaic/input/input_system.hpp"
+#include "saturn/input/input_system.hpp"
 
 #include <cassert>
 #include <memory>
@@ -8,12 +8,12 @@
 
 #include <pieces/core/result.hpp>
 
-#include "mosaic/tools/logger.hpp"
-#include "mosaic/core/system.hpp"
-#include "mosaic/input/input_context.hpp"
-#include "mosaic/window/window.hpp"
+#include "saturn/tools/logger.hpp"
+#include "saturn/core/system.hpp"
+#include "saturn/input/input_context.hpp"
+#include "saturn/window/window.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace input
 {
@@ -52,7 +52,7 @@ pieces::Result<InputContext*, std::string> InputSystem::registerWindow(window::W
 
     if (contexts.find(_window) != contexts.end())
     {
-        MOSAIC_WARN("InputSystem: Window already registered");
+        SATURN_WARN("InputSystem: Window already registered");
 
         return pieces::Ok<InputContext*, std::string>(contexts.at(_window).get());
     }
@@ -109,4 +109,4 @@ InputContext* InputSystem::getContext(const window::Window* _window) const
 }
 
 } // namespace input
-} // namespace mosaic
+} // namespace saturn

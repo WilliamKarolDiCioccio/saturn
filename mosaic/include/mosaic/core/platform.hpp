@@ -5,11 +5,11 @@
 
 #include <pieces/core/result.hpp>
 
-#include "mosaic/defines.hpp"
+#include "saturn/defines.hpp"
 
 #include "application.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace core
 {
@@ -21,7 +21,7 @@ using PlatformContextChangedEvent = std::function<void(void* _newContext)>;
  *
  * This class provides a generic interface for platform-specific context management.
  */
-class MOSAIC_API PlatformContext
+class SATURN_API PlatformContext
 {
    private:
     struct Impl;
@@ -50,7 +50,7 @@ class MOSAIC_API PlatformContext
  * initialization, running, pausing, resuming, and shutdown behaviors that differ from traditional
  * desktop applications.
  */
-class MOSAIC_API Platform
+class SATURN_API Platform
 {
    private:
     static Platform* s_instance;
@@ -81,4 +81,4 @@ class MOSAIC_API Platform
 };
 
 } // namespace core
-} // namespace mosaic
+} // namespace saturn

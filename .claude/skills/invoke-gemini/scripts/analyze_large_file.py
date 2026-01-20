@@ -37,7 +37,7 @@ def main():
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     output_file = f"gemini_analysis_{timestamp}.txt"
 
-    prompt = f"""Analyze file for Mosaic Game Engine.
+    prompt = f"""Analyze file for Saturn Game Engine.
 
 Rules:
 - Identify major structures (classes, functions, modules)
@@ -45,7 +45,7 @@ Rules:
 - Call out invariants, assumptions, coupling points
 - DO NOT rewrite code
 - DO NOT suggest design/architectural changes
-- Assume Mosaic conventions per CLAUDE.md
+- Assume Saturn conventions per CLAUDE.md
 
 Output Sections:
 - Overview

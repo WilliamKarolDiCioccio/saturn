@@ -1,6 +1,6 @@
-#include "mosaic/platform/AGDK/jni_helper.hpp"
+#include "saturn/platform/AGDK/jni_helper.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -15,20 +15,20 @@ pieces::RefResult<JNIHelper, std::string> JNIHelper::initialize(JavaVM* _vm)
 {
     if (m_initialized.load())
     {
-        MOSAIC_WARN("JNIHelper::initialize(): already initialized");
+        SATURN_WARN("JNIHelper::initialize(): already initialized");
         return pieces::OkRef<JNIHelper, std::string>(*this);
     }
 
     if (!_vm)
     {
-        MOSAIC_ERROR("JNIHelper::initialize(): JavaVM is null");
+        SATURN_ERROR("JNIHelper::initialize(): JavaVM is null");
         return pieces::ErrRef<JNIHelper, std::string>("JavaVM is null");
     }
 
     m_javaVM = _vm;
     m_initialized.store(true);
 
-    MOSAIC_INFO("JNIHelper initialized successfully");
+    SATURN_INFO("JNIHelper initialized successfully");
 
     return pieces::OkRef<JNIHelper, std::string>(*this);
 }
@@ -58,14 +58,14 @@ void JNIHelper::shutdown()
 
     m_initialized.store(false);
 
-    MOSAIC_INFO("JNIHelper shutdown complete");
+    SATURN_INFO("JNIHelper shutdown complete");
 }
 
 JNIEnv* JNIHelper::getEnv()
 {
     if (!m_initialized.load())
     {
-        MOSAIC_ERROR("JNIHelper not initialized");
+        SATURN_ERROR("JNIHelper not initialized");
         return nullptr;
     }
 
@@ -88,7 +88,7 @@ JNIEnv* JNIHelper::getEnv()
     }
     else
     {
-        MOSAIC_ERROR("Failed to get JNIEnv, error: %d", result);
+        SATURN_ERROR("Failed to get JNIEnv, error: %d", result);
         return nullptr;
     }
 }
@@ -108,12 +108,12 @@ JNIEnv* JNIHelper::attachCurrentThread()
     if (result == JNI_OK)
     {
         m_tlsEnv = env;
-        MOSAIC_INFO("Thread attached successfully");
+        SATURN_INFO("Thread attached successfully");
         return env;
     }
     else
     {
-        MOSAIC_ERROR("Failed to attach thread, error: %d", result);
+        SATURN_ERROR("Failed to attach thread, error: %d", result);
         return nullptr;
     }
 }
@@ -124,7 +124,7 @@ void JNIHelper::detachCurrentThread()
     {
         m_javaVM->DetachCurrentThread();
         m_tlsEnv = nullptr;
-        MOSAIC_INFO("Thread detached");
+        SATURN_INFO("Thread detached");
     }
 }
 
@@ -143,7 +143,7 @@ jclass JNIHelper::findClass(const std::string& _className)
     jclass localClass = env->FindClass(_className.c_str());
     if (!localClass)
     {
-        MOSAIC_ERROR("Failed to find class: %s", _className.c_str());
+        SATURN_ERROR("Failed to find class: %s", _className.c_str());
         checkAndClearException();
         return nullptr;
     }
@@ -156,7 +156,7 @@ jclass JNIHelper::findClass(const std::string& _className)
     if (globalClass)
     {
         m_classCache[_className] = globalClass;
-        MOSAIC_INFO("Cached class: %s", _className.c_str());
+        SATURN_INFO("Cached class: %s", _className.c_str());
     }
 
     return globalClass;
@@ -183,7 +183,7 @@ jmethodID JNIHelper::getMethodID(const std::string& _className, const std::strin
     jmethodID method = env->GetMethodID(clazz, _methodName.c_str(), _signature.c_str());
     if (!method)
     {
-        MOSAIC_ERROR("Failed to get method ID: %s.%s%s", _className.c_str(), _methodName.c_str(),
+        SATURN_ERROR("Failed to get method ID: %s.%s%s", _className.c_str(), _methodName.c_str(),
                      _signature.c_str());
         checkAndClearException();
         return nullptr;
@@ -216,7 +216,7 @@ jmethodID JNIHelper::getStaticMethodID(const std::string& _className,
     jmethodID method = env->GetStaticMethodID(clazz, _methodName.c_str(), _signature.c_str());
     if (!method)
     {
-        MOSAIC_ERROR("Failed to get static method ID: %s.%s%s", _className.c_str(),
+        SATURN_ERROR("Failed to get static method ID: %s.%s%s", _className.c_str(),
                      _methodName.c_str(), _signature.c_str());
         checkAndClearException();
         return nullptr;
@@ -248,7 +248,7 @@ jfieldID JNIHelper::getFieldID(const std::string& _className, const std::string&
     jfieldID field = env->GetFieldID(clazz, _fieldName.c_str(), _signature.c_str());
     if (!field)
     {
-        MOSAIC_ERROR("Failed to get field ID: %s.%s", _className.c_str(), _fieldName.c_str());
+        SATURN_ERROR("Failed to get field ID: %s.%s", _className.c_str(), _fieldName.c_str());
         checkAndClearException();
         return nullptr;
     }
@@ -279,7 +279,7 @@ jfieldID JNIHelper::getStaticFieldID(const std::string& _className, const std::s
     jfieldID field = env->GetStaticFieldID(clazz, _fieldName.c_str(), _signature.c_str());
     if (!field)
     {
-        MOSAIC_ERROR("Failed to get static field ID: %s.%s", _className.c_str(),
+        SATURN_ERROR("Failed to get static field ID: %s.%s", _className.c_str(),
                      _fieldName.c_str());
         checkAndClearException();
         return nullptr;
@@ -315,12 +315,12 @@ bool JNIHelper::registerNativeMethods(const std::string& _className,
         env->RegisterNatives(clazz, jniMethods.data(), static_cast<jint>(jniMethods.size()));
     if (result != JNI_OK)
     {
-        MOSAIC_ERROR("Failed to register native methods for class: %s", _className.c_str());
+        SATURN_ERROR("Failed to register native methods for class: %s", _className.c_str());
         checkAndClearException();
         return false;
     }
 
-    MOSAIC_INFO("Registered %zu native methods for class: %s", _methods.size(), _className.c_str());
+    SATURN_INFO("Registered %zu native methods for class: %s", _methods.size(), _className.c_str());
 
     return true;
 }
@@ -447,7 +447,7 @@ void JNIHelper::registerCallback(const std::string& _callbackName, CallbackFunct
 {
     std::lock_guard<std::mutex> lock(m_callbackMutex);
     m_callbacks[_callbackName] = std::move(_callback);
-    MOSAIC_INFO("Registered callback: %s", _callbackName.c_str());
+    SATURN_INFO("Registered callback: %s", _callbackName.c_str());
 }
 
 void JNIHelper::invokeCallback(const std::string& _callbackName,
@@ -462,7 +462,7 @@ void JNIHelper::invokeCallback(const std::string& _callbackName,
     }
     else
     {
-        MOSAIC_ERROR("Callback not found: %s", _callbackName.c_str());
+        SATURN_ERROR("Callback not found: %s", _callbackName.c_str());
     }
 }
 
@@ -496,4 +496,4 @@ JNIHelper::ThreadAttachment::~ThreadAttachment()
 
 } // namespace agdk
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

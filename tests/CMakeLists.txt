@@ -2,7 +2,7 @@ set (TEST_SOURCES)
 
 add_executable(cross_project_tests ${TEST_SOURCES} "main.cpp")
 
-target_link_libraries(cross_project_tests PRIVATE mosaic GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main)
+target_link_libraries(cross_project_tests PRIVATE saturn GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main)
 
 add_test(NAME cross_project_tests COMMAND test_projects_interaction)
 

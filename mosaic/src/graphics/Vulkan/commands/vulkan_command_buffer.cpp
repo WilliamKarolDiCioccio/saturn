@@ -1,6 +1,6 @@
 #include "vulkan_command_buffer.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -51,4 +51,4 @@ void endCommandBuffer(CommandBuffer& _commandBuffer)
 
 } // namespace vulkan
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

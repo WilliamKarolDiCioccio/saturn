@@ -1,26 +1,26 @@
 #pragma once
 
-#include "mosaic/defines.hpp"
+#include "saturn/defines.hpp"
 
-#if defined(MOSAIC_PLATFORM_DESKTOP) || defined(MOSAIC_PLATFORM_WEB)
-#include "mosaic/platform/GLFW/glfw_input_mappings.hpp"
+#if defined(SATURN_PLATFORM_DESKTOP) || defined(SATURN_PLATFORM_WEB)
+#include "saturn/platform/GLFW/glfw_input_mappings.hpp"
 #else
-#include "mosaic/platform/AGDK/agdk_input_mappings.hpp"
+#include "saturn/platform/AGDK/agdk_input_mappings.hpp"
 #endif
 
-namespace mosaic
+namespace saturn
 {
 namespace input
 {
 
-#if defined(MOSAIC_PLATFORM_DESKTOP) || defined(MOSAIC_PLATFORM_WEB)
-using KeyboardKey = mosaic::platform::glfw::GLFWKeyboardKey;
-using MouseButton = mosaic::platform::glfw::GLFWMouseButton;
-using InputAction = mosaic::platform::glfw::GLFWInputAction;
+#if defined(SATURN_PLATFORM_DESKTOP) || defined(SATURN_PLATFORM_WEB)
+using KeyboardKey = saturn::platform::glfw::GLFWKeyboardKey;
+using MouseButton = saturn::platform::glfw::GLFWMouseButton;
+using InputAction = saturn::platform::glfw::GLFWInputAction;
 #else
-using KeyboardKey = mosaic::platform::agdk::AGDKKeyboardKey;
-using MouseButton = mosaic::platform::agdk::AGDKMouseButton;
-using InputAction = mosaic::platform::agdk::AGDKInputAction;
+using KeyboardKey = saturn::platform::agdk::AGDKKeyboardKey;
+using MouseButton = saturn::platform::agdk::AGDKMouseButton;
+using InputAction = saturn::platform::agdk::AGDKInputAction;
 #endif
 
 /**
@@ -112,4 +112,4 @@ constexpr std::array<MouseButton, 8> c_mouseButtons = {
 };
 
 } // namespace input
-} // namespace mosaic
+} // namespace saturn

@@ -2,7 +2,7 @@
 
 #include <game-activity/native_app_glue/android_native_app_glue.h>
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -18,7 +18,7 @@ std::optional<bool> AGDKSystemUI::showQuestionDialog(const std::string& _title,
     JNIEnv* env = helper->getEnv();
     if (!env)
     {
-        MOSAIC_ERROR("AGDKSystemUI::showQuestionDialog: JNI environment not available.");
+        SATURN_ERROR("AGDKSystemUI::showQuestionDialog: JNI environment not available.");
         return std::nullopt;
     }
 
@@ -28,7 +28,7 @@ std::optional<bool> AGDKSystemUI::showQuestionDialog(const std::string& _title,
 
     // See SystemUI.showQuestionDialog(String title, String message, boolean allowCancel)
     jobject jResult = helper->callStaticMethod<jobject>(
-        "com/mosaic/engine_bridge/SystemUI", "showQuestionDialog",
+        "com/saturn/engine_bridge/SystemUI", "showQuestionDialog",
         "(Ljava/lang/String;Ljava/lang/String;Z)Ljava/lang/Boolean;", jTitle, jMessage,
         jAllowCancel);
 
@@ -37,7 +37,7 @@ std::optional<bool> AGDKSystemUI::showQuestionDialog(const std::string& _title,
 
     if (!jResult)
     {
-        MOSAIC_ERROR("AGDKSystemUI::showQuestionDialog: Failed to call SystemUI method.");
+        SATURN_ERROR("AGDKSystemUI::showQuestionDialog: Failed to call SystemUI method.");
         return std::nullopt;
     }
 
@@ -54,7 +54,7 @@ void AGDKSystemUI::showInfoDialog(const std::string& _title, const std::string& 
     JNIEnv* env = helper->getEnv();
     if (!env)
     {
-        MOSAIC_ERROR("AGDKSystemUI::showInfoDialog: JNI environment not available.");
+        SATURN_ERROR("AGDKSystemUI::showInfoDialog: JNI environment not available.");
         return;
     }
 
@@ -62,7 +62,7 @@ void AGDKSystemUI::showInfoDialog(const std::string& _title, const std::string& 
     jstring jMessage = helper->stringToJstring(_message);
 
     // See SystemUI.showInfoDialog(String title, String message)
-    helper->callStaticVoidMethod("com/mosaic/engine_bridge/SystemUI", "showInfoDialog",
+    helper->callStaticVoidMethod("com/saturn/engine_bridge/SystemUI", "showInfoDialog",
                                  "(Ljava/lang/String;Ljava/lang/String;)V", jTitle, jMessage);
 
     if (jTitle) env->DeleteLocalRef(jTitle);
@@ -76,7 +76,7 @@ void AGDKSystemUI::showWarningDialog(const std::string& _title, const std::strin
     JNIEnv* env = helper->getEnv();
     if (!env)
     {
-        MOSAIC_ERROR("AGDKSystemUI::showWarningDialog: JNI environment not available.");
+        SATURN_ERROR("AGDKSystemUI::showWarningDialog: JNI environment not available.");
         return;
     }
 
@@ -84,7 +84,7 @@ void AGDKSystemUI::showWarningDialog(const std::string& _title, const std::strin
     jstring jMessage = helper->stringToJstring(_message);
 
     // See SystemUI.showWarningDialog(String title, String message)
-    helper->callStaticVoidMethod("com/mosaic/engine_bridge/SystemUI", "showWarningDialog",
+    helper->callStaticVoidMethod("com/saturn/engine_bridge/SystemUI", "showWarningDialog",
                                  "(Ljava/lang/String;Ljava/lang/String;)V", jTitle, jMessage);
 
     if (jTitle) env->DeleteLocalRef(jTitle);
@@ -98,7 +98,7 @@ void AGDKSystemUI::showErrorDialog(const std::string& _title, const std::string&
     JNIEnv* env = helper->getEnv();
     if (!env)
     {
-        MOSAIC_ERROR("AGDKSystemUI::showErrorDialog: JNI environment not available.");
+        SATURN_ERROR("AGDKSystemUI::showErrorDialog: JNI environment not available.");
         return;
     }
 
@@ -106,7 +106,7 @@ void AGDKSystemUI::showErrorDialog(const std::string& _title, const std::string&
     jstring jMessage = helper->stringToJstring(_message);
 
     // See SystemUI.showErrorDialog(String title, String message)
-    helper->callStaticVoidMethod("com/mosaic/engine_bridge/SystemUI", "showErrorDialog",
+    helper->callStaticVoidMethod("com/saturn/engine_bridge/SystemUI", "showErrorDialog",
                                  "(Ljava/lang/String;Ljava/lang/String;)V", jTitle, jMessage);
 
     if (jTitle) env->DeleteLocalRef(jTitle);
@@ -139,4 +139,4 @@ void AGDKSystemUI::hideSoftwareKeyboard() const
 
 } // namespace agdk
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

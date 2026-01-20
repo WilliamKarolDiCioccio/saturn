@@ -1,4 +1,4 @@
-#include "mosaic/core/cmd_line_parser.hpp"
+#include "saturn/core/cmd_line_parser.hpp"
 
 #include <sstream>
 #include <algorithm>
@@ -14,9 +14,9 @@
 #include <vector>
 #include <cassert>
 
-#include "mosaic/core/sys_console.hpp"
+#include "saturn/core/sys_console.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace core
 {
@@ -531,4 +531,4 @@ std::optional<ArgumentValue> CommandLineParser::validateBool(const std::string& 
 }
 
 } // namespace core
-} // namespace mosaic
+} // namespace saturn

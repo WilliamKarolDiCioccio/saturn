@@ -1,10 +1,10 @@
 #pragma once
 
-#include "mosaic/core/sys_info.hpp"
+#include "saturn/core/sys_info.hpp"
 
 #include <memory>
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -27,4 +27,4 @@ class POSIXSystemInfo : public core::SystemInfo::SystemInfoImpl
 
 } // namespace posix
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

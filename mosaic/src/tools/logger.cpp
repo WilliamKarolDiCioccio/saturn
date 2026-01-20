@@ -1,4 +1,4 @@
-#include "mosaic/tools/logger.hpp"
+#include "saturn/tools/logger.hpp"
 
 #include <string>
 #include <chrono>
@@ -9,11 +9,11 @@
 #include <vector>
 #include <cassert>
 
-#ifndef MOSAIC_ARCH_ARM64
+#ifndef SATURN_ARCH_ARM64
 #include <stacktrace>
 #endif
 
-#ifdef MOSAIC_COMPILER_MSVC
+#ifdef SATURN_COMPILER_MSVC
 #include <corecrt.h>
 #else
 #include <time.h>
@@ -23,9 +23,9 @@
 
 #include <pieces/core/result.hpp>
 
-#include "mosaic/core/sys_console.hpp"
+#include "saturn/core/sys_console.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace tools
 {
@@ -73,7 +73,7 @@ void Logger::logInternal(LogLevel _level, std::string _formattedMessage) noexcep
         const std::time_t now_c = std::chrono::system_clock::to_time_t(now);
         std::tm now_tm;
 
-#ifdef MOSAIC_COMPILER_MSVC
+#ifdef SATURN_COMPILER_MSVC
         localtime_s(&now_tm, &now_c);
 #else
         localtime_r(&now_c, &now_tm);
@@ -85,7 +85,7 @@ void Logger::logInternal(LogLevel _level, std::string _formattedMessage) noexcep
         _formattedMessage = fmt::format("[{}] {}", timeBuffer, _formattedMessage);
     }
 
-#ifndef MOSAIC_ARCH_ARM64
+#ifndef SATURN_ARCH_ARM64
     // Append stack trace if requested (platform-dependent, stubbed here)
     if (m_config.showStackTrace)
     {
@@ -135,4 +135,4 @@ void Logger::logInternal(LogLevel _level, std::string _formattedMessage) noexcep
 }
 
 } // namespace tools
-} // namespace mosaic
+} // namespace saturn

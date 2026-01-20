@@ -1,6 +1,6 @@
 #pragma once
 
-#include "mosaic/core/platform.hpp"
+#include "saturn/core/platform.hpp"
 
 #include <string>
 #include <vector>
@@ -8,7 +8,7 @@
 #include <windows.h>
 #include <shlobj.h>
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -31,4 +31,4 @@ class Win32Platform : public core::Platform
 
 } // namespace win32
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

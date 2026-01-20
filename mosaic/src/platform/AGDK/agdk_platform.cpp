@@ -1,6 +1,6 @@
-#include "mosaic/platform/AGDK/agdk_platform.hpp"
+#include "saturn/platform/AGDK/agdk_platform.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -40,13 +40,13 @@ void AGDKPlatformContext::updateWindow(ANativeWindow* _newWindow)
         {
             m_surfaceDestroyed = true;
 
-            MOSAIC_DEBUG("AGDKPlatformContext: Surface destroyed");
+            SATURN_DEBUG("AGDKPlatformContext: Surface destroyed");
         }
         else
         {
             m_surfaceDestroyed = false;
 
-            MOSAIC_DEBUG("AGDKPlatformContext: Surface updated");
+            SATURN_DEBUG("AGDKPlatformContext: Surface updated");
         }
 
         // If the new window is valid, acquire it
@@ -144,4 +144,4 @@ void AGDKPlatform::shutdown() { getApplication()->shutdown(); }
 
 } // namespace agdk
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

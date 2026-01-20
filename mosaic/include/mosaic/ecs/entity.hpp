@@ -1,6 +1,6 @@
 #pragma once
 
-namespace mosaic
+namespace saturn
 {
 namespace ecs
 {
@@ -15,4 +15,4 @@ struct EntityMeta
 };
 
 } // namespace ecs
-} // namespace mosaic
+} // namespace saturn

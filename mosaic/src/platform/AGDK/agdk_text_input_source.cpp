@@ -1,6 +1,6 @@
 #include "agdk_text_input_source.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -22,4 +22,4 @@ void AGDKTextInputSource::pollDevice() {};
 
 } // namespace agdk
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

@@ -2,19 +2,19 @@
 
 #include <algorithm>
 
-#if defined(MOSAIC_PLATFORM_DESKTOP) || defined(MOSAIC_PLATFORM_WEB)
+#if defined(SATURN_PLATFORM_DESKTOP) || defined(SATURN_PLATFORM_WEB)
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
 #endif
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
 namespace vulkan
 {
 
-#ifdef MOSAIC_PLATFORM_WINDOWS
+#ifdef SATURN_PLATFORM_WINDOWS
 
 VkResult acquireExclusiveFullscreenMode(Swapchain& _swapchain)
 {
@@ -83,7 +83,7 @@ VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>
 {
     std::vector<VkFormat> preferredFormats;
 
-#if defined(MOSAIC_PLATFORM_ANDROID)
+#if defined(SATURN_PLATFORM_ANDROID)
     preferredFormats = {
         VK_FORMAT_R8G8B8A8_UNORM,
         VK_FORMAT_B8G8R8A8_UNORM,
@@ -181,7 +181,7 @@ void createSwapchain(Swapchain& _swapchain, const Device& _device, const Surface
 
     void* headExtPtr = nullptr;
 
-#ifdef MOSAIC_PLATFORM_WINDOWS
+#ifdef SATURN_PLATFORM_WINDOWS
 
     _swapchain.exclusiveFullscreenAvailable =
         std::find(_device.availableExtensions.begin(), _device.availableExtensions.end(),
@@ -246,7 +246,7 @@ void createSwapchain(Swapchain& _swapchain, const Device& _device, const Surface
     createInfo.clipped = VK_TRUE;
     createInfo.oldSwapchain = nullptr;
 
-    MOSAIC_INFO("Surface dimensions: {}x{}", _swapchain.extent.width, _swapchain.extent.height);
+    SATURN_INFO("Surface dimensions: {}x{}", _swapchain.extent.width, _swapchain.extent.height);
 
     if (vkCreateSwapchainKHR(_swapchain.device, &createInfo, nullptr, &_swapchain.swapchain) !=
         VK_SUCCESS)
@@ -261,14 +261,14 @@ void createSwapchain(Swapchain& _swapchain, const Device& _device, const Surface
 
     createImageViews(_swapchain);
 
-#ifdef MOSAIC_PLATFORM_WINDOWS
+#ifdef SATURN_PLATFORM_WINDOWS
     if (_swapchain.exclusiveFullscreenAvailable) acquireExclusiveFullscreenMode(_swapchain);
 #endif
 }
 
 void destroySwapchain(Swapchain& _swapchain)
 {
-#ifdef MOSAIC_PLATFORM_WINDOWS
+#ifdef SATURN_PLATFORM_WINDOWS
     if (_swapchain.exclusiveFullscreenAvailable) releaseExclusiveFullscreenMode(_swapchain);
 #endif
 
@@ -278,4 +278,4 @@ void destroySwapchain(Swapchain& _swapchain)
 
 } // namespace vulkan
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

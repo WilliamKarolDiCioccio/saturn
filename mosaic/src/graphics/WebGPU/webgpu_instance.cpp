@@ -1,6 +1,6 @@
 #include "webgpu_instance.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -32,7 +32,7 @@ WGPUInstance createInstance()
 
     if (!instance)
     {
-        MOSAIC_ERROR("Could not create WebGPU instance!");
+        SATURN_ERROR("Could not create WebGPU instance!");
     }
 
     return instance;
@@ -40,4 +40,4 @@ WGPUInstance createInstance()
 
 } // namespace webgpu
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

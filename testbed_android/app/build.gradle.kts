@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.mosaic.testbed"
+    namespace = "com.saturn.testbed"
     compileSdk = 35
     ndkVersion = "29.0.13113456"
 
@@ -28,7 +28,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.mosaic.testbed"
+        applicationId = "com.saturn.testbed"
         minSdk = 28
         targetSdk = 35
         versionCode = 1

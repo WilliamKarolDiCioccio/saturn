@@ -1,4 +1,4 @@
-#include "mosaic/exec/thread_pool.hpp"
+#include "saturn/exec/thread_pool.hpp"
 
 #include <string>
 #include <thread>
@@ -8,13 +8,13 @@
 #include <cassert>
 #include <condition_variable>
 
-#ifdef MOSAIC_PLATFORM_WINDOWS
+#ifdef SATURN_PLATFORM_WINDOWS
 #include <windows.h>
 #endif
 
 #include <concurrentqueue/moodycamel/concurrentqueue.h>
 
-namespace mosaic
+namespace saturn
 {
 namespace exec
 {
@@ -34,8 +34,8 @@ struct ThreadPool::Impl
     std::vector<std::unique_ptr<ThreadWorker>> workers;
 
     // Aligned to 64 bytes boundaries to avoid false sharing
-    alignas(MOSAIC_CACHE_LINE_SIZE) std::atomic<uint32_t> idleWorkersCount;
-    alignas(MOSAIC_CACHE_LINE_SIZE) std::atomic<bool> stop;
+    alignas(SATURN_CACHE_LINE_SIZE) std::atomic<uint32_t> idleWorkersCount;
+    alignas(SATURN_CACHE_LINE_SIZE) std::atomic<bool> stop;
 
     Impl();
     ~Impl();
@@ -47,7 +47,7 @@ bool ThreadPool::Impl::s_created = false;
 // WorkerStats - Cache-line aligned per-worker statistics
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct alignas(MOSAIC_CACHE_LINE_SIZE) WorkerStats
+struct alignas(SATURN_CACHE_LINE_SIZE) WorkerStats
 {
     std::atomic<uint64_t> tasksExecuted{0};
     std::atomic<uint64_t> tasksStolen{0};
@@ -152,7 +152,7 @@ class ThreadWorker final
 
     bool tryPopGlobal(MoveOnlyTask<void()>& _outTask) noexcept
     {
-        if (!mosaic::utils::hasFlag(m_sharingMode, WorkerSharingMode::global_consumer))
+        if (!saturn::utils::hasFlag(m_sharingMode, WorkerSharingMode::global_consumer))
         {
             return false;
         }
@@ -195,7 +195,7 @@ class ThreadWorker final
             const auto victim = workers[victimIdx].get();
 
             if (victim == thisWorker) continue;
-            if (!mosaic::utils::hasFlag(victim->m_sharingMode, WorkerSharingMode::allow_steal))
+            if (!saturn::utils::hasFlag(victim->m_sharingMode, WorkerSharingMode::allow_steal))
             {
                 continue;
             }
@@ -231,11 +231,11 @@ class ThreadWorker final
         }
         catch (const std::exception& e)
         {
-            MOSAIC_ERROR("Worker {}: task threw std::exception: {}", m_idx, e.what());
+            SATURN_ERROR("Worker {}: task threw std::exception: {}", m_idx, e.what());
         }
         catch (...)
         {
-            MOSAIC_ERROR("Worker {}: task threw unknown exception.", m_idx);
+            SATURN_ERROR("Worker {}: task threw unknown exception.", m_idx);
         }
 
         m_stats.tasksExecuted.fetch_add(1, std::memory_order_relaxed);
@@ -287,7 +287,7 @@ ThreadPool::~ThreadPool()
 }
 
 pieces::RefResult<ThreadPool, std::string> ThreadPool::initialize(
-    const mosaic::core::CPUInfo& _cpuInfo) noexcept
+    const saturn::core::CPUInfo& _cpuInfo) noexcept
 {
     int logical = static_cast<int>(_cpuInfo.logicalCores);
 
@@ -324,17 +324,17 @@ void ThreadPool::setWorkerAffinity(uint32_t _workerId, size_t _cpuCoreId) noexce
 
     if (!worker)
     {
-        MOSAIC_ERROR("Cannot set affinity for non-existing worker with id {}.", _workerId);
+        SATURN_ERROR("Cannot set affinity for non-existing worker with id {}.", _workerId);
         return;
     }
 
     auto nativeHandle = worker->m_thread.native_handle();
-#ifdef MOSAIC_PLATFORM_WINDOWS
+#ifdef SATURN_PLATFORM_WINDOWS
     HANDLE threadHandle = static_cast<HANDLE>(nativeHandle);
     DWORD_PTR affinityMask = 1ULL << (_cpuCoreId);
 
     SetThreadAffinityMask(threadHandle, affinityMask);
-#elif defined(MOSAIC_PLATFORM_LINUX) || defined(MOSAIC_PLATFORM_MACOS)
+#elif defined(SATURN_PLATFORM_LINUX) || defined(SATURN_PLATFORM_MACOS)
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
     CPU_SET(_cpuCoreId, &cpuset);
@@ -349,16 +349,16 @@ void ThreadPool::setWorkerSharingMode(uint32_t _workerId, WorkerSharingMode _sha
 
     if (!worker)
     {
-        MOSAIC_ERROR("Cannot set sharing mode for non-existing worker with id {}.", _workerId);
+        SATURN_ERROR("Cannot set sharing mode for non-existing worker with id {}.", _workerId);
         return;
     }
 
     static std::atomic<uint32_t> s_indirectAcceptingWorkers{0};
 
     bool currentlyAcceptsIndirect =
-        mosaic::utils::hasFlag(worker->m_sharingMode, WorkerSharingMode::accept_indirect);
+        saturn::utils::hasFlag(worker->m_sharingMode, WorkerSharingMode::accept_indirect);
     bool willAcceptIndirect =
-        mosaic::utils::hasFlag(_sharingMode, WorkerSharingMode::accept_indirect);
+        saturn::utils::hasFlag(_sharingMode, WorkerSharingMode::accept_indirect);
 
     if (currentlyAcceptsIndirect && !willAcceptIndirect)
     {
@@ -371,7 +371,7 @@ void ThreadPool::setWorkerSharingMode(uint32_t _workerId, WorkerSharingMode _sha
 
     if (s_indirectAcceptingWorkers.load(std::memory_order_acquire) == 0 && !willAcceptIndirect)
     {
-        MOSAIC_WARN(
+        SATURN_WARN(
             "Cannot disable indirect submissions for worker {}: would cause system stall. At least "
             "one worker must accept indirect submissions.",
             _workerId);
@@ -402,7 +402,7 @@ WorkerStatsSnapshot ThreadPool::getWorkerStats(uint32_t _workerIdx) const noexce
 {
     if (_workerIdx >= m_impl->workersCount)
     {
-        MOSAIC_ERROR("ThreadWorker with id {} does not exist.", _workerIdx);
+        SATURN_ERROR("ThreadWorker with id {} does not exist.", _workerIdx);
         return {};
     }
 
@@ -465,7 +465,7 @@ ThreadWorker* ThreadPool::getWorkerByIdx(uint32_t _idx) const noexcept
 {
     if (_idx >= m_impl->workersCount)
     {
-        MOSAIC_ERROR("ThreadWorker with id {} does not exist.", _idx);
+        SATURN_ERROR("ThreadWorker with id {} does not exist.", _idx);
         return nullptr;
     }
 
@@ -479,7 +479,7 @@ ThreadWorker* ThreadPool::getWorkerByDebugName(const std::string& _debugName) co
         if (worker->m_debugName == _debugName) return worker.get();
     }
 
-    MOSAIC_ERROR("ThreadWorker with debug name '{}' does not exist.", _debugName);
+    SATURN_ERROR("ThreadWorker with debug name '{}' does not exist.", _debugName);
 
     return nullptr;
 }
@@ -504,7 +504,7 @@ bool ThreadPool::assignTaskToGlobal(MoveOnlyTask<void()> _task) noexcept
 {
     if (m_impl->stop.load(std::memory_order_acquire))
     {
-        MOSAIC_WARN("ThreadPool is shutting down, cannot assign new tasks.");
+        SATURN_WARN("ThreadPool is shutting down, cannot assign new tasks.");
         return false;
     }
 
@@ -512,7 +512,7 @@ bool ThreadPool::assignTaskToGlobal(MoveOnlyTask<void()> _task) noexcept
 
     for (auto& worker : m_impl->workers)
     {
-        if (mosaic::utils::hasFlag(worker->m_sharingMode, WorkerSharingMode::global_consumer))
+        if (saturn::utils::hasFlag(worker->m_sharingMode, WorkerSharingMode::global_consumer))
         {
             worker->notify();
         }
@@ -525,7 +525,7 @@ bool ThreadPool::assignTaskToWorker(MoveOnlyTask<void()> _task) noexcept
 {
     if (m_impl->stop.load(std::memory_order_acquire))
     {
-        MOSAIC_WARN("ThreadPool is shutting down, cannot assign new tasks.");
+        SATURN_WARN("ThreadPool is shutting down, cannot assign new tasks.");
         return false;
     }
 
@@ -533,7 +533,7 @@ bool ThreadPool::assignTaskToWorker(MoveOnlyTask<void()> _task) noexcept
     {
         ThreadWorker* worker = getRandomWorker();
 
-        if (mosaic::utils::hasFlag(worker->m_sharingMode, WorkerSharingMode::accept_indirect))
+        if (saturn::utils::hasFlag(worker->m_sharingMode, WorkerSharingMode::accept_indirect))
         {
             worker->m_taskQueue.enqueue(std::move(_task));
             worker->notify();
@@ -541,13 +541,13 @@ bool ThreadPool::assignTaskToWorker(MoveOnlyTask<void()> _task) noexcept
         }
     }
 
-    MOSAIC_INFO("No thread worker available that accepts indirect task submissions.");
+    SATURN_INFO("No thread worker available that accepts indirect task submissions.");
 
     m_impl->globalTaskQueue.enqueue(std::move(_task));
 
     for (auto& worker : m_impl->workers)
     {
-        if (mosaic::utils::hasFlag(worker->m_sharingMode, WorkerSharingMode::global_consumer))
+        if (saturn::utils::hasFlag(worker->m_sharingMode, WorkerSharingMode::global_consumer))
         {
             worker->notify();
         }
@@ -562,9 +562,9 @@ bool ThreadPool::assignTaskToWorkerById(uint32_t _idx, MoveOnlyTask<void()> _tas
 
     const WorkerSharingMode mode = worker->m_sharingMode;
 
-    if (!mosaic::utils::hasFlag(mode, WorkerSharingMode::accept_direct))
+    if (!saturn::utils::hasFlag(mode, WorkerSharingMode::accept_direct))
     {
-        MOSAIC_ERROR("Worker with id {} does not accept direct task submissions.", _idx);
+        SATURN_ERROR("Worker with id {} does not accept direct task submissions.", _idx);
         return false;
     }
 
@@ -594,9 +594,9 @@ bool ThreadPool::assignTaskToWorkerByDebugName(const std::string& _debugName,
 
     const WorkerSharingMode mode = worker->m_sharingMode;
 
-    if (!mosaic::utils::hasFlag(mode, WorkerSharingMode::accept_direct))
+    if (!saturn::utils::hasFlag(mode, WorkerSharingMode::accept_direct))
     {
-        MOSAIC_ERROR("Worker with debug name '{}' does not accept direct task submissions.",
+        SATURN_ERROR("Worker with debug name '{}' does not accept direct task submissions.",
                      _debugName);
         return false;
     }
@@ -621,4 +621,4 @@ bool ThreadPool::assignTaskToWorkerByDebugName(const std::string& _debugName,
 }
 
 } // namespace exec
-} // namespace mosaic
+} // namespace saturn

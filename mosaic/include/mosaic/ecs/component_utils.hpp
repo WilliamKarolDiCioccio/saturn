@@ -8,7 +8,7 @@
 #include "component.hpp"
 #include "component_registry.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace ecs
 {
@@ -111,4 +111,4 @@ getComponentOffsetsInBytesFromSignature(const ComponentRegistry* _registry,
 }
 
 } // namespace ecs
-} // namespace mosaic
+} // namespace saturn

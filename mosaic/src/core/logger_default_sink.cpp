@@ -1,8 +1,8 @@
-#include "mosaic/tools/logger_default_sink.hpp"
+#include "saturn/tools/logger_default_sink.hpp"
 
-#include "mosaic/core/sys_console.hpp"
+#include "saturn/core/sys_console.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace tools
 {
@@ -45,4 +45,4 @@ void DefaultSink::critical(const std::string& _message) const
 }
 
 } // namespace tools
-} // namespace mosaic
+} // namespace saturn

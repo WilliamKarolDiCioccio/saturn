@@ -5,9 +5,9 @@
 #include <algorithm>
 #include <array>
 
-#include <mosaic/ecs/typeless_sparse_set.hpp>
+#include <saturn/ecs/typeless_sparse_set.hpp>
 
-using namespace mosaic::ecs;
+using namespace saturn::ecs;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Test Components

@@ -6,7 +6,7 @@
 #include "vulkan_swapchain.hpp"
 #include "commands/vulkan_render_pass.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -20,4 +20,4 @@ void destroySwapchainFramebuffers(Swapchain& _swapchain, const Device& _device);
 
 } // namespace vulkan
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

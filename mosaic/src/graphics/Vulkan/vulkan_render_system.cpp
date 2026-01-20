@@ -1,8 +1,8 @@
 #include "vulkan_render_system.hpp"
 
-#include "mosaic/window/window_system.hpp"
+#include "saturn/window/window_system.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -51,4 +51,4 @@ void VulkanRenderSystem::shutdown()
 
 } // namespace vulkan
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

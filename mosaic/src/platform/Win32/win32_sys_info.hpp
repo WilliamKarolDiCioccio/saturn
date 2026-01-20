@@ -1,6 +1,6 @@
 #pragma once
 
-#include "mosaic/core/sys_info.hpp"
+#include "saturn/core/sys_info.hpp"
 
 #include <memory>
 
@@ -10,9 +10,9 @@
 #include <wbemidl.h>
 #include <comdef.h>
 
-#include "mosaic/platform/Win32/wstring.hpp"
+#include "saturn/platform/Win32/wstring.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -77,4 +77,4 @@ class Win32SystemInfo : public core::SystemInfo::SystemInfoImpl
 
 } // namespace win32
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

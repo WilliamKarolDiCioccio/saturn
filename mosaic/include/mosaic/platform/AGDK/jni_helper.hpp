@@ -12,9 +12,9 @@
 
 #include <pieces/core/result.hpp>
 
-#include "mosaic/tools/logger.hpp"
+#include "saturn/tools/logger.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -305,4 +305,4 @@ T JNIHelper::callStaticMethod(const std::string& _className, const std::string& 
 
 } // namespace agdk
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

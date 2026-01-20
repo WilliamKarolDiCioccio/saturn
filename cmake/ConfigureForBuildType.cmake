@@ -51,20 +51,20 @@ function(configure_for_build_type target)
 
     target_compile_options(${target} PRIVATE $<$<CONFIG:Debug>:-O0 -g>)
     target_compile_definitions(${target}
-                               PRIVATE $<$<CONFIG:Debug>:MOSAIC_DEBUG_BUILD>)
+                               PRIVATE $<$<CONFIG:Debug>:SATURN_DEBUG_BUILD>)
 
   elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 
     target_compile_options(${target} PRIVATE $<$<CONFIG:Debug>:/Od /Z7 /RTC1
                                              /MDd>)
     target_compile_definitions(${target}
-                               PRIVATE $<$<CONFIG:Debug>:MOSAIC_DEBUG_BUILD>)
+                               PRIVATE $<$<CONFIG:Debug>:SATURN_DEBUG_BUILD>)
 
   elseif(EMSCRIPTEN)
 
     target_compile_options(${target} PRIVATE $<$<CONFIG:Debug>:-O0 -g>)
     target_compile_definitions(${target}
-                               PRIVATE $<$<CONFIG:Debug>:MOSAIC_DEBUG_BUILD>)
+                               PRIVATE $<$<CONFIG:Debug>:SATURN_DEBUG_BUILD>)
     target_link_options(${target} PRIVATE $<$<CONFIG:Debug>:-sASSERTIONS=2
                         -sSTACK_OVERFLOW_CHECK=2 -sSAFE_HEAP=1>)
 
@@ -77,14 +77,14 @@ function(configure_for_build_type target)
       ${target} PRIVATE $<$<CONFIG:Dev>:-O2 -g -fstack-protector
                         -fno-omit-frame-pointer>)
     target_compile_definitions(${target}
-                               PRIVATE $<$<CONFIG:Dev>:MOSAIC_DEV_BUILD>)
+                               PRIVATE $<$<CONFIG:Dev>:SATURN_DEV_BUILD>)
     target_link_options(${target} PRIVATE $<$<CONFIG:Dev>:-flto>)
 
   elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 
     target_compile_options(${target} PRIVATE $<$<CONFIG:Dev>:/GS /O2 /Ob1 /Zi>)
     target_compile_definitions(${target}
-                               PRIVATE $<$<CONFIG:Dev>:MOSAIC_DEV_BUILD>)
+                               PRIVATE $<$<CONFIG:Dev>:SATURN_DEV_BUILD>)
     target_link_options(${target} PRIVATE $<$<CONFIG:Dev>:/LTCG>)
 
   elseif(EMSCRIPTEN)
@@ -93,7 +93,7 @@ function(configure_for_build_type target)
       ${target} PRIVATE $<$<CONFIG:Dev>:-O2 -g -fstack-protector
                         -fno-omit-frame-pointer>)
     target_compile_definitions(${target}
-                               PRIVATE $<$<CONFIG:Dev>:MOSAIC_DEV_BUILD>)
+                               PRIVATE $<$<CONFIG:Dev>:SATURN_DEV_BUILD>)
     target_link_options(${target} PRIVATE $<$<CONFIG:Dev>:-flto -sASSERTIONS=1>)
 
   endif()
@@ -117,7 +117,7 @@ function(configure_for_build_type target)
               -fPIE
               -fvisibility=hidden>)
     target_compile_definitions(
-      ${target} PRIVATE $<$<CONFIG:Release>:MOSAIC_RELEASE_BUILD>)
+      ${target} PRIVATE $<$<CONFIG:Release>:SATURN_RELEASE_BUILD>)
     target_link_options(${target} PRIVATE $<$<CONFIG:Release>:-flto>)
 
   elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
@@ -137,7 +137,7 @@ function(configure_for_build_type target)
               /w14905
               /w14906>)
     target_compile_definitions(
-      ${target} PRIVATE $<$<CONFIG:Release>:MOSAIC_RELEASE_BUILD
+      ${target} PRIVATE $<$<CONFIG:Release>:SATURN_RELEASE_BUILD
                         _FORTIFY_SOURCE=2>)
     target_link_options(${target} PRIVATE $<$<CONFIG:Release>:/LTCG>)
 
@@ -157,7 +157,7 @@ function(configure_for_build_type target)
               -fno-common
               -fvisibility=hidden>)
     target_compile_definitions(
-      ${target} PRIVATE $<$<CONFIG:Release>:MOSAIC_RELEASE_BUILD>)
+      ${target} PRIVATE $<$<CONFIG:Release>:SATURN_RELEASE_BUILD>)
     target_link_options(${target} PRIVATE $<$<CONFIG:Release>:-flto>)
 
   endif()
@@ -178,7 +178,7 @@ function(configure_for_build_type target)
               -fsanitize=undefined
               -fsanitize=thread>)
     target_compile_definitions(
-      ${target} PRIVATE $<$<CONFIG:Sanitizers>:MOSAIC_SANITIZERS>)
+      ${target} PRIVATE $<$<CONFIG:Sanitizers>:SATURN_SANITIZERS>)
     target_link_options(
       ${target} PRIVATE $<$<CONFIG:Sanitizers>:-fsanitize=address
       -fsanitize=undefined -fsanitize=thread>)
@@ -189,7 +189,7 @@ function(configure_for_build_type target)
       ${target} PRIVATE $<$<CONFIG:Sanitizers>:/Zi /Od /RTC1 /DEBUG:FULL /MDd
                         /fsanitize=address>)
     target_compile_definitions(
-      ${target} PRIVATE $<$<CONFIG:Sanitizers>:MOSAIC_SANITIZERS>)
+      ${target} PRIVATE $<$<CONFIG:Sanitizers>:SATURN_SANITIZERS>)
     target_link_options(${target} PRIVATE
                         $<$<CONFIG:Sanitizers>:/INCREMENTAL:NO /DEBUG:FULL>)
 
@@ -206,7 +206,7 @@ function(configure_for_build_type target)
               -fsanitize=address
               -fsanitize=undefined>)
     target_compile_definitions(
-      ${target} PRIVATE $<$<CONFIG:Sanitizers>:MOSAIC_SANITIZERS>)
+      ${target} PRIVATE $<$<CONFIG:Sanitizers>:SATURN_SANITIZERS>)
     target_link_options(
       ${target}
       PRIVATE

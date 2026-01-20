@@ -4,11 +4,11 @@
 
 #include <pieces/core/result.hpp>
 
-#include "mosaic/core/system.hpp"
+#include "saturn/core/system.hpp"
 
 #include "input_context.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace input
 {
@@ -34,7 +34,7 @@ namespace input
  * @see Window
  * @see https://www.glfw.org/documentation.html
  */
-class MOSAIC_API InputSystem final : public core::EngineSystem
+class SATURN_API InputSystem final : public core::EngineSystem
 {
    public:
     static InputSystem* g_instance;
@@ -72,11 +72,11 @@ class MOSAIC_API InputSystem final : public core::EngineSystem
 
     [[nodiscard]] static inline InputSystem* getInstance()
     {
-        if (!g_instance) MOSAIC_ERROR("InputSystem has not been created yet!");
+        if (!g_instance) SATURN_ERROR("InputSystem has not been created yet!");
 
         return g_instance;
     }
 };
 
 } // namespace input
-} // namespace mosaic
+} // namespace saturn

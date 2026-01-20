@@ -4,7 +4,7 @@
 
 #include "entity.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace ecs
 {
@@ -85,4 +85,4 @@ class EntityAllocationHelper
 };
 
 } // namespace ecs
-} // namespace mosaic
+} // namespace saturn

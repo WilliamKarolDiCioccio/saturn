@@ -1,20 +1,20 @@
-#include "mosaic/core/application.hpp"
+#include "saturn/core/application.hpp"
 
 #include <cassert>
 #include <exception>
 #include <memory>
 #include <string>
 #include <utility>
-#include <mosaic/tools/logger.hpp>
-#include <mosaic/core/timer.hpp>
-#include <mosaic/graphics/render_system.hpp>
-#include <mosaic/input/input_system.hpp>
-#include <mosaic/window/window_system.hpp>
+#include <saturn/tools/logger.hpp>
+#include <saturn/core/timer.hpp>
+#include <saturn/graphics/render_system.hpp>
+#include <saturn/input/input_system.hpp>
+#include <saturn/window/window_system.hpp>
 #include <pieces/core/result.hpp>
 
 using namespace std::chrono_literals;
 
-namespace mosaic
+namespace saturn
 {
 namespace core
 {
@@ -34,7 +34,7 @@ struct Application::Impl
         : exitRequested(false),
           appName(_name),
           state(ApplicationState::uninitialized),
-          windowSystem(mosaic::window::WindowSystem::create()),
+          windowSystem(saturn::window::WindowSystem::create()),
           inputSystem(std::make_unique<input::InputSystem>()),
           renderSystem(graphics::RenderSystem::create(graphics::RendererAPIType::vulkan))
     {
@@ -91,7 +91,7 @@ pieces::RefResult<Application, std::string> Application::initialize()
     }
     catch (const std::exception& e)
     {
-        MOSAIC_ERROR("Application initialization error: {}", e.what());
+        SATURN_ERROR("Application initialization error: {}", e.what());
         return pieces::ErrRef<Application, std::string>(
             std::string("Application initialization error: ") + e.what());
     }
@@ -120,7 +120,7 @@ pieces::RefResult<Application, std::string> Application::update()
     }
     catch (const std::exception& e)
     {
-        MOSAIC_ERROR("Application shutdown error: {}", e.what());
+        SATURN_ERROR("Application shutdown error: {}", e.what());
         return pieces::ErrRef<Application, std::string>(
             std::string("Application input polling error: ") + e.what());
     }
@@ -133,7 +133,7 @@ pieces::RefResult<Application, std::string> Application::update()
     }
     catch (const std::exception& e)
     {
-        MOSAIC_ERROR("Application shutdown error: {}", e.what());
+        SATURN_ERROR("Application shutdown error: {}", e.what());
         return pieces::ErrRef<Application, std::string>(std::string("Application update error: ") +
                                                         e.what());
     }
@@ -151,7 +151,7 @@ void Application::pause()
         }
         catch (const std::exception& e)
         {
-            MOSAIC_ERROR("Application pause error: {}", e.what());
+            SATURN_ERROR("Application pause error: {}", e.what());
         }
 
         m_impl->state = ApplicationState::paused;
@@ -168,7 +168,7 @@ void Application::resume()
         }
         catch (const std::exception& e)
         {
-            MOSAIC_ERROR("Application resume error: {}", e.what());
+            SATURN_ERROR("Application resume error: {}", e.what());
         }
 
         m_impl->state = ApplicationState::resumed;
@@ -185,7 +185,7 @@ void Application::shutdown()
         }
         catch (const std::exception& e)
         {
-            MOSAIC_ERROR("Application shutdown error: {}", e.what());
+            SATURN_ERROR("Application shutdown error: {}", e.what());
         }
 
         m_impl->renderSystem->shutdown();
@@ -215,4 +215,4 @@ input::InputSystem* Application::getInputSystem() const { return m_impl->inputSy
 graphics::RenderSystem* Application::getRenderSystem() const { return m_impl->renderSystem.get(); }
 
 } // namespace core
-} // namespace mosaic
+} // namespace saturn

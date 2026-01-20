@@ -1,6 +1,6 @@
 #include "vulkan_render_pass.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -78,4 +78,4 @@ void endRenderPass(VkCommandBuffer commandBuffer) { vkCmdEndRenderPass(commandBu
 
 } // namespace vulkan
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

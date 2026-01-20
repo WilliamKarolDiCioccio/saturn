@@ -2,7 +2,7 @@
 
 #include "vulkan_instance.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -17,16 +17,16 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     switch (messageSeverity)
     {
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-            MOSAIC_TRACE("{}", pCallbackData->pMessage);
+            SATURN_TRACE("{}", pCallbackData->pMessage);
             break;
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
-            MOSAIC_INFO("{}", pCallbackData->pMessage);
+            SATURN_INFO("{}", pCallbackData->pMessage);
             break;
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-            MOSAIC_WARN("{}", pCallbackData->pMessage);
+            SATURN_WARN("{}", pCallbackData->pMessage);
             break;
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-            MOSAIC_ERROR("{}", pCallbackData->pMessage);
+            SATURN_ERROR("{}", pCallbackData->pMessage);
             break;
         default:
             break;
@@ -136,7 +136,7 @@ void checkInstanceExtensionsSupport(Instance& _instance)
         }
         else
         {
-            MOSAIC_WARN("Optional Vulkan instance extension '{}' is not supported!",
+            SATURN_WARN("Optional Vulkan instance extension '{}' is not supported!",
                         optionalExtension);
         }
     }
@@ -196,7 +196,7 @@ void createInstance(Instance& _instance)
 
     void* debugCreateInfoPtr = nullptr;
 
-#if defined(MOSAIC_DEBUG_BUILD) || defined(MOSAIC_DEV_BUILD)
+#if defined(SATURN_DEBUG_BUILD) || defined(SATURN_DEV_BUILD)
     VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo = populateDebugMessengerCreateInfoEXT();
 
     debugCreateInfoPtr = &debugCreateInfo;
@@ -220,14 +220,14 @@ void createInstance(Instance& _instance)
 
     volkLoadInstance(_instance.instance);
 
-#if defined(MOSAIC_DEBUG_BUILD) || defined(MOSAIC_DEV_BUILD)
+#if defined(SATURN_DEBUG_BUILD) || defined(SATURN_DEV_BUILD)
     createDebugMessenger(_instance);
 #endif
 }
 
 void destroyInstance(Instance& _instance)
 {
-#if defined(MOSAIC_DEBUG_BUILD) || defined(MOSAIC_DEV_BUILD)
+#if defined(SATURN_DEBUG_BUILD) || defined(SATURN_DEV_BUILD)
     destroyDebugMessenger(_instance);
 #endif
 
@@ -236,4 +236,4 @@ void destroyInstance(Instance& _instance)
 
 } // namespace vulkan
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

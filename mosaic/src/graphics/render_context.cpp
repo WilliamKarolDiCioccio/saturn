@@ -1,8 +1,8 @@
-#include "mosaic/graphics/render_context.hpp"
+#include "saturn/graphics/render_context.hpp"
 
-#include "mosaic/window/window.hpp"
+#include "saturn/window/window.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -41,4 +41,4 @@ window::Window* RenderContext::getWindowInternal()
 RenderContextSettings& RenderContext::getSettingsInternal() { return m_impl->m_settings; }
 
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

@@ -1,6 +1,6 @@
 #include "emscripten_platform.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -87,4 +87,4 @@ void EmscriptenPlatform::shutdown()
 
 } // namespace emscripten
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

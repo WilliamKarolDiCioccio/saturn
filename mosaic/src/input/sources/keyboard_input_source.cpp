@@ -1,12 +1,12 @@
-#include "mosaic/input/sources/keyboard_input_source.hpp"
+#include "saturn/input/sources/keyboard_input_source.hpp"
 
-#if defined(MOSAIC_PLATFORM_DESKTOP) || defined(MOSAIC_PLATFORM_WEB)
+#if defined(SATURN_PLATFORM_DESKTOP) || defined(SATURN_PLATFORM_WEB)
 #include "platform/GLFW/glfw_keyboard_input_source.hpp"
 #endif
 
 using namespace std::chrono_literals;
 
-namespace mosaic
+namespace saturn
 {
 namespace input
 {
@@ -30,7 +30,7 @@ KeyboardInputSource::KeyboardInputSource(window::Window* _window) : InputSource(
 
 std::unique_ptr<KeyboardInputSource> KeyboardInputSource::create(window::Window* _window)
 {
-#if defined(MOSAIC_PLATFORM_DESKTOP) || defined(MOSAIC_PLATFORM_WEB)
+#if defined(SATURN_PLATFORM_DESKTOP) || defined(SATURN_PLATFORM_WEB)
     return std::make_unique<platform::glfw::GLFWKeyboardInputSource>(_window);
 #else
     throw std::runtime_error("Keyboard input source not supported on mobile devices");
@@ -136,4 +136,4 @@ void KeyboardInputSource::processInput()
 }
 
 } // namespace input
-} // namespace mosaic
+} // namespace saturn

@@ -1,11 +1,11 @@
-## 🌟 Feature Request – Mosaic Game Engine
+## 🌟 Feature Request – Saturn Game Engine
 
 ### Pre-Request Checklist ✅
 
 Before submitting this feature request, please confirm you've:
 
 - [ ] Searched existing [issues](../../issues) to avoid duplicates 🔍
-- [ ] Verified the feature aligns with Mosaic’s scope (engine-level, not app-specific) 📦
+- [ ] Verified the feature aligns with Saturn’s scope (engine-level, not app-specific) 📦
 - [ ] Considered whether this feature would benefit multiple platforms or backends (e.g., Vulkan, WebGPU, etc.) 🌍
 
 ---
@@ -58,4 +58,4 @@ Link to a reference implementation in another engine, or screenshots of a typica
 
 ---
 
-Thanks for helping shape the future of Mosaic! 💚
+Thanks for helping shape the future of Saturn! 💚

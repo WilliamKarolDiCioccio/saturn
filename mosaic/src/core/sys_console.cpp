@@ -1,35 +1,35 @@
-#include "mosaic/core/sys_console.hpp"
+#include "saturn/core/sys_console.hpp"
 
 #include <memory>
 #include <string>
 
-#include "mosaic/defines.hpp"
+#include "saturn/defines.hpp"
 
-#if defined(MOSAIC_PLATFORM_WINDOWS)
+#if defined(SATURN_PLATFORM_WINDOWS)
 #include "platform/Win32/win32_sys_console.hpp"
-#elif defined(MOSAIC_PLATFORM_LINUX)
+#elif defined(SATURN_PLATFORM_LINUX)
 #include "platform/POSIX/posix_sys_console.hpp"
-#elif defined(MOSAIC_PLATFORM_EMSCRIPTEN)
+#elif defined(SATURN_PLATFORM_EMSCRIPTEN)
 #include "platform/Emscripten/emscripten_sys_console.hpp"
-#elif defined(MOSAIC_PLATFORM_ANDROID)
+#elif defined(SATURN_PLATFORM_ANDROID)
 #include "platform/AGDK/agdk_sys_console.hpp"
 #endif
 
-namespace mosaic
+namespace saturn
 {
 namespace core
 {
 
-#if defined(MOSAIC_PLATFORM_WINDOWS)
+#if defined(SATURN_PLATFORM_WINDOWS)
 std::unique_ptr<SystemConsole::SystemConsoleImpl> SystemConsole::impl =
     std::make_unique<platform::win32::Win32SystemConsole>();
-#elif defined(MOSAIC_PLATFORM_LINUX)
+#elif defined(SATURN_PLATFORM_LINUX)
 std::unique_ptr<SystemConsole::SystemConsoleImpl> SystemConsole::impl =
     std::make_unique<platform::posix::POSIXSystemConsole>();
-#elif defined(MOSAIC_PLATFORM_EMSCRIPTEN)
+#elif defined(SATURN_PLATFORM_EMSCRIPTEN)
 std::unique_ptr<SystemConsole::SystemConsoleImpl> SystemConsole::impl =
     std::make_unique<platform::emscripten::EmscriptenSystemConsole>();
-#elif defined(MOSAIC_PLATFORM_ANDROID)
+#elif defined(SATURN_PLATFORM_ANDROID)
 std::unique_ptr<SystemConsole::SystemConsoleImpl> SystemConsole::impl =
     std::make_unique<platform::agdk::AGDKSystemConsole>();
 #endif
@@ -57,4 +57,4 @@ void SystemConsole::printError(const std::string& _message) { impl->printError(_
 void SystemConsole::printCritical(const std::string& _message) { impl->printCritical(_message); }
 
 } // namespace core
-} // namespace mosaic
+} // namespace saturn

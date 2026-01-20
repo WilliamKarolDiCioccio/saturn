@@ -6,9 +6,9 @@
 #include <emscripten.h>
 #include <emscripten/html5.h>
 
-#include "mosaic/core/platform.hpp"
+#include "saturn/core/platform.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -31,4 +31,4 @@ class EmscriptenPlatform : public core::Platform
 
 } // namespace emscripten
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

@@ -1,8 +1,8 @@
-#include "mosaic/core/sys_console.hpp"
+#include "saturn/core/sys_console.hpp"
 
 #include <android/log.h>
 
-namespace mosaic
+namespace saturn
 {
 namespace platform
 {
@@ -32,4 +32,4 @@ class AGDKSystemConsole : public core::SystemConsole::SystemConsoleImpl
 
 } // namespace agdk
 } // namespace platform
-} // namespace mosaic
+} // namespace saturn

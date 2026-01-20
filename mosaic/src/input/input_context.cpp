@@ -1,4 +1,4 @@
-#include "mosaic/input/input_context.hpp"
+#include "saturn/input/input_context.hpp"
 
 #include <memory>
 #include <string>
@@ -13,12 +13,12 @@
 
 #include <pieces/core/result.hpp>
 
-#include "mosaic/tools/logger.hpp"
-#include "mosaic/input/action.hpp"
-#include "mosaic/input/mappings.hpp"
-#include "mosaic/window/window.hpp"
+#include "saturn/tools/logger.hpp"
+#include "saturn/input/action.hpp"
+#include "saturn/input/mappings.hpp"
+#include "saturn/window/window.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace input
 {
@@ -29,7 +29,7 @@ struct InputContext::Impl
 
     // Input sources
 #define DEFINE_SOURCE(_Type, _Member, _Name) std::unique_ptr<_Type> _Member;
-#include "mosaic/input/sources.def"
+#include "saturn/input/sources.def"
 #undef DEFINE_SOURCE
 
     // Virtual keys and buttons mapped to their native equivalents
@@ -76,7 +76,7 @@ void InputContext::loadVirtualKeysAndButtons(const std::string& _filePath)
 
     if (!file.is_open())
     {
-        MOSAIC_ERROR("Failed to open virtual mouse buttons file: {}", _filePath);
+        SATURN_ERROR("Failed to open virtual mouse buttons file: {}", _filePath);
         return;
     }
 
@@ -88,7 +88,7 @@ void InputContext::loadVirtualKeysAndButtons(const std::string& _filePath)
     }
     catch (const nlohmann::json::parse_error& e)
     {
-        MOSAIC_ERROR("Failed to parse virtual mouse buttons JSON: {}", e.what());
+        SATURN_ERROR("Failed to parse virtual mouse buttons JSON: {}", e.what());
         return;
     }
 
@@ -115,7 +115,7 @@ void InputContext::saveVirtualKeysAndButtons(const std::string& _filePath)
 
     if (!file.is_open())
     {
-        MOSAIC_ERROR("Failed to open virtual keyboard keys file: {}", _filePath);
+        SATURN_ERROR("Failed to open virtual keyboard keys file: {}", _filePath);
         return;
     }
 
@@ -127,7 +127,7 @@ void InputContext::saveVirtualKeysAndButtons(const std::string& _filePath)
     }
     catch (const nlohmann::json::parse_error& e)
     {
-        MOSAIC_ERROR("Failed to parse virtual keyboard keys JSON: {}", e.what());
+        SATURN_ERROR("Failed to parse virtual keyboard keys JSON: {}", e.what());
     }
 }
 
@@ -143,7 +143,7 @@ void InputContext::updateVirtualKeyboardKeys(
         {
             if (virtualKeyboardKeys.find(k) == virtualKeyboardKeys.end())
             {
-                MOSAIC_WARN("Virtual keyboard key not found: {}", k);
+                SATURN_WARN("Virtual keyboard key not found: {}", k);
             }
 
             virtualKeyboardKeys[k] = v;
@@ -153,7 +153,7 @@ void InputContext::updateVirtualKeyboardKeys(
     {
         virtualKeyboardKeys = backupMap;
 
-        MOSAIC_ERROR("Failed to update virtual keyboard keys: {}", e.what());
+        SATURN_ERROR("Failed to update virtual keyboard keys: {}", e.what());
     }
 }
 
@@ -168,7 +168,7 @@ void InputContext::updateVirtualMouseButtons(
         {
             if (m_impl->virtualMouseButtons.find(k) == m_impl->virtualMouseButtons.end())
             {
-                MOSAIC_WARN("Virtual mouse button not found: {}", k);
+                SATURN_WARN("Virtual mouse button not found: {}", k);
             }
 
             m_impl->virtualMouseButtons[k] = v;
@@ -178,7 +178,7 @@ void InputContext::updateVirtualMouseButtons(
     {
         m_impl->virtualMouseButtons = backupMap;
 
-        MOSAIC_ERROR("Failed to update virtual mouse buttons: {}", e.what());
+        SATURN_ERROR("Failed to update virtual mouse buttons: {}", e.what());
     }
 }
 
@@ -194,7 +194,7 @@ void InputContext::registerActions(const std::vector<Action>&& _actions)
         {
             if (actions.find(action.name) != actions.end())
             {
-                MOSAIC_ERROR("An action with the name '{}' already exists. ", action.name);
+                SATURN_ERROR("An action with the name '{}' already exists. ", action.name);
                 continue;
             }
 
@@ -205,7 +205,7 @@ void InputContext::registerActions(const std::vector<Action>&& _actions)
     {
         actions = backupActions;
 
-        MOSAIC_ERROR("Failed to register actions: {}", e.what());
+        SATURN_ERROR("Failed to register actions: {}", e.what());
     }
 }
 
@@ -215,7 +215,7 @@ void InputContext::unregisterActions(const std::vector<std::string>&& _names)
     {
         if (m_impl->actions.find(name) == m_impl->actions.end())
         {
-            MOSAIC_ERROR("An action with the name '{}' does not exist. ", name);
+            SATURN_ERROR("An action with the name '{}' does not exist. ", name);
             continue;
         }
 
@@ -232,7 +232,7 @@ bool InputContext::isActionTriggered(const std::string& _name, bool _onlyCurrPol
 
     if (actionIt == actions.end())
     {
-        MOSAIC_ERROR("Action not found: {}", _name);
+        SATURN_ERROR("Action not found: {}", _name);
         return false;
     }
 
@@ -256,7 +256,7 @@ KeyboardKey InputContext::translateKey(const std::string& _key) const
 
     if (virtualKeyboardKeys.find(_key) == virtualKeyboardKeys.end())
     {
-        MOSAIC_ERROR("Virtual keyboard key not found: {}", _key);
+        SATURN_ERROR("Virtual keyboard key not found: {}", _key);
         return static_cast<KeyboardKey>(0);
     };
 
@@ -269,7 +269,7 @@ MouseButton InputContext::translateButton(const std::string& _button) const
 
     if (virtualMouseButtons.find(_button) == virtualMouseButtons.end())
     {
-        MOSAIC_ERROR("Virtual mouse button not found: {}", _button);
+        SATURN_ERROR("Virtual mouse button not found: {}", _button);
         return static_cast<MouseButton>(0);
     };
 
@@ -282,7 +282,7 @@ MouseButton InputContext::translateButton(const std::string& _button) const
         auto& member = m_impl->_Member;                                          \
         if (member != nullptr)                                                   \
         {                                                                        \
-            MOSAIC_WARN(#_Type " already exists.");                              \
+            SATURN_WARN(#_Type " already exists.");                              \
             return pieces::Ok<_Type*, std::string>(member.get());                \
         }                                                                        \
                                                                                  \
@@ -290,7 +290,7 @@ MouseButton InputContext::translateButton(const std::string& _button) const
         auto result = member->initialize();                                      \
         if (result.isErr())                                                      \
         {                                                                        \
-            MOSAIC_ERROR("Failed to initialize " #_Type ": {}", result.error()); \
+            SATURN_ERROR("Failed to initialize " #_Type ": {}", result.error()); \
             return pieces::Err<_Type*, std::string>(std::move(result.error()));  \
         }                                                                        \
                                                                                  \
@@ -312,9 +312,9 @@ MouseButton InputContext::translateButton(const std::string& _button) const
                                                                                  \
     [[nodiscard]] _Type* InputContext::get##_Name##Source() const { return m_impl->_Member.get(); }
 
-#include "mosaic/input/sources.def"
+#include "saturn/input/sources.def"
 
 #undef DEFINE_SOURCE
 
 } // namespace input
-} // namespace mosaic
+} // namespace saturn

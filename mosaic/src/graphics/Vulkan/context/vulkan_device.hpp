@@ -4,7 +4,7 @@
 #include "vulkan_instance.hpp"
 #include "vulkan_surface.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace graphics
 {
@@ -47,18 +47,18 @@ struct Device
     {
         requiredExtensions = {
             VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-#if defined(MOSAIC_PLATFORM_DESKTOP)
+#if defined(SATURN_PLATFORM_DESKTOP)
             VK_KHR_MULTIVIEW_EXTENSION_NAME,
 #endif
         };
 
         optionalExtensions = {
-#ifdef MOSAIC_PLATFORM_WINDOWS
+#ifdef SATURN_PLATFORM_WINDOWS
             VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME,
 #endif
         };
 
-#if defined(MOSAIC_DEBUG_BUILD) || defined(MOSAIC_DEV_BUILD)
+#if defined(SATURN_DEBUG_BUILD) || defined(SATURN_DEV_BUILD)
         requiredLayers = {
             "VK_LAYER_KHRONOS_validation",
         };
@@ -77,4 +77,4 @@ SwapChainSupportDetails findDeviceSwapChainSupport(const VkPhysicalDevice& devic
                                                    const VkSurfaceKHR& _surface);
 } // namespace vulkan
 } // namespace graphics
-} // namespace mosaic
+} // namespace saturn

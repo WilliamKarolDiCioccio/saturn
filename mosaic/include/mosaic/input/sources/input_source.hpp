@@ -6,13 +6,13 @@
 #include <pieces/core/result.hpp>
 #include <pieces/containers/circular_buffer.hpp>
 
-#include "mosaic/tools/logger.hpp"
-#include "mosaic/input/constants.hpp"
-#include "mosaic/input/events.hpp"
-#include "mosaic/input/mappings.hpp"
-#include "mosaic/window/window.hpp"
+#include "saturn/tools/logger.hpp"
+#include "saturn/input/constants.hpp"
+#include "saturn/input/events.hpp"
+#include "saturn/input/mappings.hpp"
+#include "saturn/window/window.hpp"
 
-namespace mosaic
+namespace saturn
 {
 namespace input
 {
@@ -49,4 +49,4 @@ class InputSource
 };
 
 } // namespace input
-} // namespace mosaic
+} // namespace saturn

@@ -4,7 +4,7 @@
 
 #include <pieces/containers/circular_buffer.hpp>
 
-namespace mosaic
+namespace saturn
 {
 namespace input
 {
@@ -18,7 +18,7 @@ namespace input
 
  * @see InputSource
  */
-class MOSAIC_API MouseInputSource : public InputSource
+class SATURN_API MouseInputSource : public InputSource
 {
    protected:
     struct MouseWheelScrollSample
@@ -165,4 +165,4 @@ class MOSAIC_API MouseInputSource : public InputSource
 };
 
 } // namespace input
-} // namespace mosaic
+} // namespace saturn
