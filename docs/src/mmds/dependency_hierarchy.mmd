@@ -1,0 +1,20 @@
+graph TD
+    %% Base Layer
+    PIECES[pieces/] --> CODEX[codex/]
+    PIECES --> MOSAIC[mosaic/]
+    PIECES --> TESTBED[testbed/]
+
+    %% Codex Branch
+    CODEX --> DOCSGEN[docsgen/]
+    CODEX --> METAGEN[metagen/]
+
+    %% Mosaic Branch
+    EXT_LIBS([External Libs]) -.-> MOSAIC
+    MOSAIC --> TESTBED
+
+    %% Independent/Special Relationship
+    EDITOR[editor/] -- "Native FFI" --> MOSAIC
+    DOCS[docs/]
+
+    %% Styling
+    style DOCS stroke-dasharray: 5 5

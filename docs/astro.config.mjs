@@ -90,6 +90,14 @@ export default defineConfig({
               slug: "collaborator/build_instructions",
             },
             {
+              label: "Project Scaffolding",
+              translations: {
+                en: "Project Scaffolding",
+                it: "Struttura del progetto",
+              },
+              slug: "collaborator/project_scaffolding",
+            },
+            {
               label: "C++ conventions",
               translations: { en: "C++ conventions", it: "Convenzioni C++" },
               slug: "collaborator/cpp_conventions",
