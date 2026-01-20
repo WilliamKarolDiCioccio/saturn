@@ -49,7 +49,7 @@
     },
     {
       "name": "utfcpp",
-      "version>=": "4.0.6"
+      "version>=": "4.0.9"
     },
     {
       "name": "volk",
