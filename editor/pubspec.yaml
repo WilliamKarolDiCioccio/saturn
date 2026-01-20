@@ -1,0 +1,37 @@
+name: mosaic_workspace
+description: "Monorepo workspace for the Mosaic game engine editor and its tooling and supporting packages."
+publish_to: none
+
+environment:
+  sdk: ">=3.9.0 <4.0.0"
+
+dev_dependencies:
+  melos: ^7.3.0
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
+
+workspace:
+  - app/
+
+melos:
+  publish:
+    git:
+      enabled: true
+
+  command:
+    bootstrap:
+      runPubGetInParallel: true
+      usePubspecOverrides: true
+    version:
+      linkToVersion: true
+      updateDependents: true
+      updateGitTagRefs: true
+
+  scripts:
+    mosaic_editor: cd app && fvm flutter run
+    mosaic_editor:profile: cd app && fvm flutter run --profile
+    mosaic_editor:release: cd app && fvm flutter run --release
+
+flutter:
+  uses-material-design: true
