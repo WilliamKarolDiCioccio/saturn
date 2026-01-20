@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout your repository using git
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install Puppeteer browser
         run: npx puppeteer browsers install chrome-headless-shell
