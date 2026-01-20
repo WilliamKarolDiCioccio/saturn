@@ -23,7 +23,7 @@ WebGPURenderContext::WebGPURenderContext(const window::Window* _window,
       m_adapter(nullptr),
       m_device(nullptr),
       m_presentQueue(nullptr),
-      RenderContext(_window, _settings){};
+      RenderContext(_window, _settings) {};
 
 pieces::RefResult<RenderContext, std::string> WebGPURenderContext::initialize(
     RenderSystem* _renderSystem)
@@ -57,11 +57,7 @@ pieces::RefResult<RenderContext, std::string> WebGPURenderContext::initialize(
             case WGPUQueueWorkDoneStatus_Error:
                 MOSAIC_ERROR("WebGPU queue work done with error!");
                 break;
-#if defined(WEBGPU_BACKEND_DAWN) && !defined(MOSAIC_PLATFORM_LINUX)
-            case WGPUQueueWorkDoneStatus_InstanceDropped:
-                MOSAIC_ERROR("WebGPU queue work done with unknown status!");
-                break;
-#elif defined(WEBGPU_BACKEND_WGPU)
+#if defined(WEBGPU_BACKEND_WGPU)
             case WGPUQueueWorkDoneStatus_Unknown:
                 MOSAIC_ERROR("WebGPU queue work done with unknown status!");
                 break;
