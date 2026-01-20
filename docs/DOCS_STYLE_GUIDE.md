@@ -1,4 +1,4 @@
-# Mosaic Documentation Style Guide
+# Saturn Documentation Style Guide
 
 ## 1. Purpose & Authority
 
@@ -8,9 +8,9 @@
 
 **Contribution:** Anyone may contribute via PR, pending review by team members (future: dedicated documentation team/individual).
 
-**Scope:** All Mosaic project knowledge and conventions: Engine Core, Editor, Tooling, Tutorials, Conventions, Engineering Docs, API References.
+**Scope:** All Saturn project knowledge and conventions: Engine Core, Editor, Tooling, Tutorials, Conventions, Engineering Docs, API References.
 
-**Authority:** Single source of truth for Mosaic documentation style.
+**Authority:** Single source of truth for Saturn documentation style.
 
 **Core Principles:**
 
@@ -26,7 +26,7 @@
 
 **User-Facing Docs:** Readable by anyone.
 
-**Contributor-Facing Docs:** Assume intermediate to expert knowledge of CS and Mosaic tech stack (C++, Dart). Do not assume engine internals knowledge—docs must build it.
+**Contributor-Facing Docs:** Assume intermediate to expert knowledge of CS and Saturn tech stack (C++, Dart). Do not assume engine internals knowledge—docs must build it.
 
 **Math-Heavy Content:** Allowed in dedicated sections; minimize elsewhere and focus on CS concepts.
 
@@ -157,7 +157,7 @@
 ### General Rules
 
 - Examples must compile or be explicitly labeled as pseudocode
-- Follow Mosaic coding conventions
+- Follow Saturn coding conventions
 - Avoid placeholders unless purpose clearly explained
 - Favor clarity and correctness over brevity
 
@@ -234,7 +234,7 @@
 ### External Resources
 
 - Use sparingly, only for authoritative context
-- Must not be required to understand Mosaic-specific behavior
+- Must not be required to understand Saturn-specific behavior
 
 ### Link Maintenance
 

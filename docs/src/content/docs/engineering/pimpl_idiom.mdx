@@ -1,9 +1,9 @@
 ---
 title: PIMPL Idiom
-description: How Mosaic uses the PIMPL (Pointer to Implementation) idiom for interface stability and dependency isolation.
+description: How Saturn uses the PIMPL (Pointer to Implementation) idiom for interface stability and dependency isolation.
 ---
 
-The **PIMPL idiom** (Pointer to IMPLementation) is used in Mosaic to enforce a strict separation between **public interfaces** and **private implementation details**.
+The **PIMPL idiom** (Pointer to IMPLementation) is used in Saturn to enforce a strict separation between **public interfaces** and **private implementation details**.
 
 This pattern reduces header dependencies, stabilizes ABI boundaries, and allows internal changes without forcing recompilation of dependent code. It is a foundational tool for maintaining large-scale C++ systems with clear ownership and long-term evolution in mind.
 
@@ -14,11 +14,13 @@ This pattern reduces header dependencies, stabilizes ABI boundaries, and allows 
 PIMPL is a design pattern in which a class stores a single pointer to an **opaque implementation structure**, typically named `Impl` or `Implementation`.
 
 The public class:
+
 - Declares the interface
 - Owns a pointer to the implementation
 - Exposes no private data members
 
 The implementation structure:
+
 - Contains private state
 - Optionally contains private logic
 - Is defined in the source file, not the header
@@ -43,15 +45,15 @@ class Renderer
 
 In this layout:
 
-* `Renderer` defines the **contract**
-* `Renderer::Impl` defines the **details**
-* Consumers of `Renderer` cannot depend on its internal state
+- `Renderer` defines the **contract**
+- `Renderer::Impl` defines the **details**
+- Consumers of `Renderer` cannot depend on its internal state
 
 ---
 
 ## Structural vs. Behavioral PIMPL
 
-Mosaic distinguishes between two forms of the PIMPL idiom, based on where behavior is implemented.
+Saturn distinguishes between two forms of the PIMPL idiom, based on where behavior is implemented.
 
 ### Structural PIMPL
 
@@ -59,13 +61,13 @@ With **structural PIMPL**, only the **data members** are moved into the `Impl`. 
 
 Characteristics:
 
-* `Impl` stores private data only
-* Methods are implemented in the public class
-* Minimal forwarding overhead
-* Clear control flow
-* Well-suited for inheritance hierarchies
+- `Impl` stores private data only
+- Methods are implemented in the public class
+- Minimal forwarding overhead
+- Clear control flow
+- Well-suited for inheritance hierarchies
 
-This is the **default and preferred approach** in Mosaic.
+This is the **default and preferred approach** in Saturn.
 
 ---
 
@@ -75,45 +77,45 @@ With **behavioral PIMPL**, both **state and logic** live inside the `Impl`. Publ
 
 Characteristics:
 
-* `Impl` owns both data and behavior
-* Public methods delegate almost entirely
-* Increased indirection and boilerplate
-* Greater flexibility at the cost of clarity
+- `Impl` owns both data and behavior
+- Public methods delegate almost entirely
+- Increased indirection and boilerplate
+- Greater flexibility at the cost of clarity
 
 Behavioral PIMPL is used sparingly and only when implementation swapping or strict ABI isolation justifies the added complexity.
 
 ---
 
-## Why Mosaic Uses PIMPL
+## Why Saturn Uses PIMPL
 
 The PIMPL idiom is primarily used to address the following concerns:
 
-* **Header dependency reduction**
+- **Header dependency reduction**
   Private headers and heavy includes remain in source files.
 
-* **Rebuild time control**
+- **Rebuild time control**
   Changes to implementation details do not force downstream recompilation.
 
-* **Interface stability**
+- **Interface stability**
   Public APIs remain stable as internal layouts evolve.
 
-* **Encapsulation enforcement**
+- **Encapsulation enforcement**
   Internal state cannot leak through headers or inline accessors.
 
-* **Scalability**
+- **Scalability**
   Large subsystems remain manageable as complexity increases.
 
-In Mosaic, PIMPL is not used for abstraction alone. It is a tool for enforcing architectural boundaries and preserving long-term maintainability.
+In Saturn, PIMPL is not used for abstraction alone. It is a tool for enforcing architectural boundaries and preserving long-term maintainability.
 
 ---
 
 ## Design Guidance
 
-When using PIMPL in Mosaic:
+When using PIMPL in Saturn:
 
-* Prefer **structural PIMPL** unless behavioral indirection is explicitly required
-* Keep public headers minimal and dependency-free
-* Avoid leaking implementation types through inline methods
-* Treat the public class as a contract, not a convenience wrapper
+- Prefer **structural PIMPL** unless behavioral indirection is explicitly required
+- Keep public headers minimal and dependency-free
+- Avoid leaking implementation types through inline methods
+- Treat the public class as a contract, not a convenience wrapper
 
 PIMPL introduces a small amount of indirection. That cost is intentional and accepted in exchange for clearer boundaries and more robust system evolution.

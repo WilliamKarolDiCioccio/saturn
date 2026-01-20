@@ -9,7 +9,8 @@
 ## Purpose & Responsibility
 
 ### Owns
-- Mosaic engine documentation website (deployed to GitHub Pages)
+
+- Saturn engine documentation website (deployed to GitHub Pages)
 - Content authoring in MDX (Markdown + JSX for React components)
 - Multi-language support (English, Italian via Starlight i18n)
 - Mermaid diagram pre-rendering workflow (dual-theme SVG generation)
@@ -19,16 +20,18 @@
 - SEO metadata (sitemap, robots.txt, Open Graph tags)
 
 ### Does NOT Own
+
 - C++ code documentation generation (docsgen/ package)
 - API reference extraction (codex/ package)
-- Engine architecture or implementation (mosaic/, pieces/, codex/)
-- Version control of generated assets (src/assets/mmds/*.svg excluded from git)
+- Engine architecture or implementation (saturn/, pieces/, codex/)
+- Version control of generated assets (src/assets/mmds/\*.svg excluded from git)
 
 ---
 
 ## Key Abstractions & Invariants
 
 ### Core Technologies
+
 - **Astro 5** (`astro.config.mjs:21`) — Static site framework with island architecture
 - **Starlight** (`@astrojs/starlight`) — Documentation theme with built-in i18n, sidebar, search
 - **React 19** — Component framework for interactive elements (MermaidDiagram)
@@ -37,6 +40,7 @@
 - **Mermaid CLI** (`@mermaid-js/mermaid-cli`) — Pre-rendering diagrams to SVG
 
 ### Directory Structure
+
 ```
 docs/
 ├── src/
@@ -64,11 +68,12 @@ docs/
 ```
 
 ### Invariants (NEVER violate)
+
 1. **Mermaid pre-rendering**: ALL Mermaid diagrams MUST be pre-rendered to SVG (dual-theme) before build
 2. **Theme synchronization**: MermaidDiagram component MUST watch `data-theme` attribute on `<html>` element
 3. **i18n structure**: Translated pages MUST match English slug structure (`en: intro/overview` → `it: intro/overview`)
 4. **Sidebar autogeneration**: `engineering/` and `reference/` directories use autogenerate, manual changes forbidden
-5. **Base URL**: Site MUST use `/mosaic/` base (GitHub Pages subdirectory deployment)
+5. **Base URL**: Site MUST use `/saturn/` base (GitHub Pages subdirectory deployment)
 6. **Content collections**: MDX files MUST be in `src/content/docs/` (Starlight requirement)
 7. **Asset paths**: Component imports from `src/assets/` MUST use `/src/assets/` absolute path (Astro resolution)
 8. **SVG cleanup**: Orphaned SVGs (no matching .mmd) MUST be deleted by sync_mermaid.mjs
@@ -76,6 +81,7 @@ docs/
 10. **Frontmatter required**: ALL MDX files MUST have `title` and `description` in frontmatter
 
 ### Architectural Patterns
+
 - **Island Architecture**: Astro ships zero JS by default, React components hydrate on client only when needed
 - **Content Collections**: Type-safe content via Astro's `defineCollection` + Starlight schemas
 - **Pre-rendering workflow**: Mermaid → mmdc → dual-theme SVG → React component → theme-aware display
@@ -87,7 +93,9 @@ docs/
 ## Architectural Constraints
 
 ### Dependency Rules
+
 **Allowed:**
+
 - Astro official integrations (`@astrojs/react`, `@astrojs/sitemap`, `@astrojs/starlight`)
 - Starlight plugins (`starlight-theme-black`, `starlight-kbd`, `starlight-scroll-to-top`)
 - React 19 (components only, no routing/state management libraries)
@@ -96,6 +104,7 @@ docs/
 - Type utilities (`@types/node`, `@types/react`, `@types/react-dom`)
 
 **Forbidden:**
+
 - ❌ Client-side Mermaid rendering (use pre-rendered SVGs only)
 - ❌ Vue, Svelte, Solid (Astro supports them, but this project uses React exclusively)
 - ❌ CSS-in-JS libraries (use Tailwind utility classes)
@@ -103,33 +112,40 @@ docs/
 - ❌ Runtime diagram generation (PlantUML abandoned for Mermaid pre-rendering)
 
 ### Build Workflow
+
 **Development:**
+
 ```bash
-pnpm run dev  # sync:mermaid → astro dev (HMR on http://localhost:4321/mosaic/)
+pnpm run dev  # sync:mermaid → astro dev (HMR on http://localhost:4321/saturn/)
 ```
 
 **Production:**
+
 ```bash
 pnpm run build  # sync:mermaid → astro build → dist/
 ```
 
 **Preview:**
+
 ```bash
 pnpm run preview  # Serve dist/ locally before deployment
 ```
 
 ### Threading Model
+
 - **Build-time**: Node.js single-threaded (Astro bundler, Mermaid CLI via execSync)
 - **Runtime**: Static HTML (zero JS by default, React islands hydrate independently)
 
 ### Lifetime & Ownership
+
 - **Build artifacts**: `dist/` and `src/assets/mmds/` are ephemeral (gitignored, regenerated on build)
 - **Source diagrams**: `src/mmds/*.mmd` are versioned (source of truth for diagrams)
 - **Content**: `src/content/docs/**/*.mdx` are versioned (source of truth for documentation)
 - **Translations**: `src/content/i18n/*.json` are versioned (i18n overrides)
 
 ### Platform Constraints
-- **Deployment**: GitHub Pages (static hosting, `/mosaic/` base path)
+
+- **Deployment**: GitHub Pages (static hosting, `/saturn/` base path)
 - **Node.js**: Requires Node.js 18+ (Astro 5 requirement)
 - **pnpm**: Workspace-aware package manager (faster than npm, stricter than yarn)
 - **Puppeteer**: Headless Chrome required for `mmdc` (Mermaid CLI dependency)
@@ -139,6 +155,7 @@ pnpm run preview  # Serve dist/ locally before deployment
 ## Modification Rules
 
 ### Safe to Change
+
 - Add new MDX files in `src/content/docs/` (follows Starlight conventions)
 - Add new Mermaid diagrams in `src/mmds/` (auto-generated to SVG on next build)
 - Extend `astro.config.mjs` sidebar (manual sections only, not autogenerate)
@@ -148,7 +165,8 @@ pnpm run preview  # Serve dist/ locally before deployment
 - Improve `sync_mermaid.mjs` (incremental build logic, error handling)
 
 ### Requires Coordination
-- Changing base URL (`/mosaic/` → something else) breaks GitHub Pages deployment
+
+- Changing base URL (`/saturn/` → something else) breaks GitHub Pages deployment
 - Modifying MermaidDiagram component affects all diagrams across site
 - Altering content collection schema impacts all MDX files
 - Switching Starlight theme plugin requires CSS/Tailwind adjustments
@@ -156,6 +174,7 @@ pnpm run preview  # Serve dist/ locally before deployment
 - Modifying sidebar autogenerate directories breaks navigation
 
 ### Almost Never Change
+
 - **Astro major version**: Upgrade with caution (breaking changes in SSR/SSG)
 - **React JSX config**: `tsconfig.json` JSX settings are load-bearing for components
 - **Content collections schema**: Breaks type-safety for all MDX files
@@ -167,6 +186,7 @@ pnpm run preview  # Serve dist/ locally before deployment
 ## Common Pitfalls
 
 ### Footguns
+
 - ⚠️ **Forgetting sync:mermaid**: Running `astro dev` directly skips diagram generation (use `pnpm run dev`)
 - ⚠️ **Client-side Mermaid**: Importing `mermaid` library bloats bundle (pre-render to SVG instead)
 - ⚠️ **Hardcoded theme in SVG**: Using `<MermaidDiagram>` without dual-theme SVGs breaks dark mode
@@ -177,12 +197,14 @@ pnpm run preview  # Serve dist/ locally before deployment
 - ⚠️ **npm instead of pnpm**: Lockfile mismatch causes dependency resolution issues
 
 ### Performance Traps
+
 - 🐌 **Large SVGs**: Mermaid diagrams with 100+ nodes bloat page size (split into multiple diagrams)
 - 🐌 **Unoptimized images**: Use Astro's `<Image>` component for automatic optimization
 - 🐌 **Too many React islands**: Excessive client-side hydration slows page load (use static HTML when possible)
 - 🐌 **Uncached builds**: `pnpm run build` without cached `node_modules` takes 2-3 minutes (use CI cache)
 
 ### Historical Mistakes (Do NOT repeat)
+
 - **PlantUML dependency**: Abandoned for Mermaid (better syntax, pre-rendering workflow)
 - **Client-side Mermaid rendering**: Removed (100KB+ bundle size, layout shifts)
 - **Manual SVG commits**: Removed (src/assets/mmds/ now gitignored, auto-generated)
@@ -192,6 +214,7 @@ pnpm run preview  # Serve dist/ locally before deployment
 ## How Claude Should Help
 
 ### Expected Tasks
+
 - Add new documentation pages in `src/content/docs/` (follow existing frontmatter pattern)
 - Create Mermaid diagrams in `src/mmds/` (architecture diagrams, flowcharts)
 - Update sidebar configuration in `astro.config.mjs` (manual sections only)
@@ -202,6 +225,7 @@ pnpm run preview  # Serve dist/ locally before deployment
 - Optimize sync_mermaid.mjs (parallel processing, better error messages)
 
 ### Conservative Approach Required
+
 - **Changing Astro/Starlight versions**: Test thoroughly (breaking changes common)
 - **Modifying content collections schema**: Affects ALL MDX files (validate first)
 - **Altering MermaidDiagram component**: Breaks ALL diagrams if not backward-compatible
@@ -209,6 +233,7 @@ pnpm run preview  # Serve dist/ locally before deployment
 - **Changing i18n structure**: Breaks language switcher (coordinate with translators)
 
 ### Before Making Changes
+
 - [ ] Verify `pnpm run dev` works after modifications (catches config errors)
 - [ ] Test both light/dark themes (MermaidDiagram component, theme-black plugin)
 - [ ] Check i18n pages render correctly (language switcher, translated slugs)
@@ -222,39 +247,48 @@ pnpm run preview  # Serve dist/ locally before deployment
 ## Quick Reference
 
 ### Files
+
 **Configuration:**
+
 - `astro.config.mjs` — Astro + Starlight config (sidebar, plugins, i18n)
 - `package.json` — pnpm scripts (dev, build, preview, sync:mermaid)
 - `tsconfig.json` — TypeScript config (React JSX)
 - `puppeteer-config.json` — Headless Chrome config for mmdc
 
 **Content:**
+
 - `src/content/docs/**/*.mdx` — Documentation pages (MDX = Markdown + JSX)
 - `src/content/i18n/it.json` — Italian translations
 - `src/mmds/*.mmd` — Source Mermaid diagrams
 
 **Components:**
+
 - `src/components/mmd_diagram.tsx` — Theme-aware Mermaid diagram renderer
 
 **Scripts:**
+
 - `scripts/sync_mermaid.mjs` — Pre-render .mmd → dual-theme SVG (light/dark)
 
 **Build Artifacts (gitignored):**
+
 - `dist/` — Static site output (HTML, CSS, JS)
-- `src/assets/mmds/` — Pre-rendered SVGs (*_light.svg, *_dark.svg)
+- `src/assets/mmds/` — Pre-rendered SVGs (_\_light.svg, _\_dark.svg)
 
 ### Key Commands
+
 - `pnpm run dev` — Start dev server with HMR (includes Mermaid sync)
 - `pnpm run build` — Build static site for production
 - `pnpm run preview` — Preview production build locally
 - `pnpm run sync:mermaid` — Manually trigger Mermaid pre-rendering
 
 ### Starlight Plugins
+
 - `starlight-theme-black` — Dark theme with custom styling
 - `starlight-kbd` — Keyboard shortcut component (`<kbd>`)
 - `starlight-scroll-to-top` — Scroll-to-top button
 
 ### Content Structure
+
 - `intro/` — Introduction pages (overview)
 - `user/` — User guides (getting started - WIP)
 - `collaborator/` — Contributor guides (C++ conventions, GitHub conventions)
@@ -264,4 +298,5 @@ pnpm run preview  # Serve dist/ locally before deployment
 ---
 
 ## Status Notes
+
 **Active development** — Website deployed to GitHub Pages. Mermaid pre-rendering workflow stable. API reference section pending integration with docsgen/codex output. Italian translations incomplete (only navigation strings, no content pages yet).

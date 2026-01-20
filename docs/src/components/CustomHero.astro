@@ -1,0 +1,306 @@
+---
+import Image from "astro/components/Image.astro";
+import logo from "../assets/svgs/logo.svg";
+import logotype from "../assets/svgs/logotype.svg";
+---
+
+<div class="hero-container">
+  <canvas id="starfield"></canvas>
+  <div class="hero-content">
+    <Image src={logotype} alt="Saturn Game Engine" class="hero-logotype" />
+    <Image src={logo} alt="Saturn Game Engine" class="hero-logo-icon" />
+    <p class="hero-tagline">The gravity center for your ideas.</p>
+    <a href="./intro/overview/" class="hero-cta">Get Started</a>
+  </div>
+</div>
+
+<style>
+  .hero-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100vw;
+    min-height: 100vh;
+    background: #0a0a0f;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Break out of any parent constraints */
+  .hero-container::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+  }
+
+  #starfield {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding: 2rem;
+  }
+
+  .hero-logotype {
+    width: min(80vw, 800px);
+    height: auto;
+    filter: drop-shadow(0 0 40px rgba(255, 200, 150, 0.3));
+    animation: float 6s ease-in-out infinite;
+    display: block;
+    margin: 0 auto;
+  }
+
+  .hero-logo-icon {
+    display: none;
+    width: min(40vw, 200px);
+    height: auto;
+    filter: drop-shadow(0 0 40px rgba(255, 200, 150, 0.3));
+    animation: float 6s ease-in-out infinite;
+    margin: 0 auto;
+  }
+
+  /* Switch to icon on narrow screens */
+  @media (max-width: 620px) {
+    .hero-logotype {
+      display: none;
+    }
+    .hero-logo-icon {
+      display: block;
+    }
+  }
+
+  .hero-tagline {
+    margin-top: 3rem;
+    font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+    font-weight: 300;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(255, 240, 220, 0.8);
+    text-shadow: 0 0 20px rgba(255, 200, 150, 0.4);
+    animation: fadeIn 1s ease-out 0.5s both;
+  }
+
+  .hero-cta {
+    display: inline-block;
+    margin-top: 2.5rem;
+    padding: 1rem 3rem;
+    font-size: 1.125rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #0a0a0f;
+    background: linear-gradient(135deg, #f4c792 0%, #d89b5f 100%);
+    border: none;
+    border-radius: 12px;
+    text-decoration: none;
+    box-shadow:
+      0 0 30px rgba(244, 199, 146, 0.4),
+      0 4px 15px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    animation: fadeIn 1s ease-out 0.8s both;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-cta::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition:
+      width 0.6s,
+      height 0.6s;
+  }
+
+  .hero-cta:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 0 50px rgba(244, 199, 146, 0.6),
+      0 8px 25px rgba(0, 0, 0, 0.4);
+  }
+
+  .hero-cta:hover::before {
+    width: 300px;
+    height: 300px;
+  }
+
+  .hero-cta:active {
+    transform: translateY(0);
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-20px);
+    }
+  }
+</style>
+
+<script>
+  const canvas = document.getElementById("starfield") as HTMLCanvasElement;
+  const ctx = canvas.getContext("2d")!;
+
+  let width = window.innerWidth;
+  let height = window.innerHeight;
+  canvas.width = width;
+  canvas.height = height;
+
+  interface Star {
+    x: number;
+    y: number;
+    opacity: number;
+    fadeSpeed: number;
+    maxOpacity: number;
+    size: number;
+    phase: "fadeIn" | "sustain" | "fadeOut";
+    sustainTimer: number;
+  }
+
+  const stars: Star[] = [];
+  const maxStars = 120;
+
+  function createStar(): Star {
+    return {
+      x: Math.random() * width,
+      y: Math.random() * height,
+      opacity: 0,
+      fadeSpeed: 0.005 + Math.random() * 0.015,
+      maxOpacity: 0.4 + Math.random() * 0.6,
+      size: 1 + Math.random() * 2,
+      phase: "fadeIn",
+      sustainTimer: 0,
+    };
+  }
+
+  function drawStar(star: Star) {
+    const gradient = ctx.createRadialGradient(
+      star.x,
+      star.y,
+      0,
+      star.x,
+      star.y,
+      star.size * 3,
+    );
+
+    gradient.addColorStop(0, `rgba(255, 255, 255, ${star.opacity})`);
+    gradient.addColorStop(0.3, `rgba(255, 240, 220, ${star.opacity * 0.6})`);
+    gradient.addColorStop(1, `rgba(255, 200, 150, 0)`);
+
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+
+    // Four-pointed star shape
+    const points = 4;
+    const outerRadius = star.size * 2;
+    const innerRadius = star.size * 0.5;
+
+    for (let i = 0; i < points * 2; i++) {
+      const radius = i % 2 === 0 ? outerRadius : innerRadius;
+      const angle = (Math.PI * i) / points;
+      const x = star.x + Math.cos(angle) * radius;
+      const y = star.y + Math.sin(angle) * radius;
+
+      if (i === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+    }
+
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function updateStar(star: Star) {
+    switch (star.phase) {
+      case "fadeIn":
+        star.opacity += star.fadeSpeed;
+        if (star.opacity >= star.maxOpacity) {
+          star.opacity = star.maxOpacity;
+          star.phase = "sustain";
+          star.sustainTimer = 30 + Math.random() * 90;
+        }
+        break;
+
+      case "sustain":
+        star.sustainTimer--;
+        if (star.sustainTimer <= 0) {
+          star.phase = "fadeOut";
+        }
+        break;
+
+      case "fadeOut":
+        star.opacity -= star.fadeSpeed;
+        if (star.opacity <= 0) {
+          star.opacity = 0;
+          return false; // Remove star
+        }
+        break;
+    }
+    return true;
+  }
+
+  function animate() {
+    ctx.fillStyle = "#0a0a0f";
+    ctx.fillRect(0, 0, width, height);
+
+    // Update and draw stars
+    for (let i = stars.length - 1; i >= 0; i--) {
+      const keep = updateStar(stars[i]);
+      if (keep) {
+        drawStar(stars[i]);
+      } else {
+        stars.splice(i, 1);
+      }
+    }
+
+    // Add new stars
+    if (stars.length < maxStars && Math.random() < 0.3) {
+      stars.push(createStar());
+    }
+
+    requestAnimationFrame(animate);
+  }
+
+  window.addEventListener("resize", () => {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+  });
+
+  // Start animation
+  animate();
+</script>

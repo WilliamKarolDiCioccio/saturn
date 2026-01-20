@@ -15,20 +15,25 @@ import starlightScrollToTop from "starlight-scroll-to-top";
 
 import sitemap from "@astrojs/sitemap";
 
-const websiteUrl = "https://williamkaroldicioccio.github.io/mosaic/";
+const websiteUrl = "https://williamkaroldicioccio.github.io/saturn/";
 
 // https://astro.build/config
 export default defineConfig({
-  base: "/mosaic/",
+  base: "/saturn/",
   site: websiteUrl,
   integrations: [
     starlight({
-      title: "Mosaic Docs",
+      title: "Saturn Docs",
+      description: "Documentation for the Saturn game engine",
+      components: {
+        Hero: "./src/components/CustomHero.astro",
+      },
+      customCss: ["./src/styles/global.css"],
       social: [
         {
           icon: "github",
           label: "GitHub",
-          href: "https://github.com/WilliamKarolDiCioccio/mosaic",
+          href: "https://github.com/WilliamKarolDiCioccio/saturn",
         },
       ],
       sidebar: [

@@ -1,21 +1,21 @@
 ---
 title: Compilation time optimization
-description: Strategies used in Mosaic to reduce C++ compilation times without sacrificing correctness or maintainability.
+description: Strategies used in Saturn to reduce C++ compilation times without sacrificing correctness or maintainability.
 ---
 
-Compilation time is a first-class engineering concern in Mosaic. Slow builds disrupt iteration, discourage experimentation, and make refactoring costly. As the codebase grows, unmanaged dependencies quickly turn incremental changes into full rebuilds.
+Compilation time is a first-class engineering concern in Saturn. Slow builds disrupt iteration, discourage experimentation, and make refactoring costly. As the codebase grows, unmanaged dependencies quickly turn incremental changes into full rebuilds.
 
-Mosaic addresses this problem by reducing header coupling, limiting transitive includes, and helping the compiler reuse work whenever possible. The strategies described here are mandatory guidelines for engine development and contributor code.
+Saturn addresses this problem by reducing header coupling, limiting transitive includes, and helping the compiler reuse work whenever possible. The strategies described here are mandatory guidelines for engine development and contributor code.
 
 ---
 
 ## Precompiled headers (PCH)
 
-Mosaic uses **CMake precompiled headers** to reduce repeated parsing of large, frequently used headers. CMake injects these headers automatically through compiler options. You must not include them manually in source files.
+Saturn uses **CMake precompiled headers** to reduce repeated parsing of large, frequently used headers. CMake injects these headers automatically through compiler options. You must not include them manually in source files.
 
 ```cmake
 target_precompile_headers(
-  mosaic
+  saturn
   PRIVATE
   <vector>
   <string>
@@ -28,22 +28,22 @@ target_precompile_headers(
   <array>
   <chrono>
 )
-````
+```
 
 Precompiled headers are most effective when they contain headers that are:
 
-* Expensive to parse
-* Widely used across translation units
-* Stable over time
+- Expensive to parse
+- Widely used across translation units
+- Stable over time
 
 ### PCH usage rules
 
 Follow these rules when modifying PCH contents:
 
-* Include only **general-purpose** headers used broadly across the engine
-* Avoid project-specific headers or implementation details
-* Avoid headers that change frequently
-* Prefer STL and platform headers with high parse cost
+- Include only **general-purpose** headers used broadly across the engine
+- Avoid project-specific headers or implementation details
+- Avoid headers that change frequently
+- Prefer STL and platform headers with high parse cost
 
 Poorly chosen PCH contents increase rebuild times instead of reducing them.
 
@@ -51,11 +51,11 @@ Poorly chosen PCH contents increase rebuild times instead of reducing them.
 
 ## Build-time analysis
 
-Mosaic relies on **Visual Studio 2022 build analysis tools** to track compilation performance on Windows. These tools are used to identify:
+Saturn relies on **Visual Studio 2022 build analysis tools** to track compilation performance on Windows. These tools are used to identify:
 
-* Excessive template instantiations
-* Headers included transitively across many files
-* Translation units with disproportionate compile cost
+- Excessive template instantiations
+- Headers included transitively across many files
+- Translation units with disproportionate compile cost
 
 Use this data to guide refactoring. Optimization decisions must be driven by measured impact, not intuition.
 
@@ -65,7 +65,7 @@ When a file or header becomes a compile-time hotspot, address the dependency str
 
 ## Reducing includes with opaque handles
 
-Mosaic selectively uses **opaque handles** to reduce header dependencies in large or widely used APIs. This pattern replaces concrete type exposure with forward-declared, incomplete types.
+Saturn selectively uses **opaque handles** to reduce header dependencies in large or widely used APIs. This pattern replaces concrete type exposure with forward-declared, incomplete types.
 
 This approach is especially useful in systems such as the renderer, where exposing full type definitions would otherwise force large transitive include chains.
 
@@ -75,15 +75,15 @@ Opaque handles are not a free optimization.
 
 **Benefits:**
 
-* Reduced header coupling
-* Faster incremental builds
-* Cleaner public interfaces
+- Reduced header coupling
+- Faster incremental builds
+- Cleaner public interfaces
 
 **Costs:**
 
-* Additional indirection
-* Reduced type visibility
-* Potential **ABI safety implications** if misused
+- Additional indirection
+- Reduced type visibility
+- Potential **ABI safety implications** if misused
 
 Use opaque handles deliberately. Favor clarity and correctness over compile-time savings when the tradeoff is unclear.
 
@@ -93,14 +93,14 @@ Use opaque handles deliberately. Favor clarity and correctness over compile-time
 
 Compilation time optimization is an ongoing effort. Planned improvements include:
 
-* **Splitting the engine into multiple CMake targets**
+- **Splitting the engine into multiple CMake targets**
   This allows subsystem-specific dependency graphs and tailored PCH sets.
 
-* **Subsystem-scoped PCH usage**
+- **Subsystem-scoped PCH usage**
   Each major subsystem will eventually define its own precompiled headers.
 
-* **Evaluation of C++20 modules**
-  Modules are not yet production-ready across all supported toolchains. Mosaic will adopt them only when support is stable and measurable benefits outweigh migration costs.
+- **Evaluation of C++20 modules**
+  Modules are not yet production-ready across all supported toolchains. Saturn will adopt them only when support is stable and measurable benefits outweigh migration costs.
 
 ---
 
