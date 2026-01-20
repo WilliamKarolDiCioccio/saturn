@@ -123,7 +123,7 @@ BENCHMARK_DEFINE_F(ECSBenchmark, BatchEntityCreation)(benchmark::State& state)
         benchmark::DoNotOptimize(entities);
 
         // Clean up for next iteration
-        g_entityRegistry->destroyEntities(entities);
+        g_entityRegistry->destroyEntityBulk(entities);
     }
 
     state.SetItemsProcessed(state.iterations() * batch_size);
