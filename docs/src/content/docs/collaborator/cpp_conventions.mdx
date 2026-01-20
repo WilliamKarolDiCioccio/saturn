@@ -1,11 +1,11 @@
 ---
 title: C++ Conventions
-description: Standards and good practices for writing C++ code in Mosaic.
+description: Standards and good practices for writing C++ code in Saturn.
 ---
 
-This document defines the standards and conventions you must follow when writing C++ code in Mosaic. These conventions exist to ensure long-term maintainability, readability, and predictable behavior across the entire engine. You should follow these rules for all engine code, tooling, and internal libraries.
+This document defines the standards and conventions you must follow when writing C++ code in Saturn. These conventions exist to ensure long-term maintainability, readability, and predictable behavior across the entire engine. You should follow these rules for all engine code, tooling, and internal libraries.
 
-These conventions are derived from real development constraints encountered while building a game engine. The rules are inspired by the Google C++ Style Guide but adapted to Mosaic’s architecture, performance requirements, and contributor workflow. Every guideline addresses either a known failure mode or a scalability concern.
+These conventions are derived from real development constraints encountered while building a game engine. The rules are inspired by the Google C++ Style Guide but adapted to Saturn’s architecture, performance requirements, and contributor workflow. Every guideline addresses either a known failure mode or a scalability concern.
 
 ---
 
@@ -13,9 +13,9 @@ These conventions are derived from real development constraints encountered whil
 
 Game engines are large, tightly coupled systems operating under strict performance and correctness constraints. You will routinely work across rendering, asset loading, ECS, platform abstraction, and tooling layers. In this environment, inconsistency introduces cognitive overhead and increases the likelihood of subtle bugs.
 
-Mosaic conventions prioritize clarity over expressiveness. You should write code that communicates intent directly and unambiguously. Explicit naming, predictable structure, and visible lifetimes matter more than clever language features. When debugging complex behavior under pressure, readable code reduces error recovery time.
+Saturn conventions prioritize clarity over expressiveness. You should write code that communicates intent directly and unambiguously. Explicit naming, predictable structure, and visible lifetimes matter more than clever language features. When debugging complex behavior under pressure, readable code reduces error recovery time.
 
-Consistency also enables collaboration. Contributors should be able to navigate unfamiliar code without reconstructing personal conventions. These rules establish a shared mental model for how Mosaic code is written and organized.
+Consistency also enables collaboration. Contributors should be able to navigate unfamiliar code without reconstructing personal conventions. These rules establish a shared mental model for how Saturn code is written and organized.
 
 ---
 
@@ -23,7 +23,7 @@ Consistency also enables collaboration. Contributors should be able to navigate 
 
 Use automated tooling to enforce formatting rules. Manual formatting decisions are discouraged.
 
-Mosaic standardizes on **Clang Format** and **Clang Tidy**. Formatting and static analysis rules are defined in the project configuration files and apply uniformly across the codebase. You must not introduce formatting deviations.
+Saturn standardizes on **Clang Format** and **Clang Tidy**. Formatting and static analysis rules are defined in the project configuration files and apply uniformly across the codebase. You must not introduce formatting deviations.
 
 Install a Clang Format integration for your IDE and enable format-on-save. This configuration ensures that all submitted code conforms automatically and avoids formatting-related review noise.
 
@@ -31,9 +31,9 @@ Install a Clang Format integration for your IDE and enable format-on-save. This 
 
 ## Build system and dependencies
 
-Mosaic uses **CMake** as its build system. You should follow existing CMake patterns and avoid introducing custom abstractions unless strictly necessary. Despite its limitations, CMake provides broad platform support and integrates cleanly with Mosaic tooling.
+Saturn uses **CMake** as its build system. You should follow existing CMake patterns and avoid introducing custom abstractions unless strictly necessary. Despite its limitations, CMake provides broad platform support and integrates cleanly with Saturn tooling.
 
-Mosaic uses **VCPKG** as the primary dependency manager. When a dependency is unavailable or unsuitable in VCPKG, you must add it as a Git submodule under the `vendor` directory. This approach balances convenience with explicit version control and reproducibility.
+Saturn uses **VCPKG** as the primary dependency manager. When a dependency is unavailable or unsuitable in VCPKG, you must add it as a Git submodule under the `vendor` directory. This approach balances convenience with explicit version control and reproducibility.
 
 You should not introduce alternative package managers or ad-hoc dependency fetching mechanisms.
 
@@ -41,9 +41,9 @@ You should not introduce alternative package managers or ad-hoc dependency fetch
 
 ## Testing strategy
 
-Testing in Mosaic focuses on correctness where deterministic validation is possible. You should treat tests as a safety net for logic that can fail silently or propagate errors across systems.
+Testing in Saturn focuses on correctness where deterministic validation is possible. You should treat tests as a safety net for logic that can fail silently or propagate errors across systems.
 
-Mosaic uses **Google Test** for both unit and integration tests. You should integrate all tests into the standard build pipeline.
+Saturn uses **Google Test** for both unit and integration tests. You should integrate all tests into the standard build pipeline.
 
 ### Unit testing
 
@@ -59,7 +59,7 @@ Integration tests should verify behavior, not implementation details.
 
 ### Non-goals
 
-Do not test rendering output at the pixel level. Driver variability and hardware differences make such tests unreliable. Do not test third-party library internals. Instead, test Mosaic’s integration points and error handling.
+Do not test rendering output at the pixel level. Driver variability and hardware differences make such tests unreliable. Do not test third-party library internals. Instead, test Saturn’s integration points and error handling.
 
 Avoid tests for non-deterministic systems unless determinism can be enforced through seeding or mocking.
 
@@ -119,9 +119,9 @@ Avoid `using namespace` directives in headers. You may use them in implementatio
 
 Prefix variables to encode ownership and lifetime:
 
-* Instance fields use `m_`
-* Static fields use `s_`
-* Global variables use `g_`
+- Instance fields use `m_`
+- Static fields use `s_`
+- Global variables use `g_`
 
 ```cpp
 class MyClass {
@@ -180,7 +180,7 @@ class _Name {                                          \
 
 Documentation exists to explain intent, constraints, and safe usage. You should write documentation for future contributors who lack your current context.
 
-Mosaic uses **Doxygen** for API documentation generation. You must write Doxygen-style comments for all non-trivial public and internal APIs.
+Saturn uses **Doxygen** for API documentation generation. You must write Doxygen-style comments for all non-trivial public and internal APIs.
 
 ### What to document
 
@@ -188,10 +188,10 @@ Document functions, classes, and systems that have side effects, performance imp
 
 Always document:
 
-* Preconditions and postconditions
-* Ownership and lifetime rules
-* Thread-safety guarantees
-* Units of measurement
+- Preconditions and postconditions
+- Ownership and lifetime rules
+- Thread-safety guarantees
+- Units of measurement
 
 ```cpp
 /**
@@ -225,7 +225,7 @@ Mirror namespace structure in the directory layout. This alignment reduces menta
 
 Reserve `internal` and `detail` namespaces for implementation details that external users must not depend on.
 
-Prefer explicit naming such as `mosaic::platform::win32::Win32Platform`. Verbosity is acceptable when it prevents ambiguity and reduces reliance on `using` directives.
+Prefer explicit naming such as `saturn::platform::win32::Win32Platform`. Verbosity is acceptable when it prevents ambiguity and reduces reliance on `using` directives.
 
 As systems grow, migrate them into dedicated subdirectories rather than flattening namespaces.
 
@@ -235,7 +235,7 @@ As systems grow, migrate them into dedicated subdirectories rather than flatteni
 
 Avoid exceptions for recoverable errors. Exceptions introduce unpredictable control flow and platform-specific behavior that complicates engine code.
 
-Use Mosaic’s `Result` type for recoverable failures that require error propagation.
+Use Saturn’s `Result` type for recoverable failures that require error propagation.
 
 ```cpp
 Result<Texture, std::string> loadTexture(const std::string& path) {

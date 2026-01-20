@@ -1,9 +1,9 @@
 ---
 title: ABI Safety
-description: Rules and constraints for maintaining Application Binary Interface (ABI) safety in Mosaic’s dynamic library.
+description: Rules and constraints for maintaining Application Binary Interface (ABI) safety in Saturn’s dynamic library.
 ---
 
-ABI safety is a **hard requirement** for Mosaic when distributed as a dynamic library. Public engine binaries must remain link-compatible across projects and machines without forcing consumers to rebuild the engine.
+ABI safety is a **hard requirement** for Saturn when distributed as a dynamic library. Public engine binaries must remain link-compatible across projects and machines without forcing consumers to rebuild the engine.
 
 Breaking ABI compatibility leads to undefined behavior that is often silent, difficult to diagnose, and catastrophic at runtime. These rules exist to prevent that class of failure.
 
@@ -26,6 +26,7 @@ The **Application Binary Interface (ABI)** defines how compiled code interacts a
   Binary representation of exceptions and runtime type information.
 
 ABI compatibility depends on:
+
 - Compiler vendor and version
 - Compiler flags and standard library implementation
 - Target architecture
@@ -85,13 +86,14 @@ Use opaque pointers to incomplete types as the primary mechanism for ABI isolati
 - All data members live in the source file
 - Public methods forward to the implementation
 
-This isolates layout changes from consumers and is the **preferred pattern** in Mosaic.
+This isolates layout changes from consumers and is the **preferred pattern** in Saturn.
 
 ---
 
 ### Value Copies
 
 Returning or accepting copied values is ABI-safe **only** when:
+
 - The type is trivially copyable, or
 - Construction and destruction occur on the same side
 
@@ -100,6 +102,7 @@ Returning or accepting copied values is ABI-safe **only** when:
 ### Const Accessors
 
 `const` references or views are generally safe when:
+
 - They do not imply ownership transfer
 - They do not expose internal layout assumptions
 
@@ -123,6 +126,7 @@ When in doubt, return handles or copies—not references.
 Virtual functions form part of the ABI contract.
 
 Rules:
+
 - Never remove or reorder public virtual functions
 - Never change the signature of an existing virtual function
 - New virtual functions must be appended to the end of the vtable
@@ -147,13 +151,14 @@ This prevents cross-runtime lifetime mismatches.
 ABI compatibility is **not portable by default**.
 
 Expect differences across:
+
 - Compiler vendors (MSVC, Clang, GCC)
 - Compiler versions
 - CRT versions
 - Architectures
 - Build modes
 
-Mosaic does not attempt to guarantee ABI compatibility across incompatible toolchains. Consumers are expected to use supported configurations.
+Saturn does not attempt to guarantee ABI compatibility across incompatible toolchains. Consumers are expected to use supported configurations.
 
 ---
 
@@ -162,11 +167,13 @@ Mosaic does not attempt to guarantee ABI compatibility across incompatible toolc
 ABI stability must be verified continuously.
 
 Recommended tools:
+
 - `abi-compliance-checker`
 - `nm`, `readelf`, `objdump`
 - `dumpbin` (Windows)
 
 Any ABI-breaking change must:
+
 - Be detected automatically
 - Be documented
 - Trigger a version bump
@@ -178,6 +185,7 @@ Any ABI-breaking change must:
 Some designs may require controlled ABI violations.
 
 When this occurs:
+
 - Scope must be minimal
 - Exposure must be tightly audited
 - Exceptions must be documented explicitly
@@ -191,4 +199,4 @@ ABI safety is the default. Exceptions are deliberate, rare, and visible.
 
 ABI rules exist to **protect users from undefined behavior**, not to constrain design unnecessarily.
 
-When choosing between convenience and binary safety, Mosaic always favors **explicitness, isolation, and long-term stability**.
+When choosing between convenience and binary safety, Saturn always favors **explicitness, isolation, and long-term stability**.

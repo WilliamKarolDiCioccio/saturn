@@ -1,15 +1,15 @@
 ---
 title: Memory Safety
-description: Guidelines for managing memory safely in Mosaic using RAII, custom allocators, and diagnostic tools.
+description: Guidelines for managing memory safely in Saturn using RAII, custom allocators, and diagnostic tools.
 ---
 
-Memory safety is a core concern in Mosaic. C++ gives us unmatched control and performance, but with power comes responsibility. By following clear principles and using available tooling, we can write **safe, maintainable, and performant** code.
+Memory safety is a core concern in Saturn. C++ gives us unmatched control and performance, but with power comes responsibility. By following clear principles and using available tooling, we can write **safe, maintainable, and performant** code.
 
 ---
 
 ## Principles of Safe Memory Management
 
-Manual memory management is **strongly discouraged** wherever possible. Instead, Mosaic relies on:
+Manual memory management is **strongly discouraged** wherever possible. Instead, Saturn relies on:
 
 - **Custom allocators**: Inspired by Zig-style memory management, these provide deterministic and controlled memory usage while maintaining high performance.
 - **RAII-based wrappers**: All C-style resources are wrapped in RAII classes to ensure proper acquisition and release. This prevents leaks, double frees, and dangling resources.
@@ -20,7 +20,7 @@ Following these principles ensures that the codebase minimizes undefined behavio
 
 ## Diagnostics and Safety Checks
 
-Mosaic integrates robust memory diagnostic tools. Its **CMakePresets.json** includes profiles for **MSVC and Clang Address Sanitizers**, enabling memory-safe builds with minimal setup.
+Saturn integrates robust memory diagnostic tools. Its **CMakePresets.json** includes profiles for **MSVC and Clang Address Sanitizers**, enabling memory-safe builds with minimal setup.
 
 We recommend running sanitizer-enabled builds **whenever working with manual memory management, complex object hierarchies, or new subsystems**. These checks guarantee that:
 
@@ -43,4 +43,4 @@ Sanitizer coverage is currently **not available for Web targets** via Emscripten
 
 ---
 
-By combining **preventive design** with **diagnostic tooling**, Mosaic achieves a high standard of memory safety without compromising C++’s performance and flexibility.
+By combining **preventive design** with **diagnostic tooling**, Saturn achieves a high standard of memory safety without compromising C++’s performance and flexibility.

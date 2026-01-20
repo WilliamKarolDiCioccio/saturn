@@ -1,19 +1,19 @@
 graph TD
     %% Base Layer
     PIECES[pieces/] --> CODEX[codex/]
-    PIECES --> MOSAIC[mosaic/]
+    PIECES --> SATURN[saturn/]
     PIECES --> TESTBED[testbed/]
 
     %% Codex Branch
     CODEX --> DOCSGEN[docsgen/]
     CODEX --> METAGEN[metagen/]
 
-    %% Mosaic Branch
-    EXT_LIBS([External Libs]) -.-> MOSAIC
-    MOSAIC --> TESTBED
+    %% Saturn Branch
+    EXT_LIBS([External Libs]) -.-> SATURN
+    SATURN --> TESTBED
 
     %% Independent/Special Relationship
-    EDITOR[editor/] -- "Native FFI" --> MOSAIC
+    EDITOR[editor/] -- "Native FFI" --> SATURN
     DOCS[docs/]
 
     %% Styling

@@ -1,9 +1,9 @@
 ---
 title: GitHub repository conventions
-description: Standards and workflows for contributing to Mosaic on GitHub.
+description: Standards and workflows for contributing to Saturn on GitHub.
 ---
 
-This document defines how you collaborate on Mosaic using GitHub. It covers commit and branch conventions, issue and pull request workflows, labeling taxonomy, automation, and pre-commit enforcement.
+This document defines how you collaborate on Saturn using GitHub. It covers commit and branch conventions, issue and pull request workflows, labeling taxonomy, automation, and pre-commit enforcement.
 
 These conventions exist to make collaboration predictable, scalable, and low-friction. They reduce ambiguity in intent, simplify review and triage, and allow automation to operate reliably as the project grows.
 
@@ -13,14 +13,14 @@ You should follow these rules when opening issues, creating branches, committing
 
 ## Conceptual model
 
-GitHub acts as Mosaic’s shared communication layer. Every commit message, branch name, label, and pull request description communicates intent, scope, and impact to other contributors.
+GitHub acts as Saturn’s shared communication layer. Every commit message, branch name, label, and pull request description communicates intent, scope, and impact to other contributors.
 
 The workflow follows four guiding principles:
 
-* Prefer clarity over cleverness
-* Prefer consistency over personal preference
-* Use automation to remove human error
-* Keep the barrier to entry low for new contributors
+- Prefer clarity over cleverness
+- Prefer consistency over personal preference
+- Use automation to remove human error
+- Keep the barrier to entry low for new contributors
 
 If intent can be inferred automatically, the workflow enables tools to infer it. If judgment is required, the workflow makes that judgment explicit and visible.
 
@@ -28,10 +28,10 @@ If intent can be inferred automatically, the workflow enables tools to infer it.
 
 ## Commits and branches
 
-Mosaic uses two complementary standards:
+Saturn uses two complementary standards:
 
-* [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/#summary)
-* [Conventional Branch Names](https://conventional-branch.github.io/)
+- [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/#summary)
+- [Conventional Branch Names](https://conventional-branch.github.io/)
 
 These standards encode intent directly into commit history and branch structure.
 
@@ -39,10 +39,10 @@ These standards encode intent directly into commit history and branch structure.
 
 Structured commits and branches allow you to:
 
-* Understand what changed and why without inspecting diffs
-* Generate changelogs automatically
-* Identify breaking changes reliably
-* Preserve readable history over time
+- Understand what changed and why without inspecting diffs
+- Generate changelogs automatically
+- Identify breaking changes reliably
+- Preserve readable history over time
 
 ### Commit messages
 
@@ -94,21 +94,23 @@ Use labels deliberately. Do not overload a single label with multiple meanings.
 
 ### 📦 Packages
 
-Package labels identify which deliverable or artifact is affected. Mosaic is a multi-package repository, so package labeling is required whenever possible.
+Package labels identify which deliverable or artifact is affected. Saturn is a multi-package repository, so package labeling is required whenever possible.
 
-<div style={{display: "flex", flexWrap: "wrap", gap: "8px"}}>
-  {[
-    "Codex",
-    "docsgen",
-    "metagen",
-    "Editor",
-    "Testbed",
-    "Mosaic Engine",
-  ].map(p => (
-    <span style={{background:"#D8D1FB",color:"black",padding:"4px 8px",borderRadius:"6px"}}>
-      {`Package: ${p}`}
-    </span>
-  ))}
+<div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+  {["Codex", "docsgen", "metagen", "Editor", "Testbed", "Saturn Engine"].map(
+    (p) => (
+      <span
+        style={{
+          background: "#D8D1FB",
+          color: "black",
+          padding: "4px 8px",
+          borderRadius: "6px",
+        }}
+      >
+        {`Package: ${p}`}
+      </span>
+    ),
+  )}
 </div>
 
 Assign **exactly one** package label unless the issue genuinely spans multiple packages. If it does, explain why in the issue description.
@@ -119,7 +121,7 @@ Assign **exactly one** package label unless the issue genuinely spans multiple p
 
 Department labels identify subsystem ownership. They route issues for review, triage, and long-term accountability.
 
-<div style={{display: "flex", flexWrap: "wrap", gap: "8px"}}>
+<div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
   {[
     "CI/CD",
     "Core Systems",
@@ -130,8 +132,15 @@ Department labels identify subsystem ownership. They route issues for review, tr
     "Tooling",
     "Translations",
     "Dependencies",
-  ].map(d => (
-    <span style={{background:"#0075CA",color:"white",padding:"4px 8px",borderRadius:"6px"}}>
+  ].map((d) => (
+    <span
+      style={{
+        background: "#0075CA",
+        color: "white",
+        padding: "4px 8px",
+        borderRadius: "6px",
+      }}
+    >
       {`Department: ${d}`}
     </span>
   ))}
@@ -145,9 +154,16 @@ Department labels answer the question: **Who owns this work?**
 
 Platform labels indicate where an issue manifests or applies.
 
-<div style={{display: "flex", flexWrap: "wrap", gap: "8px"}}>
-  {["Android","Linux","Web","Windows"].map(p => (
-    <span style={{background:"#ddb6e5",color:"black",padding:"4px 8px",borderRadius:"6px"}}>
+<div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+  {["Android", "Linux", "Web", "Windows"].map((p) => (
+    <span
+      style={{
+        background: "#ddb6e5",
+        color: "black",
+        padding: "4px 8px",
+        borderRadius: "6px",
+      }}
+    >
       {`Platform: ${p}`}
     </span>
   ))}
@@ -161,11 +177,47 @@ If an issue is platform-agnostic, omit platform labels.
 
 Priority expresses urgency and impact, not personal preference.
 
-<div style={{display: "flex", flexWrap: "wrap", gap: "8px"}}>
-  <span style={{background:"#FF0000",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Priority: Critical</span>
-  <span style={{background:"#FF6500",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Priority: High</span>
-  <span style={{background:"#FFBF00",color:"black",padding:"4px 8px",borderRadius:"6px"}}>Priority: Medium</span>
-  <span style={{background:"#099A50",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Priority: Low</span>
+<div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+  <span
+    style={{
+      background: "#FF0000",
+      color: "white",
+      padding: "4px 8px",
+      borderRadius: "6px",
+    }}
+  >
+    Priority: Critical
+  </span>
+  <span
+    style={{
+      background: "#FF6500",
+      color: "white",
+      padding: "4px 8px",
+      borderRadius: "6px",
+    }}
+  >
+    Priority: High
+  </span>
+  <span
+    style={{
+      background: "#FFBF00",
+      color: "black",
+      padding: "4px 8px",
+      borderRadius: "6px",
+    }}
+  >
+    Priority: Medium
+  </span>
+  <span
+    style={{
+      background: "#099A50",
+      color: "white",
+      padding: "4px 8px",
+      borderRadius: "6px",
+    }}
+  >
+    Priority: Low
+  </span>
 </div>
 
 Assign priority during triage. Do not guess by default.
@@ -176,19 +228,127 @@ Assign priority during triage. Do not guess by default.
 
 Status labels track lifecycle state. Only one status label should be active at a time.
 
-<div style={{display: "flex", flexWrap: "wrap", gap: "8px"}}>
-  <span style={{background:"#050505",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Status: Abandoned</span>
-  <span style={{background:"#099A50",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Status: Accepted</span>
-  <span style={{background:"#80FFA3",color:"black",padding:"4px 8px",borderRadius:"6px"}}>Status: Available</span>
-  <span style={{background:"#FF0000",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Status: Blocked</span>
-  <span style={{background:"#009B97",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Status: Completed</span>
-  <span style={{background:"#D5D5D5",color:"black",padding:"4px 8px",borderRadius:"6px"}}>Status: In Progress</span>
-  <span style={{background:"#FF0000",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Status: On Hold</span>
-  <span style={{background:"#FFFB80",color:"black",padding:"4px 8px",borderRadius:"6px"}}>Status: Pending</span>
-  <span style={{background:"#000000",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Status: Refused</span>
-  <span style={{background:"#FFBF00",color:"black",padding:"4px 8px",borderRadius:"6px"}}>Status: Review Needed</span>
-  <span style={{background:"#FF0000",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Status: Revision Needed</span>
-  <span style={{background:"#6B1375",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Status: Triaged</span>
+<div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+  <span
+    style={{
+      background: "#050505",
+      color: "white",
+      padding: "4px 8px",
+      borderRadius: "6px",
+    }}
+  >
+    Status: Abandoned
+  </span>
+  <span
+    style={{
+      background: "#099A50",
+      color: "white",
+      padding: "4px 8px",
+      borderRadius: "6px",
+    }}
+  >
+    Status: Accepted
+  </span>
+  <span
+    style={{
+      background: "#80FFA3",
+      color: "black",
+      padding: "4px 8px",
+      borderRadius: "6px",
+    }}
+  >
+    Status: Available
+  </span>
+  <span
+    style={{
+      background: "#FF0000",
+      color: "white",
+      padding: "4px 8px",
+      borderRadius: "6px",
+    }}
+  >
+    Status: Blocked
+  </span>
+  <span
+    style={{
+      background: "#009B97",
+      color: "white",
+      padding: "4px 8px",
+      borderRadius: "6px",
+    }}
+  >
+    Status: Completed
+  </span>
+  <span
+    style={{
+      background: "#D5D5D5",
+      color: "black",
+      padding: "4px 8px",
+      borderRadius: "6px",
+    }}
+  >
+    Status: In Progress
+  </span>
+  <span
+    style={{
+      background: "#FF0000",
+      color: "white",
+      padding: "4px 8px",
+      borderRadius: "6px",
+    }}
+  >
+    Status: On Hold
+  </span>
+  <span
+    style={{
+      background: "#FFFB80",
+      color: "black",
+      padding: "4px 8px",
+      borderRadius: "6px",
+    }}
+  >
+    Status: Pending
+  </span>
+  <span
+    style={{
+      background: "#000000",
+      color: "white",
+      padding: "4px 8px",
+      borderRadius: "6px",
+    }}
+  >
+    Status: Refused
+  </span>
+  <span
+    style={{
+      background: "#FFBF00",
+      color: "black",
+      padding: "4px 8px",
+      borderRadius: "6px",
+    }}
+  >
+    Status: Review Needed
+  </span>
+  <span
+    style={{
+      background: "#FF0000",
+      color: "white",
+      padding: "4px 8px",
+      borderRadius: "6px",
+    }}
+  >
+    Status: Revision Needed
+  </span>
+  <span
+    style={{
+      background: "#6B1375",
+      color: "white",
+      padding: "4px 8px",
+      borderRadius: "6px",
+    }}
+  >
+    Status: Triaged
+  </span>
 </div>
 
 Status labels answer the question: **What is happening right now?**
@@ -199,13 +359,67 @@ Status labels answer the question: **What is happening right now?**
 
 Type labels classify the intent of the work.
 
-<div style={{display: "flex", flexWrap: "wrap", gap: "8px"}}>
-  <span style={{background:"#FF0000",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Type: Bug</span>
-  <span style={{background:"#4B26C9",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Type: Development</span>
-  <span style={{background:"#A2EEEF",color:"black",padding:"4px 8px",borderRadius:"6px"}}>Type: Enhancement</span>
-  <span style={{background:"#33CB51",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Type: Feature</span>
-  <span style={{background:"#FFBF00",color:"black",padding:"4px 8px",borderRadius:"6px"}}>Type: Maintenance</span>
-  <span style={{background:"#D876E3",color:"white",padding:"4px 8px",borderRadius:"6px"}}>Type: Question</span>
+<div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+  <span
+    style={{
+      background: "#FF0000",
+      color: "white",
+      padding: "4px 8px",
+      borderRadius: "6px",
+    }}
+  >
+    Type: Bug
+  </span>
+  <span
+    style={{
+      background: "#4B26C9",
+      color: "white",
+      padding: "4px 8px",
+      borderRadius: "6px",
+    }}
+  >
+    Type: Development
+  </span>
+  <span
+    style={{
+      background: "#A2EEEF",
+      color: "black",
+      padding: "4px 8px",
+      borderRadius: "6px",
+    }}
+  >
+    Type: Enhancement
+  </span>
+  <span
+    style={{
+      background: "#33CB51",
+      color: "white",
+      padding: "4px 8px",
+      borderRadius: "6px",
+    }}
+  >
+    Type: Feature
+  </span>
+  <span
+    style={{
+      background: "#FFBF00",
+      color: "black",
+      padding: "4px 8px",
+      borderRadius: "6px",
+    }}
+  >
+    Type: Maintenance
+  </span>
+  <span
+    style={{
+      background: "#D876E3",
+      color: "white",
+      padding: "4px 8px",
+      borderRadius: "6px",
+    }}
+  >
+    Type: Question
+  </span>
 </div>
 
 Type labels answer the question: **What kind of change is this?**
@@ -216,13 +430,31 @@ Type labels answer the question: **What kind of change is this?**
 
 These labels have special meaning on GitHub and are intentionally preserved.
 
-<div style={{display: "flex", flexWrap: "wrap", gap: "8px"}}>
-  <span style={{background:"#7057ff",color:"white",padding:"4px 8px",borderRadius:"6px"}}>good first issue</span>
-  <span style={{background:"#006B75",color:"white",padding:"4px 8px",borderRadius:"6px"}}>help wanted</span>
+<div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+  <span
+    style={{
+      background: "#7057ff",
+      color: "white",
+      padding: "4px 8px",
+      borderRadius: "6px",
+    }}
+  >
+    good first issue
+  </span>
+  <span
+    style={{
+      background: "#006B75",
+      color: "white",
+      padding: "4px 8px",
+      borderRadius: "6px",
+    }}
+  >
+    help wanted
+  </span>
 </div>
 
-* **good first issue** identifies curated, newcomer-friendly tasks
-* **help wanted** indicates that maintainers actively welcome external contributions
+- **good first issue** identifies curated, newcomer-friendly tasks
+- **help wanted** indicates that maintainers actively welcome external contributions
 
 ---
 
@@ -230,9 +462,27 @@ These labels have special meaning on GitHub and are intentionally preserved.
 
 The following labels are reserved for automation and dependency tooling:
 
-<div style={{display: "flex", flexWrap: "wrap", gap: "8px"}}>
-  <span style={{background:"#000000",color:"white",padding:"4px 8px",borderRadius:"6px"}}>github_actions</span>
-  <span style={{background:"#000000",color:"white",padding:"4px 8px",borderRadius:"6px"}}>dart</span>
+<div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+  <span
+    style={{
+      background: "#000000",
+      color: "white",
+      padding: "4px 8px",
+      borderRadius: "6px",
+    }}
+  >
+    github_actions
+  </span>
+  <span
+    style={{
+      background: "#000000",
+      color: "white",
+      padding: "4px 8px",
+      borderRadius: "6px",
+    }}
+  >
+    dart
+  </span>
 </div>
 
 Do not remove, rename, or repurpose these labels.
@@ -243,10 +493,10 @@ Not every issue requires every label.
 
 **Typical minimum set:**
 
-* One `Type`
-* One `Status`
-* One `Package`
-* Optional: `Department`, `Platform`, `Priority`
+- One `Type`
+- One `Status`
+- One `Package`
+- Optional: `Department`, `Platform`, `Priority`
 
 Labels are not decoration. Used consistently, they enable large-scale maintenance without manual coordination.
 
@@ -258,10 +508,10 @@ Use the provided issue and pull request templates whenever possible.
 
 Templates exist to:
 
-* Capture required context early
-* Reduce clarification cycles
-* Make issues actionable
-* Keep reviews focused on substance
+- Capture required context early
+- Reduce clarification cycles
+- Make issues actionable
+- Keep reviews focused on substance
 
 Templates act as guardrails for new contributors and time-savers for experienced ones.
 
@@ -271,10 +521,10 @@ Templates act as guardrails for new contributors and time-savers for experienced
 
 ### Dependabot
 
-Mosaic uses Dependabot to manage dependency updates for:
+Saturn uses Dependabot to manage dependency updates for:
 
-* **vcpkg** (C++ dependencies)
-* **pub.dev** (Dart and Flutter tooling)
+- **vcpkg** (C++ dependencies)
+- **pub.dev** (Dart and Flutter tooling)
 
 Automated pull requests are labeled accordingly. Review them like any other change. Verify integration and impact before merging.
 
@@ -288,17 +538,17 @@ This tool augments contributor productivity. Treat generated suggestions as untr
 
 ## Pre-commit hooks
 
-Mosaic uses **pre-commit hooks** to enforce code quality before commits are created. Hooks prevent common issues from reaching code review or continuous integration.
+Saturn uses **pre-commit hooks** to enforce code quality before commits are created. Hooks prevent common issues from reaching code review or continuous integration.
 
 ### Purpose
 
 Pre-commit hooks:
 
-* Catch formatting issues early
-* Enforce consistent standards
-* Reduce CI failures
-* Lower review friction
-* Provide automatic guidance for new contributors
+- Catch formatting issues early
+- Enforce consistent standards
+- Reduce CI failures
+- Lower review friction
+- Provide automatic guidance for new contributors
 
 ### Installation
 
@@ -332,10 +582,10 @@ pre-commit run --all-files
 
 The repository defines hooks for:
 
-* General file hygiene
-* Python linting and formatting using Ruff
-* Markdown, Astro and TypeScript linting using ESLint
-* C and C++ formatting using Clang-Format
+- General file hygiene
+- Python linting and formatting using Ruff
+- Markdown, Astro and TypeScript linting using ESLint
+- C and C++ formatting using Clang-Format
 
 Hooks automatically modify files when possible. Re-stage modified files before committing.
 
@@ -357,6 +607,6 @@ Hooks are defined in `.pre-commit-config.yaml`. Do not modify this file without 
 
 ## The long view
 
-A GitHub repository is a living system. As contributor count increases, structure becomes essential. These conventions keep Mosaic approachable, predictable, and scalable.
+A GitHub repository is a living system. As contributor count increases, structure becomes essential. These conventions keep Saturn approachable, predictable, and scalable.
 
 The goal is not bureaucracy. The goal is to reduce friction so effort goes into building the engine rather than managing process.

@@ -1,6 +1,6 @@
 ---
 title: Project Scaffolding
-description: Overview of the file structure and architectural organization of the Mosaic monorepo.
+description: Overview of the file structure and architectural organization of the Saturn monorepo.
 ---
 
 import { Aside, Badge, FileTree } from "@astrojs/starlight/components";
@@ -8,9 +8,9 @@ import MermaidDiagram from "../../../components/mmd_diagram";
 
 ## Monorepo structure
 
-The Mosaic [repository](https://github.com/WilliamKarolDiCioccio/mosaic) is a **monorepo**, not a single project. It contains multiple first-class projects unified by shared philosophy and tooling, each with distinct responsibility boundaries.
+The Saturn [repository](https://github.com/WilliamKarolDiCioccio/saturn) is a **monorepo**, not a single project. It contains multiple first-class projects unified by shared philosophy and tooling, each with distinct responsibility boundaries.
 
-This organization reflects an intentional architecture: a cohesive ecosystem where the engine (`mosaic/`), utilities (`pieces/`), tooling (`codex/`, `docsgen/`), sandbox (`testbed/`), and editor (`editor/`) coordinate around common design patterns while maintaining clear separation of concerns.
+This organization reflects an intentional architecture: a cohesive ecosystem where the engine (`saturn/`), utilities (`pieces/`), tooling (`codex/`, `docsgen/`), sandbox (`testbed/`), and editor (`editor/`) coordinate around common design patterns while maintaining clear separation of concerns.
 
 ### Top-level projects
 
@@ -18,14 +18,14 @@ The repository contains six major top-level projects:
 
 - <Badge text="WIP" variant="note" /> **`pieces/`** — STL-like header-only
   utility library
-- **`mosaic/`** — Game engine core
+- **`saturn/`** — Game engine core
 - <Badge text="WIP" variant="note" /> **`codex/`** — C++ source code parser
 - <Badge text="WIP" variant="note" /> **`docsgen/`** — Documentation generation
   tool
 - <Badge text="Future" variant="success" /> **`metagen/`** — Code generation
   tool
-- <Badge text="Future" variant="success" /> **`editor/`** — Mosaic Editor
-  (Flutter + native Mosaic integration)
+- <Badge text="Future" variant="success" /> **`editor/`** — Saturn Editor
+  (Flutter + native Saturn integration)
 - **`testbed/`** — Sandbox application for engine feature validation
 
 The documentation website:
@@ -147,7 +147,7 @@ While this scales really well it can be a bit verbose for small features. In tho
 
 - **Type:** C++23 header-only library
 - **Dependencies:** utf8cpp (string utilities only)
-- **Responsibility:** Core data structures and patterns shared across all Mosaic projects
+- **Responsibility:** Core data structures and patterns shared across all Saturn projects
 
 `pieces/` provides STL-like utilities with zero runtime coupling to the engine:
 
@@ -169,7 +169,7 @@ While this scales really well it can be a bit verbose for small features. In tho
 
 ---
 
-## `mosaic/` — Game engine core
+## `saturn/` — Game engine core
 
 - **Type:** Shared library (desktop/mobile), static library (web)
 - **Dependencies:** pieces, Vulkan SDK, fmt, glm, glfw, nlohmann-json, etc.
@@ -211,7 +211,7 @@ The engine is organized into subsystems, each with clear ownership and invariant
 - **Dependencies:** pieces, tree-sitter, tree-sitter-cpp, fmt
 - **Responsibility:** Parsing C++ source code and extracting structured documentation data
 
-`codex` uses tree-sitter to build an Abstract Syntax Tree (AST) from C++ source files, then extracts structured information for documentation generation. It is intentionally decoupled from the Mosaic engine and can parse any C++ project.
+`codex` uses tree-sitter to build an Abstract Syntax Tree (AST) from C++ source files, then extracts structured information for documentation generation. It is intentionally decoupled from the Saturn engine and can parse any C++ project.
 
 <Aside type="note">
   Codex performs **syntax-only analysis**. It does not resolve types,
@@ -232,7 +232,7 @@ The engine is organized into subsystems, each with clear ownership and invariant
 **Invocation:**
 
 ```bash
-./build/docsgen/docsgen --input ./mosaic/include --output ./docs/src/content/docs/reference
+./build/docsgen/docsgen --input ./saturn/include --output ./docs/src/content/docs/reference
 ```
 
 This generates API reference pages from the engine headers. The tool guarantees deterministic output (same input = same output) and respects the `--input` and `--output` directories.
@@ -247,20 +247,20 @@ This generates API reference pages from the engine headers. The tool guarantees 
 ## `testbed/` — Sandbox application
 
 - **Type:** Executable application
-- **Dependencies:** mosaic, pieces
+- **Dependencies:** saturn, pieces
 - **Responsibility:** Validating engine features and experimenting with APIs
 
-`testbed` is a lightweight test application that links against `mosaic` and exercises engine functionality. It serves as both a proof-of-concept and a safe sandbox for feature validation without disrupting the main codebase.
+`testbed` is a lightweight test application that links against `saturn` and exercises engine functionality. It serves as both a proof-of-concept and a safe sandbox for feature validation without disrupting the main codebase.
 
-The testbed follows the standard Mosaic application pattern: subclass `Application`, override lifecycle methods, and use `MOSAIC_ENTRY_POINT(MyApp)` for platform-specific entry point generation.
+The testbed follows the standard Saturn application pattern: subclass `Application`, override lifecycle methods, and use `SATURN_ENTRY_POINT(MyApp)` for platform-specific entry point generation.
 
 ---
 
-## `editor/` — Mosaic Editor
+## `editor/` — Saturn Editor
 
 - **Type:** Flutter application + native integration
-- **Dependencies:** mosaic (via FFI), Flutter SDK, Dart packages
-- **Responsibility:** Interactive game development interface with native Mosaic engine integration
+- **Dependencies:** saturn (via FFI), Flutter SDK, Dart packages
+- **Responsibility:** Interactive game development interface with native Saturn engine integration
 
 The editor is deliberately built with a **different technology stack** (Flutter + Dart) to maintain separation from the C++ engine core. This architectural choice allows:
 
@@ -275,7 +275,7 @@ The editor project uses [Melos](https://melos.invertase.dev/) to manage multiple
 
 ### Editor app (`app/`)
 
-The main Mosaic Editor application written in Flutter. It is a standard Flutter project with platform-specific implementations for Windows, Linux, and macOS.
+The main Saturn Editor application written in Flutter. It is a standard Flutter project with platform-specific implementations for Windows, Linux, and macOS.
 
 Each feature owns its data layer, domain logic, and presentation layer. This structure enables independent feature development and testing.
 
@@ -302,7 +302,7 @@ Reserved for CLI tools and small standalone utilities useful for game developmen
 ## `docs/` — Documentation website
 
 - **Type:** Astro 5 + Starlight static site
-- **Deployment:** GitHub Pages at `/mosaic/`
+- **Deployment:** GitHub Pages at `/saturn/`
 - **Responsibility:** Engine and editor documentation for users and contributors
 
 The documentation site is built with Astro (static site generator) and Starlight (documentation theme). It features:
@@ -344,5 +344,5 @@ The monorepo maintains a strict dependency hierarchy to prevent cycles and enfor
 <MermaidDiagram
   name="dependency_hierarchy"
   alt="Dependency Hierarchy Diagram"
-  client:visible
+  client:load
 />
