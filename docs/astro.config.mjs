@@ -27,8 +27,13 @@ export default defineConfig({
       description: "Documentation for the Saturn game engine",
       components: {
         Hero: "./src/components/CustomHero.astro",
+        SocialIcons: "./src/components/CustomSocialIcons.astro",
       },
       customCss: ["./src/styles/global.css"],
+      editLink: {
+        baseUrl: "https://github.com/WilliamKarolDiCioccio/saturn/pulls",
+      },
+      lastUpdated: true,
       social: [
         {
           icon: "github",
