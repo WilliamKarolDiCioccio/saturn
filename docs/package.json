@@ -22,6 +22,7 @@
     "plantuml-encoder": "^1.4.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-modal": "^3.16.3",
     "sharp": "^0.34.2",
     "starlight-kbd": "^0.2.0",
     "starlight-scroll-to-top": "^0.1.1",
@@ -32,6 +33,7 @@
     "@mermaid-js/mermaid-cli": "^11.12.0",
     "@tailwindcss/vite": "^4.1.18",
     "@types/node": "^24.0.15",
+    "@types/react-modal": "^3.16.3",
     "vite": "^7.0.5"
   }
 }
