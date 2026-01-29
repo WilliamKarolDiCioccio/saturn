@@ -269,9 +269,11 @@ The editor is deliberately built with a **different technology stack** (Flutter 
 - Independent release cycles for editor and engine
 - Reusable Flutter packages for common editor widgets
 
-### Using Melos for monorepo management
+### Flutter & Dart scaffolding tools
 
 The editor project uses [Melos](https://melos.invertase.dev/) to manage multiple Flutter/Dart packages within the `editor/` directory. Melos simplifies dependency management, versioning, and script execution across the monorepo.
+
+To ensure the scaffolding is clean and consistent we use [Mason](https://pub.dev/packages/mason), allowing us to define the a reusable structure for the building blocks of our software.
 
 ### Editor app (`app/`)
 
