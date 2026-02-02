@@ -79,3 +79,6 @@ local.properties
 
 # build output
 /dist
+
+# Claude Code local settings
+.claude/settings.local.json
