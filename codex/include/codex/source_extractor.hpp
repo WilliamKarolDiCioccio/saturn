@@ -12,8 +12,12 @@ namespace codex
 
 class SourceExtractor
 {
+   private:
+    std::filesystem::path m_path;
+    std::string m_sourceCode;
+
    public:
-    std::vector<std::shared_ptr<Source>> extract(const std::vector<std::filesystem::path>& _paths);
+    std::shared_ptr<Source> extractSource(const std::filesystem::path& _path);
 };
 
 } // namespace codex

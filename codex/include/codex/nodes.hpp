@@ -91,6 +91,12 @@ inline std::string nodeKindToString(NodeKind kind)
             return "FunctionLikeMacro";
         case NodeKind::ObjectLikeMacro:
             return "ObjectLikeMacro";
+        case NodeKind::CopyConstructor:
+            return "CopyConstructor";
+        case NodeKind::MoveConstructor:
+            return "MoveConstructor";
+        case NodeKind::Friend:
+            return "Friend";
         default:
             return "Unknown";
     }
@@ -139,17 +145,73 @@ struct TypeSignature
     inline std::string toString() const;
 };
 
+enum struct TemplateParameterKind
+{
+    Type,
+    NonType,
+    TemplateTemplate
+};
+
 struct TemplateParameter
 {
-    std::string keyword;
+    TemplateParameterKind paramKind = TemplateParameterKind::Type;
+
+    // Common
     std::string name;
     bool isVariadic = false;
+    std::string defaultValue;
+
+    // Type params (keyword = "typename"/"class")
+    std::string keyword;
+    std::string constraint;
+
+    // NonType params
+    TypeSignature typeSignature;
+
+    // TemplateTemplate params -- recursive
+    std::vector<TemplateParameter> innerParameters;
 
     std::string toString() const
     {
-        std::string result = keyword;
-        if (isVariadic) result += "...";
-        if (!name.empty()) result += " " + name;
+        std::string result;
+
+        switch (paramKind)
+        {
+            case TemplateParameterKind::TemplateTemplate:
+            {
+                result = "template<";
+                for (size_t i = 0; i < innerParameters.size(); ++i)
+                {
+                    if (i > 0) result += ", ";
+                    result += innerParameters[i].toString();
+                }
+                result += "> ";
+                result += keyword.empty() ? "class" : keyword;
+                if (!name.empty()) result += " " + name;
+                break;
+            }
+            case TemplateParameterKind::NonType:
+            {
+                result = typeSignature.toString();
+                if (isVariadic) result += "...";
+                if (!name.empty()) result += " " + name;
+                break;
+            }
+            case TemplateParameterKind::Type:
+            default:
+            {
+                if (!constraint.empty())
+                    result = constraint;
+                else
+                    result = keyword;
+                if (isVariadic) result += "...";
+                if (!name.empty()) result += " " + name;
+                break;
+            }
+        }
+
+        if (!defaultValue.empty()) result += " = " + defaultValue;
+
         return result;
     }
 };
@@ -656,16 +718,13 @@ struct EnumSpecifierNode final : Node
 struct VariableNode final : Node
 {
     bool isStatic = false;
-    bool isConst = false;
     bool isConstexpr = false;
-    bool isMutable = false;
-    bool isVolatile = false;
     bool isThreadLocal = false;
     bool isInline = false;
     bool isExtern = false;
     bool isConstinit = false;
 
-    std::string type;
+    TypeSignature typeSignature;
     std::string name;
     std::string initialValue;
 
@@ -679,10 +738,7 @@ struct VariableNode final : Node
 
         std::vector<std::string> modifiers;
         if (isStatic) modifiers.push_back("static");
-        if (isConst) modifiers.push_back("const");
         if (isConstexpr) modifiers.push_back("constexpr");
-        if (isMutable) modifiers.push_back("mutable");
-        if (isVolatile) modifiers.push_back("volatile");
         if (isThreadLocal) modifiers.push_back("thread_local");
         if (isInline) modifiers.push_back("inline");
         if (isExtern) modifiers.push_back("extern");
@@ -699,7 +755,7 @@ struct VariableNode final : Node
             result += "]";
         }
 
-        result += "\n" + indent + "  Type: " + type;
+        result += "\n" + indent + "  Type: " + typeSignature.toString();
 
         if (!initialValue.empty())
         {
@@ -856,6 +912,8 @@ struct ConstructorNode final : Node
     bool isDeleted = false;
     bool isConstexpr = false;
     bool isInline = false;
+    bool isCopyConstructor = false;
+    bool isMoveConstructor = false;
 
     std::string name;
     std::vector<GenericParameter> parameters;
@@ -877,6 +935,8 @@ struct ConstructorNode final : Node
         if (isDeleted) modifiers.push_back("deleted");
         if (isConstexpr) modifiers.push_back("constexpr");
         if (isInline) modifiers.push_back("inline");
+        if (isCopyConstructor) modifiers.push_back("copy");
+        if (isMoveConstructor) modifiers.push_back("move");
 
         if (!modifiers.empty())
         {
@@ -1201,7 +1261,7 @@ struct StructNode final : Node
     std::string name;
     std::shared_ptr<Node> templateDecl;
     std::vector<TemplateArgument> templateArgs;
-    std::vector<std::string> baseClasses;
+    std::vector<std::pair<AccessSpecifier, std::string>> baseClasses;
     std::vector<std::string> derivedClasses;
     std::vector<std::shared_ptr<Node>> memberVariables;
     std::vector<std::shared_ptr<Node>> memberFunctions;
@@ -1232,7 +1292,8 @@ struct StructNode final : Node
             for (size_t i = 0; i < baseClasses.size(); ++i)
             {
                 if (i > 0) result += ", ";
-                result += baseClasses[i];
+                result +=
+                    accessSpecifierToString(baseClasses[i].first) + " " + baseClasses[i].second;
             }
         }
 
@@ -1349,7 +1410,7 @@ struct ClassNode final : Node
     std::string name;
     std::shared_ptr<Node> templateDecl;
     std::vector<TemplateArgument> templateArgs;
-    std::vector<std::string> baseClasses;
+    std::vector<std::pair<AccessSpecifier, std::string>> baseClasses;
     std::vector<std::string> derivedClasses;
     std::vector<std::pair<AccessSpecifier, std::shared_ptr<Node>>> memberVariables;
     std::vector<std::pair<AccessSpecifier, std::shared_ptr<Node>>> memberFunctions;
@@ -1380,7 +1441,8 @@ struct ClassNode final : Node
             for (size_t i = 0; i < baseClasses.size(); ++i)
             {
                 if (i > 0) result += ", ";
-                result += baseClasses[i];
+                result +=
+                    accessSpecifierToString(baseClasses[i].first) + " " + baseClasses[i].second;
             }
         }
 

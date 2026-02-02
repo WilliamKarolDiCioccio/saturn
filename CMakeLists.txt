@@ -114,6 +114,7 @@ if(NOT ANDROID)
   add_subdirectory("saturn/bench")
   add_subdirectory("pieces/tests")
   add_subdirectory("pieces/bench")
+  add_subdirectory("codex/tests")
   add_subdirectory("tests")
 endif()
 
