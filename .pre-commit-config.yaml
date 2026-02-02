@@ -46,31 +46,57 @@ repos:
     hooks:
       - id: dart-format-app
         name: Dart Format (editor/app)
-        entry: bash -c "cd editor/app && dart format --fix ."
+        entry: dart
+        args: [format, editor/app]
         language: system
-        files: ^editor/app/.*\.(dart|yaml|json)$
+        files: ^editor/app/.*\.dart$
+        pass_filenames: false
+      - id: dart-fix-app
+        name: Dart Fix (editor/app)
+        entry: dart
+        args: [fix, --apply, editor/app]
+        language: system
+        files: ^editor/app/.*\.dart$
         pass_filenames: false
       - id: flutter-analyze-app
         name: Flutter Analyze (editor/app)
-        entry: bash -c "cd editor/app && fvm flutter analyze"
+        entry: fvm flutter
+        args: [analyze, editor/app]
         language: system
-        files: ^editor/app/.*\.(dart|yaml|json)$
+        files: ^editor/app/.*\.dart$
         pass_filenames: false
       - id: dart-format-packages
         name: Dart Format (editor/packages)
-        entry: bash -c "cd editor/packages && dart format --fix ."
+        entry: dart
+        args: [format, editor/packages]
         language: system
-        files: ^editor/packages/.*\.(dart|yaml|json)$
+        files: ^editor/packages/.*\.dart$
+        pass_filenames: false
+      - id: dart-fix-packages
+        name: Dart Fix (editor/packages)
+        entry: dart
+        args: [fix, --apply, editor/packages]
+        language: system
+        files: ^editor/packages/.*\.dart$
         pass_filenames: false
       - id: flutter-analyze-packages
         name: Flutter Analyze (editor/packages)
-        entry: bash -c "cd editor/packages && fvm flutter analyze"
+        entry: fvm flutter
+        args: [analyze, editor/packages]
         language: system
-        files: ^editor/packages/.*\.(dart|yaml|json)$
+        files: ^editor/packages/.*\.dart$
         pass_filenames: false
       - id: dart-format-tools
         name: Dart Format (editor/tools)
-        entry: bash -c "cd editor/tools && dart format --fix ."
+        entry: dart
+        args: [format, editor/tools]
         language: system
-        files: ^editor/tools/.*\.(dart|yaml|json)$
+        files: ^editor/tools/.*\.dart$
+        pass_filenames: false
+      - id: dart-fix-tools
+        name: Dart Fix (editor/tools)
+        entry: dart
+        args: [fix, --apply, editor/tools]
+        language: system
+        files: ^editor/tools/.*\.dart$
         pass_filenames: false
