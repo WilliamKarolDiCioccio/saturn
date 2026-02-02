@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "context7": {
+      "type": "stdio",
+      "command": "cmd /c npx",
+      "args": ["-y", "@upstash/context7-mcp"],
+      "env": {}
+    },
+    "figma": {
+      "type": "stdio",
+      "command": "cmd /c npx",
+      "args": ["-y", "figma-developer-mcp", "--stdio"],
+      "env": {}
+    },
+    "sequential-thinking": {
+      "type": "stdio",
+      "command": "cmd /c npx",
+      "args": ["-y", "@anthropic/mcp-sequential-thinking"],
+      "env": {}
+    }
+  }
+}
