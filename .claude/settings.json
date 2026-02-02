@@ -1,5 +1,8 @@
 {
   "enabledPlugins": {
-    "claude-code-builder@claude-code-builder": true
+    "claude-code-builder@claude-code-builder": true,
+    "safety-net@cc-marketplace": true,
+    "typescript-lsp@claude-plugins-official": true,
+    "clangd-lsp@claude-plugins-official": true
   }
 }
