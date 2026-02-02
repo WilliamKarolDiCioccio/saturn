@@ -21,10 +21,6 @@
 namespace codex
 {
 
-/////////////////////////////////////////////////////////////////////////////////////////////
-// Parser lifecycle
-/////////////////////////////////////////////////////////////////////////////////////////////
-
 Parser::Parser()
 {
     m_parser = ts_parser_new();
@@ -38,6 +34,10 @@ Parser::Parser()
 }
 
 Parser::~Parser() { ts_parser_delete(m_parser); }
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+// Public API, Lifecycle Management
+/////////////////////////////////////////////////////////////////////////////////////////////
 
 std::shared_ptr<SourceNode> Parser::parse(const std::shared_ptr<Source>& _source)
 {
@@ -77,7 +77,94 @@ void Parser::reset()
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////
-// Main dispatch function
+// Custom AST helpers
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+auto toConstructorNode = [](const std::shared_ptr<FunctionNode>& func,
+                            const std::string& parentName) -> std::shared_ptr<ConstructorNode>
+{
+    auto ctor = std::make_shared<ConstructorNode>(func->startLine, func->startColumn, func->endLine,
+                                                  func->endColumn);
+
+    ctor->name = func->name;
+
+    ctor->isExplicit = func->isExplicit;
+    ctor->isNoexcept = func->isNoexcept;
+    ctor->isConstexpr = func->isConstexpr;
+    ctor->isInline = func->isInline;
+
+    ctor->isDefaulted = false;
+    ctor->isDeleted = false;
+
+    ctor->parameters = func->parameters;
+    ctor->templateDecl = func->templateDecl;
+    ctor->templateArgs = func->templateArgs;
+
+    ctor->comment = func->comment;
+
+    // Detect copy/move constructor
+    // Copy: single param of (const ClassName&) or (ClassName const&)
+    // Move: single param of (ClassName&&)
+    if (func->parameters.size() == 1)
+    {
+        const auto& param = func->parameters[0];
+        const auto& sig = param.typeSignature;
+
+        // Check if the base type matches the class name
+        if (sig.baseType == parentName)
+        {
+            if (sig.isLValueRef && sig.isConst && !sig.isRValueRef)
+            {
+                ctor->isCopyConstructor = true;
+            }
+            else if (sig.isRValueRef && !sig.isLValueRef)
+            {
+                ctor->isMoveConstructor = true;
+            }
+        }
+    }
+
+    return ctor;
+};
+
+auto toDestructorNode =
+    [](const std::shared_ptr<FunctionNode>& func) -> std::shared_ptr<DestructorNode>
+{
+    auto dtor = std::make_shared<DestructorNode>(func->startLine, func->startColumn, func->endLine,
+                                                 func->endColumn);
+
+    dtor->name = func->name;
+
+    dtor->isVirtual = func->isVirtual;
+    dtor->isPureVirtual = func->isPureVirtual;
+    dtor->isNoexcept = func->isNoexcept;
+    dtor->isConstexpr = func->isConstexpr;
+    dtor->isInline = func->isInline;
+
+    dtor->isDefaulted = false;
+    dtor->isDeleted = false;
+
+    dtor->comment = func->comment;
+    return dtor;
+};
+
+auto determineKind = [](const TSNode& _node) -> NodeKind
+{
+    uint32_t childCount = ts_node_child_count(_node);
+
+    for (uint32_t j = 0; j < childCount; ++j)
+    {
+        TSNode child = ts_node_child(_node, j);
+        std::string type = ts_node_type(child);
+
+        if (type == "operator_name" || type == "operator_cast") return NodeKind::Operator;
+    }
+
+    return NodeKind::Function;
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+// Core Parsing Logic
 /////////////////////////////////////////////////////////////////////////////////////////////
 
 std::shared_ptr<Node> Parser::dispatch(TSNode _node)
@@ -187,257 +274,96 @@ std::shared_ptr<Node> Parser::dispatch(TSNode _node)
     return nullptr;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////
-// Dependent nodes (requiring to be linked to other nodes and leaving outisde the main tree)
-/////////////////////////////////////////////////////////////////////////////////////////////
-
-std::shared_ptr<CommentNode> Parser::parseComment(const TSNode& _node)
+std::shared_ptr<Node> Parser::parseAmbiguousDeclaration(const TSNode& _node)
 {
-    auto [start, end] = getPositionData(_node);
+    NodeKind kind = NodeKind::Variable;
 
-    auto text = m_source->content.substr(ts_node_start_byte(_node),
-                                         ts_node_end_byte(_node) - ts_node_start_byte(_node));
-
-    return std::make_shared<CommentNode>(text, start.row, start.column, end.row, end.column);
-}
-
-std::vector<TemplateParameter> Parser::parseTemplateParameterList(const TSNode& _node)
-{
-    std::vector<TemplateParameter> parameters;
-
-    const uint32_t paramCount = ts_node_child_count(_node);
-
-    for (uint32_t j = 0; j < paramCount; ++j)
-    {
-        TSNode param = ts_node_child(_node, j);
-        std::string paramType = ts_node_type(param);
-
-        TemplateParameter tp;
-
-        if (paramType == "type_parameter_declaration")
-        {
-            // e.g. "typename T"
-            tp.paramKind = TemplateParameterKind::Type;
-
-            for (uint32_t k = 0; k < ts_node_child_count(param); ++k)
-            {
-                TSNode sub = ts_node_child(param, k);
-                std::string subType = ts_node_type(sub);
-
-                if (subType == "typename" || subType == "class")
-                {
-                    tp.keyword = getNodeText(sub, m_source->content);
-                }
-                else if (subType == "type_identifier")
-                {
-                    tp.name = getNodeText(sub, m_source->content);
-                }
-            }
-        }
-        else if (paramType == "variadic_type_parameter_declaration")
-        {
-            tp.paramKind = TemplateParameterKind::Type;
-            tp.isVariadic = true;
-
-            for (uint32_t k = 0; k < ts_node_child_count(param); ++k)
-            {
-                TSNode sub = ts_node_child(param, k);
-                std::string subType = ts_node_type(sub);
-
-                if (subType == "class" || subType == "typename")
-                {
-                    tp.keyword = getNodeText(sub, m_source->content);
-                }
-                else if (subType == "type_identifier")
-                {
-                    tp.name = getNodeText(sub, m_source->content);
-                }
-            }
-        }
-        else if (paramType == "optional_type_parameter_declaration")
-        {
-            // e.g. "typename T = int"
-            tp.paramKind = TemplateParameterKind::Type;
-
-            for (uint32_t k = 0; k < ts_node_child_count(param); ++k)
-            {
-                TSNode sub = ts_node_child(param, k);
-                std::string subType = ts_node_type(sub);
-
-                if (subType == "typename" || subType == "class")
-                {
-                    tp.keyword = getNodeText(sub, m_source->content);
-                }
-                else if (subType == "type_identifier")
-                {
-                    if (tp.name.empty() && tp.defaultValue.empty())
-                        tp.name = getNodeText(sub, m_source->content);
-                    else
-                        tp.defaultValue = getNodeText(sub, m_source->content);
-                }
-                else if (subType == "type_descriptor" || subType == "template_type" ||
-                         subType == "primitive_type" || subType == "qualified_identifier")
-                {
-                    tp.defaultValue = getNodeText(sub, m_source->content);
-                }
-            }
-        }
-        else if (paramType == "parameter_declaration")
-        {
-            // Non-type param: e.g. "int N" or "auto V"
-            tp.paramKind = TemplateParameterKind::NonType;
-            tp.typeSignature = parseTypeSignature(param);
-
-            for (uint32_t k = 0; k < ts_node_child_count(param); ++k)
-            {
-                TSNode sub = ts_node_child(param, k);
-                std::string subType = ts_node_type(sub);
-
-                if (subType == "identifier")
-                {
-                    tp.name = getNodeText(sub, m_source->content);
-                }
-                else if (subType == "variadic_declarator")
-                {
-                    tp.isVariadic = true;
-                    // The name is inside the variadic_declarator
-                    for (uint32_t m = 0; m < ts_node_child_count(sub); ++m)
-                    {
-                        TSNode vsub = ts_node_child(sub, m);
-                        if (std::string(ts_node_type(vsub)) == "identifier")
-                        {
-                            tp.name = getNodeText(vsub, m_source->content);
-                        }
-                    }
-                }
-            }
-        }
-        else if (paramType == "optional_parameter_declaration")
-        {
-            // Non-type with default: e.g. "int N = 42"
-            tp.paramKind = TemplateParameterKind::NonType;
-            tp.typeSignature = parseTypeSignature(param);
-
-            for (uint32_t k = 0; k < ts_node_child_count(param); ++k)
-            {
-                TSNode sub = ts_node_child(param, k);
-                std::string subType = ts_node_type(sub);
-
-                if (subType == "identifier")
-                {
-                    tp.name = getNodeText(sub, m_source->content);
-                }
-                else if (subType == "number_literal" || subType == "string_literal" ||
-                         subType == "char_literal" || subType == "boolean_literal" ||
-                         subType == "floating_point_literal" || subType == "template_type" ||
-                         subType == "type_descriptor" || subType == "qualified_identifier")
-                {
-                    tp.defaultValue = getNodeText(sub, m_source->content);
-                }
-            }
-        }
-        else if (paramType == "template_template_parameter_declaration")
-        {
-            // e.g. "template<typename> class C"
-            // AST: template_template_parameter_declaration
-            //        template_parameter_list (inner params)
-            //        type_parameter_declaration (keyword + name)
-            tp.paramKind = TemplateParameterKind::TemplateTemplate;
-
-            for (uint32_t k = 0; k < ts_node_child_count(param); ++k)
-            {
-                TSNode sub = ts_node_child(param, k);
-                std::string subType = ts_node_type(sub);
-
-                if (subType == "template_parameter_list")
-                {
-                    tp.innerParameters = parseTemplateParameterList(sub);
-                }
-                else if (subType == "type_parameter_declaration")
-                {
-                    // Contains "class C" or "typename C"
-                    for (uint32_t m = 0; m < ts_node_child_count(sub); ++m)
-                    {
-                        TSNode inner = ts_node_child(sub, m);
-                        std::string innerType = ts_node_type(inner);
-
-                        if (innerType == "typename" || innerType == "class")
-                        {
-                            tp.keyword = getNodeText(inner, m_source->content);
-                        }
-                        else if (innerType == "type_identifier")
-                        {
-                            tp.name = getNodeText(inner, m_source->content);
-                        }
-                    }
-                }
-            }
-        }
-        else
-        {
-            continue;
-        }
-
-        if (!tp.keyword.empty() || !tp.name.empty() || !tp.typeSignature.baseType.empty() ||
-            tp.paramKind == TemplateParameterKind::TemplateTemplate)
-        {
-            parameters.emplace_back(std::move(tp));
-        }
-    }
-
-    return parameters;
-}
-
-std::shared_ptr<TemplateNode> Parser::parseTemplateDeclaration(const TSNode& _node)
-{
-    auto [start, end] = getPositionData(_node);
-    const uint32_t childCount = ts_node_child_count(_node);
-
-    auto templateDeclNode =
-        std::make_shared<TemplateNode>(start.row, start.column, end.row, end.column);
+    uint32_t childCount = ts_node_child_count(_node);
 
     for (uint32_t i = 0; i < childCount; ++i)
     {
         TSNode child = ts_node_child(_node, i);
         std::string childType = ts_node_type(child);
 
-        if (childType == "template_parameter_list")
+        if (childType == "function_declarator")
         {
-            templateDeclNode->parameters = parseTemplateParameterList(child);
+            kind = determineKind(child);
+        }
+        else if (childType == "reference_declarator" || childType == "pointer_declarator" ||
+                 childType == "array_declarator")
+        {
+            uint32_t subChildCount = ts_node_child_count(child);
+
+            for (uint32_t j = 0; j < subChildCount; ++j)
+            {
+                TSNode subChild = ts_node_child(child, j);
+                std::string subChildType = ts_node_type(subChild);
+
+                if (subChildType == "function_declarator")
+                {
+                    kind = determineKind(subChild);
+                    break;
+                }
+            }
         }
     }
 
-    return templateDeclNode;
+    switch (kind)
+    {
+        case NodeKind::Function:
+            return parseFunction(_node);
+        case NodeKind::Operator:
+            return parseOperator(_node);
+        default:
+            return parseVariable(_node);
+    }
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////
-// Dependent nodes consumption helpers
-/////////////////////////////////////////////////////////////////////////////////////////////
-
-std::shared_ptr<CommentNode> Parser::getLeadingComment()
+std::shared_ptr<Node> Parser::parseAmbiguousDefinition(const TSNode& _node)
 {
-    if (!m_leadingComment) return nullptr;
+    NodeKind kind = NodeKind::Function;
 
-    auto copy = m_leadingComment;
+    uint32_t childCount = ts_node_child_count(_node);
 
-    m_leadingComment = nullptr;
+    for (uint32_t i = 0; i < childCount; ++i)
+    {
+        TSNode child = ts_node_child(_node, i);
+        std::string childType = ts_node_type(child);
 
-    return copy;
-}
+        if (childType == "function_declarator")
+        {
+            kind = determineKind(child);
+        }
+        else if (childType == "reference_declarator" || childType == "pointer_declarator" ||
+                 childType == "array_declarator")
+        {
+            uint32_t subChildCount = ts_node_child_count(child);
 
-std::shared_ptr<TemplateNode> Parser::getTemplateDeclaration()
-{
-    if (!m_templateDeclaration) return nullptr;
+            for (uint32_t j = 0; j < subChildCount; ++j)
+            {
+                TSNode subChild = ts_node_child(child, j);
+                std::string subChildType = ts_node_type(subChild);
 
-    auto copy = m_templateDeclaration;
+                if (subChildType == "function_declarator")
+                {
+                    kind = determineKind(subChild);
+                    break;
+                }
+            }
+        }
+    }
 
-    m_templateDeclaration = nullptr;
-
-    return copy;
+    switch (kind)
+    {
+        case NodeKind::Operator:
+            return parseOperator(_node);
+        default:
+            return parseFunction(_node);
+    }
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////
-// Independent nodes
+// Preprocessor & Global Scopes
 /////////////////////////////////////////////////////////////////////////////////////////////
 
 std::shared_ptr<IncludeNode> Parser::parseInclude(const TSNode& _node)
@@ -672,70 +598,78 @@ std::shared_ptr<UsingNamespaceNode> Parser::parseUsingNamespace(const TSNode& _n
     return usingNsNode;
 }
 
-std::shared_ptr<TypedefNode> Parser::parseTypedef(const TSNode& _node)
+/////////////////////////////////////////////////////////////////////////////////////////////
+// Type & Data Structures
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+TypeSignature Parser::parseTypeSignature(const TSNode& _node)
 {
-    auto [start, end] = getPositionData(_node);
-    uint32_t childCount = ts_node_child_count(_node);
+    TypeSignature sig;
 
-    auto typedefNode = std::make_shared<TypedefNode>(start.row, start.column, end.row, end.column);
+    auto fullText = getNodeText(_node, m_source->content);
 
-    clearTemplateDeclaration();
-    typedefNode->comment = getLeadingComment();
-
-    for (uint32_t i = 0; i < childCount; ++i)
-    {
-        TSNode child = ts_node_child(_node, i);
-        std::string type = ts_node_type(child);
-
-        if (type == "primitive_type")
-        {
-            // e.g. "int"
-            typedefNode->targetType = getNodeText(child, m_source->content);
-        }
-        else if (type == "struct_specifier" || type == "class_specifier" ||
-                 type == "union_specifier")
-        {
-            // e.g. "struct MyStruct { ... }"
-            typedefNode->targetType = getNodeText(child, m_source->content);
-        }
-        else if (type == "type_identifier")
-        {
-            // e.g. "MyType"
-            typedefNode->aliasName = getNodeText(child, m_source->content);
-        }
-    }
-
-    return typedefNode;
-}
-
-std::shared_ptr<TypeAliasNode> Parser::parseTypeAlias(const TSNode& _node)
-{
-    auto [start, end] = getPositionData(_node);
     const uint32_t childCount = ts_node_child_count(_node);
-
-    auto typeAliasNode =
-        std::make_shared<TypeAliasNode>(start.row, start.column, end.row, end.column);
-
-    typeAliasNode->templateDecl = getTemplateDeclaration();
-    typeAliasNode->comment = getLeadingComment();
 
     for (uint32_t i = 0; i < childCount; ++i)
     {
         TSNode child = ts_node_child(_node, i);
         std::string childType = ts_node_type(child);
+        std::string childText = getNodeText(child, m_source->content);
 
-        if (childType == "type_identifier")
+        if (childType == "primitive_type" || childType == "type_identifier")
         {
-            typeAliasNode->aliasName = getNodeText(child, m_source->content);
+            sig.baseType += childText;
         }
-        else if (childType == "type_descriptor" || childType == "primitive_type" ||
-                 childType == "identifier")
+        else if (childType == "qualified_identifier")
         {
-            typeAliasNode->targetType = getNodeText(child, m_source->content);
+            const uint32_t subChildCount = ts_node_child_count(child);
+
+            sig.baseType += childText;
+        }
+        else if (childType == "type_qualifier")
+        {
+            std::string txt = childText;
+            if (txt == "const") sig.isConst = true;
+            if (txt == "volatile") sig.isVolatile = true;
+            if (txt == "mutable") sig.isMutable = true;
+        }
+        else if (childType == "pointer_declarator" ||
+                 (childType == "init_declarator" && childText[0] == '*'))
+        {
+            sig.isPointer = true;
+        }
+        else if (childType == "reference_declarator" ||
+                 (childType == "init_declarator" && childText[0] == '&'))
+        {
+            std::string txt = childText;
+
+            if (txt.find("&&") != std::string::npos)
+            {
+                sig.isRValueRef = true;
+            }
+            else
+            {
+                sig.isLValueRef = true;
+            }
+        }
+        else if (childType == "template_type")
+        {
+            sig.baseType =
+                getNodeText(ts_node_child(child, 0), m_source->content); // the identifier
+
+            if (ts_node_child_count(child) > 1)
+            {
+                TSNode argList = ts_node_child(child, 1);
+
+                if (std::string(ts_node_type(argList)) == "template_argument_list")
+                {
+                    sig.templateArgs = parseTemplateArgumentsList(argList);
+                }
+            }
         }
     }
 
-    return typeAliasNode;
+    return sig;
 }
 
 std::shared_ptr<EnumNode> Parser::parseEnum(const TSNode& _node)
@@ -849,368 +783,71 @@ std::shared_ptr<ConceptNode> Parser::parseConcept(const TSNode& _node)
     return conceptNode;
 }
 
-std::shared_ptr<VariableNode> Parser::parseVariable(const TSNode& _node)
+std::shared_ptr<TypedefNode> Parser::parseTypedef(const TSNode& _node)
+{
+    auto [start, end] = getPositionData(_node);
+    uint32_t childCount = ts_node_child_count(_node);
+
+    auto typedefNode = std::make_shared<TypedefNode>(start.row, start.column, end.row, end.column);
+
+    clearTemplateDeclaration();
+    typedefNode->comment = getLeadingComment();
+
+    for (uint32_t i = 0; i < childCount; ++i)
+    {
+        TSNode child = ts_node_child(_node, i);
+        std::string type = ts_node_type(child);
+
+        if (type == "primitive_type")
+        {
+            // e.g. "int"
+            typedefNode->targetType = getNodeText(child, m_source->content);
+        }
+        else if (type == "struct_specifier" || type == "class_specifier" ||
+                 type == "union_specifier")
+        {
+            // e.g. "struct MyStruct { ... }"
+            typedefNode->targetType = getNodeText(child, m_source->content);
+        }
+        else if (type == "type_identifier")
+        {
+            // e.g. "MyType"
+            typedefNode->aliasName = getNodeText(child, m_source->content);
+        }
+    }
+
+    return typedefNode;
+}
+
+std::shared_ptr<TypeAliasNode> Parser::parseTypeAlias(const TSNode& _node)
 {
     auto [start, end] = getPositionData(_node);
     const uint32_t childCount = ts_node_child_count(_node);
 
-    auto varNode = std::make_shared<VariableNode>(start.row, start.column, end.row, end.column);
+    auto typeAliasNode =
+        std::make_shared<TypeAliasNode>(start.row, start.column, end.row, end.column);
 
-    clearTemplateDeclaration();
-    varNode->comment = getLeadingComment();
-    varNode->typeSignature = parseTypeSignature(_node);
+    typeAliasNode->templateDecl = getTemplateDeclaration();
+    typeAliasNode->comment = getLeadingComment();
 
     for (uint32_t i = 0; i < childCount; ++i)
     {
         TSNode child = ts_node_child(_node, i);
         std::string childType = ts_node_type(child);
 
-        if (childType == "identifier" || childType == "field_identifier")
+        if (childType == "type_identifier")
         {
-            varNode->name = getNodeText(child, m_source->content);
+            typeAliasNode->aliasName = getNodeText(child, m_source->content);
         }
-        else if (childType == "type_qualifier")
+        else if (childType == "type_descriptor" || childType == "primitive_type" ||
+                 childType == "identifier")
         {
-            std::string q = getNodeText(child, m_source->content);
-
-            if (q == "constexpr")
-                varNode->isConstexpr = true;
-            else if (q == "constinit")
-                varNode->isConstinit = true;
-        }
-        else if (childType == "storage_class_specifier")
-        {
-            std::string s = getNodeText(child, m_source->content);
-
-            if (s == "static")
-                varNode->isStatic = true;
-            else if (s == "extern")
-                varNode->isExtern = true;
-            else if (s == "thread_local")
-                varNode->isThreadLocal = true;
-            else if (s == "inline")
-                varNode->isInline = true;
-            else if (s == "mutable")
-                varNode->typeSignature.isMutable = true;
-        }
-        else if (childType == "init_declarator")
-        {
-            parseInitDeclarator(child, varNode);
+            typeAliasNode->targetType = getNodeText(child, m_source->content);
         }
     }
 
-    return varNode;
+    return typeAliasNode;
 }
-
-void Parser::parseInitDeclarator(const TSNode& _node, std::shared_ptr<VariableNode>& _varNode)
-{
-    const uint32_t childCount = ts_node_child_count(_node);
-
-    for (uint32_t i = 0; i < childCount; ++i)
-    {
-        TSNode child = ts_node_child(_node, i);
-        std::string type = ts_node_type(child);
-
-        if (type == "identifier" || type == "field_identifier")
-        {
-            _varNode->name = getNodeText(child, m_source->content);
-        }
-        else if (type == "number_literal" || type == "string_literal")
-        {
-            _varNode->initialValue = getNodeText(child, m_source->content);
-        }
-        else if (type == "reference_declarator" || type == "pointer_declarator")
-        {
-            const uint32_t subChildCount = ts_node_child_count(child);
-
-            for (uint32_t j = 0; j < subChildCount; ++j)
-            {
-                TSNode subChild = ts_node_child(child, j);
-                std::string subType = ts_node_type(subChild);
-
-                if (subType == "identifier")
-                {
-                    _varNode->name = getNodeText(subChild, m_source->content);
-                }
-                else if (subType == "number_literal" || subType == "string_literal")
-                {
-                    _varNode->initialValue = getNodeText(subChild, m_source->content);
-                }
-            }
-        }
-    }
-}
-
-std::shared_ptr<FunctionNode> Parser::parseFunction(const TSNode& _node)
-{
-    auto [start, end] = getPositionData(_node);
-    const uint32_t childCount = ts_node_child_count(_node);
-
-    auto fnNode = std::make_shared<FunctionNode>(start.row, start.column, end.row, end.column);
-
-    fnNode->comment = getLeadingComment();
-    fnNode->templateDecl = getTemplateDeclaration();
-    fnNode->returnSignature = parseTypeSignature(_node);
-
-    for (uint32_t i = 0; i < childCount; ++i)
-    {
-        TSNode child = ts_node_child(_node, i);
-        std::string type = ts_node_type(child);
-
-        if (type == "attribute_declaration")
-        {
-            fnNode->attributes.emplace_back(getNodeText(child, m_source->content));
-        }
-        else if (type == "storage_class_specifier")
-        {
-            std::string txt = getNodeText(child, m_source->content);
-            if (txt == "static") fnNode->isStatic = true;
-            if (txt == "inline") fnNode->isInline = true;
-        }
-        else if (type == "type_qualifier")
-        {
-            std::string txt = getNodeText(child, m_source->content);
-            if (txt == "constexpr") fnNode->isConstexpr = true;
-            if (txt == "consteval") fnNode->isConsteval = true;
-            if (txt == "const") fnNode->isConst = true;
-            if (txt == "volatile") fnNode->isVolatile = true;
-        }
-        else if (type == "virtual")
-        {
-            fnNode->isVirtual = true;
-        }
-        else
-        {
-            if (type == "reference_declarator" || type == "pointer_declarator")
-            {
-                const uint32_t subChildCount = ts_node_child_count(child);
-
-                for (uint32_t j = 0; j < subChildCount; ++j)
-                {
-                    TSNode subChild = ts_node_child(child, j);
-                    std::string subType = ts_node_type(subChild);
-
-                    if (subType != "function_declarator") continue;
-
-                    parseFunctionDeclarator(subChild, fnNode);
-                }
-            }
-            else if (type == "function_declarator")
-            {
-                parseFunctionDeclarator(child, fnNode);
-            }
-        }
-    }
-
-    return fnNode;
-}
-
-void Parser::parseFunctionDeclarator(const TSNode& _node, std::shared_ptr<FunctionNode>& _fn)
-{
-    const uint32_t childCount = ts_node_child_count(_node);
-
-    for (uint32_t i = 0; i < childCount; ++i)
-    {
-        TSNode child = ts_node_child(_node, i);
-        std::string type = ts_node_type(child);
-
-        if (type == "identifier" || type == "field_identifier" || type == "destructor_name")
-        {
-            _fn->name = getNodeText(child, m_source->content);
-        }
-        else if (type == "template_function" || type == "template_method")
-        {
-            if (ts_node_child_count(child) > 1)
-            {
-                TSNode argList = ts_node_child(child, 1);
-
-                if (std::string(ts_node_type(argList)) == "template_argument_list")
-                {
-                    _fn->templateArgs = parseTemplateArgumentsList(argList);
-                }
-            }
-        }
-        else if (type == "parameter_list")
-        {
-            _fn->parameters = parseGenericParametersList(child);
-        }
-        else if (type == "noexcept")
-        {
-            _fn->isNoexcept = true;
-        }
-        else if (type == "override")
-        {
-            _fn->isOverride = true;
-        }
-        else if (type == "final")
-        {
-            _fn->isFinal = true;
-        }
-        else if (type == "const")
-        {
-            _fn->isConst = true;
-        }
-    }
-}
-
-std::shared_ptr<OperatorNode> Parser::parseOperator(const TSNode& _node)
-{
-    auto [start, end] = getPositionData(_node);
-    const uint32_t childCount = ts_node_child_count(_node);
-
-    auto opNode = std::make_shared<OperatorNode>(start.row, start.column, end.row, end.column);
-
-    opNode->comment = getLeadingComment();
-    opNode->templateDecl = getTemplateDeclaration();
-    opNode->returnSignature = parseTypeSignature(_node);
-
-    for (uint32_t i = 0; i < childCount; ++i)
-    {
-        TSNode child = ts_node_child(_node, i);
-        std::string type = ts_node_type(child);
-
-        if (type == "function_declarator")
-        {
-            parseOperatorDeclarator(child, opNode);
-        }
-        else if (type == "storage_class_specifier")
-        {
-            std::string txt = getNodeText(child, m_source->content);
-            if (txt == "static") opNode->isStatic = true;
-            if (txt == "inline") opNode->isInline = true;
-        }
-        else if (type == "type_qualifier")
-        {
-            std::string text = getNodeText(child, m_source->content);
-            if (text == "const") opNode->isConst = true;
-            if (text == "constexpr") opNode->isConstexpr = true;
-            if (text == "explicit") opNode->isExplicit = true;
-        }
-    }
-
-    return opNode;
-}
-
-void Parser::parseOperatorDeclarator(const TSNode& _node, std::shared_ptr<OperatorNode>& _op)
-{
-    const uint32_t childCount = ts_node_child_count(_node);
-
-    for (uint32_t i = 0; i < childCount; ++i)
-    {
-        TSNode child = ts_node_child(_node, i);
-        std::string type = ts_node_type(child);
-
-        if (type == "operator_name")
-        {
-            _op->operatorSymbol =
-                getNodeText(child, m_source->content).substr(8); // remove "operator"
-        }
-        else if (type == "parameter_list")
-        {
-            _op->parameters = parseGenericParametersList(child);
-        }
-        else if (type == "template_function" || type == "template_method")
-        {
-            if (ts_node_child_count(child) > 1)
-            {
-                TSNode argList = ts_node_child(child, 1);
-
-                if (std::string(ts_node_type(argList)) == "template_argument_list")
-                {
-                    _op->templateArgs = parseTemplateArgumentsList(argList);
-                }
-            }
-        }
-        else if (type == "virtual")
-        {
-            _op->isVirtual = true;
-        }
-        else if (type == "override")
-        {
-            _op->isOverride = true;
-        }
-        else if (type == "final")
-        {
-            _op->isFinal = true;
-        }
-        else if (type == "pure_virtual_specifier")
-        {
-            _op->isPureVirtual = true;
-        }
-        else if (type == "noexcept")
-        {
-            _op->isNoexcept = true;
-        }
-    }
-}
-
-auto toConstructorNode = [](const std::shared_ptr<FunctionNode>& func,
-                            const std::string& parentName) -> std::shared_ptr<ConstructorNode>
-{
-    auto ctor = std::make_shared<ConstructorNode>(func->startLine, func->startColumn, func->endLine,
-                                                  func->endColumn);
-
-    ctor->name = func->name;
-
-    ctor->isExplicit = func->isExplicit;
-    ctor->isNoexcept = func->isNoexcept;
-    ctor->isConstexpr = func->isConstexpr;
-    ctor->isInline = func->isInline;
-
-    ctor->isDefaulted = false;
-    ctor->isDeleted = false;
-
-    ctor->parameters = func->parameters;
-    ctor->templateDecl = func->templateDecl;
-    ctor->templateArgs = func->templateArgs;
-
-    ctor->comment = func->comment;
-
-    // Detect copy/move constructor
-    // Copy: single param of (const ClassName&) or (ClassName const&)
-    // Move: single param of (ClassName&&)
-    if (func->parameters.size() == 1)
-    {
-        const auto& param = func->parameters[0];
-        const auto& sig = param.typeSignature;
-
-        // Check if the base type matches the class name
-        if (sig.baseType == parentName)
-        {
-            if (sig.isLValueRef && sig.isConst && !sig.isRValueRef)
-            {
-                ctor->isCopyConstructor = true;
-            }
-            else if (sig.isRValueRef && !sig.isLValueRef)
-            {
-                ctor->isMoveConstructor = true;
-            }
-        }
-    }
-
-    return ctor;
-};
-
-auto toDestructorNode =
-    [](const std::shared_ptr<FunctionNode>& func) -> std::shared_ptr<DestructorNode>
-{
-    auto dtor = std::make_shared<DestructorNode>(func->startLine, func->startColumn, func->endLine,
-                                                 func->endColumn);
-
-    dtor->name = func->name;
-
-    dtor->isVirtual = func->isVirtual;
-    dtor->isPureVirtual = func->isPureVirtual;
-    dtor->isNoexcept = func->isNoexcept;
-    dtor->isConstexpr = func->isConstexpr;
-    dtor->isInline = func->isInline;
-
-    dtor->isDefaulted = false;
-    dtor->isDeleted = false;
-
-    dtor->comment = func->comment;
-    return dtor;
-};
 
 std::shared_ptr<UnionNode> Parser::parseUnion(const TSNode& _node)
 {
@@ -1270,34 +907,6 @@ std::shared_ptr<UnionNode> Parser::parseUnion(const TSNode& _node)
     }
 
     return unionNode;
-}
-
-std::shared_ptr<Node> Parser::parseFriend(const TSNode& _node)
-{
-    auto [start, end] = getPositionData(_node);
-    const uint32_t childCount = ts_node_child_count(_node);
-
-    auto friendNode = std::make_shared<FriendNode>(start.row, start.column, end.row, end.column);
-
-    clearTemplateDeclaration();
-    friendNode->comment = getLeadingComment();
-
-    for (uint32_t i = 0; i < childCount; ++i)
-    {
-        TSNode child = ts_node_child(_node, i);
-        std::string childType = ts_node_type(child);
-
-        if (childType == "struct" || childType == "class")
-        {
-            friendNode->kind = getNodeText(child, m_source->content);
-        }
-        else if (childType == "type_identifier" || childType == "qualified_identifier")
-        {
-            friendNode->name = getNodeText(child, m_source->content);
-        }
-    }
-
-    return friendNode;
 }
 
 std::shared_ptr<StructNode> Parser::parseStruct(const TSNode& _node)
@@ -1429,185 +1038,129 @@ std::shared_ptr<ClassNode> Parser::parseClass(const TSNode& _node)
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////
-// Custom AST helpers
+// Executables & Declarations
 /////////////////////////////////////////////////////////////////////////////////////////////
 
-auto determineKind = [](const TSNode& _node) -> NodeKind
+std::shared_ptr<VariableNode> Parser::parseVariable(const TSNode& _node)
 {
-    uint32_t childCount = ts_node_child_count(_node);
-
-    for (uint32_t j = 0; j < childCount; ++j)
-    {
-        TSNode child = ts_node_child(_node, j);
-        std::string type = ts_node_type(child);
-
-        if (type == "operator_name" || type == "operator_cast") return NodeKind::Operator;
-    }
-
-    return NodeKind::Function;
-};
-
-std::shared_ptr<Node> Parser::parseAmbiguousDeclaration(const TSNode& _node)
-{
-    NodeKind kind = NodeKind::Variable;
-
-    uint32_t childCount = ts_node_child_count(_node);
-
-    for (uint32_t i = 0; i < childCount; ++i)
-    {
-        TSNode child = ts_node_child(_node, i);
-        std::string childType = ts_node_type(child);
-
-        if (childType == "function_declarator")
-        {
-            kind = determineKind(child);
-        }
-        else if (childType == "reference_declarator" || childType == "pointer_declarator" ||
-                 childType == "array_declarator")
-        {
-            uint32_t subChildCount = ts_node_child_count(child);
-
-            for (uint32_t j = 0; j < subChildCount; ++j)
-            {
-                TSNode subChild = ts_node_child(child, j);
-                std::string subChildType = ts_node_type(subChild);
-
-                if (subChildType == "function_declarator")
-                {
-                    kind = determineKind(subChild);
-                    break;
-                }
-            }
-        }
-    }
-
-    switch (kind)
-    {
-        case NodeKind::Function:
-            return parseFunction(_node);
-        case NodeKind::Operator:
-            return parseOperator(_node);
-        default:
-            return parseVariable(_node);
-    }
-}
-
-std::shared_ptr<Node> Parser::parseAmbiguousDefinition(const TSNode& _node)
-{
-    NodeKind kind = NodeKind::Function;
-
-    uint32_t childCount = ts_node_child_count(_node);
-
-    for (uint32_t i = 0; i < childCount; ++i)
-    {
-        TSNode child = ts_node_child(_node, i);
-        std::string childType = ts_node_type(child);
-
-        if (childType == "function_declarator")
-        {
-            kind = determineKind(child);
-        }
-        else if (childType == "reference_declarator" || childType == "pointer_declarator" ||
-                 childType == "array_declarator")
-        {
-            uint32_t subChildCount = ts_node_child_count(child);
-
-            for (uint32_t j = 0; j < subChildCount; ++j)
-            {
-                TSNode subChild = ts_node_child(child, j);
-                std::string subChildType = ts_node_type(subChild);
-
-                if (subChildType == "function_declarator")
-                {
-                    kind = determineKind(subChild);
-                    break;
-                }
-            }
-        }
-    }
-
-    switch (kind)
-    {
-        case NodeKind::Operator:
-            return parseOperator(_node);
-        default:
-            return parseFunction(_node);
-    }
-}
-
-TypeSignature Parser::parseTypeSignature(const TSNode& _node)
-{
-    TypeSignature sig;
-
-    auto fullText = getNodeText(_node, m_source->content);
-
+    auto [start, end] = getPositionData(_node);
     const uint32_t childCount = ts_node_child_count(_node);
 
+    auto varNode = std::make_shared<VariableNode>(start.row, start.column, end.row, end.column);
+
+    clearTemplateDeclaration();
+    varNode->comment = getLeadingComment();
+    varNode->typeSignature = parseTypeSignature(_node);
+
     for (uint32_t i = 0; i < childCount; ++i)
     {
         TSNode child = ts_node_child(_node, i);
         std::string childType = ts_node_type(child);
-        std::string childText = getNodeText(child, m_source->content);
 
-        if (childType == "primitive_type" || childType == "type_identifier")
+        if (childType == "identifier" || childType == "field_identifier")
         {
-            sig.baseType += childText;
-        }
-        else if (childType == "qualified_identifier")
-        {
-            const uint32_t subChildCount = ts_node_child_count(child);
-
-            sig.baseType += childText;
+            varNode->name = getNodeText(child, m_source->content);
         }
         else if (childType == "type_qualifier")
         {
-            std::string txt = childText;
-            if (txt == "const") sig.isConst = true;
-            if (txt == "volatile") sig.isVolatile = true;
-            if (txt == "mutable") sig.isMutable = true;
-        }
-        else if (childType == "pointer_declarator" ||
-                 (childType == "init_declarator" && childText[0] == '*'))
-        {
-            sig.isPointer = true;
-        }
-        else if (childType == "reference_declarator" ||
-                 (childType == "init_declarator" && childText[0] == '&'))
-        {
-            std::string txt = childText;
+            std::string q = getNodeText(child, m_source->content);
 
-            if (txt.find("&&") != std::string::npos)
-            {
-                sig.isRValueRef = true;
-            }
-            else
-            {
-                sig.isLValueRef = true;
-            }
+            if (q == "constexpr")
+                varNode->isConstexpr = true;
+            else if (q == "constinit")
+                varNode->isConstinit = true;
         }
-        else if (childType == "template_type")
+        else if (childType == "storage_class_specifier")
         {
-            sig.baseType =
-                getNodeText(ts_node_child(child, 0), m_source->content); // the identifier
+            std::string s = getNodeText(child, m_source->content);
 
-            if (ts_node_child_count(child) > 1)
+            if (s == "static")
+                varNode->isStatic = true;
+            else if (s == "extern")
+                varNode->isExtern = true;
+            else if (s == "thread_local")
+                varNode->isThreadLocal = true;
+            else if (s == "inline")
+                varNode->isInline = true;
+            else if (s == "mutable")
+                varNode->typeSignature.isMutable = true;
+        }
+        else if (childType == "init_declarator")
+        {
+            parseInitDeclarator(child, varNode);
+        }
+    }
+
+    return varNode;
+}
+
+std::shared_ptr<FunctionNode> Parser::parseFunction(const TSNode& _node)
+{
+    auto [start, end] = getPositionData(_node);
+    const uint32_t childCount = ts_node_child_count(_node);
+
+    auto fnNode = std::make_shared<FunctionNode>(start.row, start.column, end.row, end.column);
+
+    fnNode->comment = getLeadingComment();
+    fnNode->templateDecl = getTemplateDeclaration();
+    fnNode->returnSignature = parseTypeSignature(_node);
+
+    for (uint32_t i = 0; i < childCount; ++i)
+    {
+        TSNode child = ts_node_child(_node, i);
+        std::string type = ts_node_type(child);
+
+        if (type == "attribute_declaration")
+        {
+            fnNode->attributes.emplace_back(getNodeText(child, m_source->content));
+        }
+        else if (type == "storage_class_specifier")
+        {
+            std::string txt = getNodeText(child, m_source->content);
+            if (txt == "static") fnNode->isStatic = true;
+            if (txt == "inline") fnNode->isInline = true;
+        }
+        else if (type == "type_qualifier")
+        {
+            std::string txt = getNodeText(child, m_source->content);
+            if (txt == "constexpr") fnNode->isConstexpr = true;
+            if (txt == "consteval") fnNode->isConsteval = true;
+            if (txt == "const") fnNode->isConst = true;
+            if (txt == "volatile") fnNode->isVolatile = true;
+        }
+        else if (type == "virtual")
+        {
+            fnNode->isVirtual = true;
+        }
+        else
+        {
+            if (type == "reference_declarator" || type == "pointer_declarator")
             {
-                TSNode argList = ts_node_child(child, 1);
+                const uint32_t subChildCount = ts_node_child_count(child);
 
-                if (std::string(ts_node_type(argList)) == "template_argument_list")
+                for (uint32_t j = 0; j < subChildCount; ++j)
                 {
-                    sig.templateArgs = parseTemplateArgumentsList(argList);
+                    TSNode subChild = ts_node_child(child, j);
+                    std::string subType = ts_node_type(subChild);
+
+                    if (subType != "function_declarator") continue;
+
+                    parseFunctionDeclarator(subChild, fnNode);
                 }
+            }
+            else if (type == "function_declarator")
+            {
+                parseFunctionDeclarator(child, fnNode);
             }
         }
     }
 
-    return sig;
+    return fnNode;
 }
 
-std::vector<GenericParameter> Parser::parseGenericParametersList(const TSNode& _node)
+std::vector<FunctionParameter> Parser::parseFunctionParametersList(const TSNode& _node)
 {
-    std::vector<GenericParameter> result;
+    std::vector<FunctionParameter> result;
 
     const uint32_t childCount = ts_node_child_count(_node);
 
@@ -1624,7 +1177,7 @@ std::vector<GenericParameter> Parser::parseGenericParametersList(const TSNode& _
             continue;
         }
 
-        GenericParameter gp;
+        FunctionParameter gp;
         gp.typeSignature = parseTypeSignature(child);
 
         const uint32_t subCount = ts_node_child_count(child);
@@ -1652,81 +1205,75 @@ std::vector<GenericParameter> Parser::parseGenericParametersList(const TSNode& _
     return result;
 }
 
-std::vector<TemplateArgument> Parser::parseTemplateArgumentsList(const TSNode& node)
+std::shared_ptr<OperatorNode> Parser::parseOperator(const TSNode& _node)
 {
-    std::vector<TemplateArgument> args;
+    auto [start, end] = getPositionData(_node);
+    const uint32_t childCount = ts_node_child_count(_node);
 
-    const uint32_t count = ts_node_child_count(node);
+    auto opNode = std::make_shared<OperatorNode>(start.row, start.column, end.row, end.column);
 
-    args.reserve(count);
+    opNode->comment = getLeadingComment();
+    opNode->templateDecl = getTemplateDeclaration();
+    opNode->returnSignature = parseTypeSignature(_node);
 
-    for (uint32_t i = 0; i < count; ++i)
+    for (uint32_t i = 0; i < childCount; ++i)
     {
-        TSNode child = ts_node_child(node, i);
-
-        if (!ts_node_is_named(child)) continue;
-
+        TSNode child = ts_node_child(_node, i);
         std::string type = ts_node_type(child);
 
-        TemplateArgument arg;
-
-        if (type == "type_descriptor" || type == "primitive_type" || type == "type_identifier")
+        if (type == "function_declarator")
         {
-            arg.typeSignature = parseTypeSignature(child);
+            parseOperatorDeclarator(child, opNode);
         }
-        else if (type == "number_literal" || type == "string_literal" || type == "true" ||
-                 type == "false" || type == "identifier" || type == "qualified_identifier")
+        else if (type == "storage_class_specifier")
         {
-            arg.value = getNodeText(child, m_source->content);
+            std::string txt = getNodeText(child, m_source->content);
+            if (txt == "static") opNode->isStatic = true;
+            if (txt == "inline") opNode->isInline = true;
         }
-        else
+        else if (type == "type_qualifier")
         {
-            // fallback: raw text
-            arg.value = getNodeText(child, m_source->content);
+            std::string text = getNodeText(child, m_source->content);
+            if (text == "const") opNode->isConst = true;
+            if (text == "constexpr") opNode->isConstexpr = true;
+            if (text == "explicit") opNode->isExplicit = true;
         }
-
-        args.emplace_back(std::move(arg));
     }
 
-    return args;
+    return opNode;
 }
 
-std::vector<std::pair<AccessSpecifier, std::string>> Parser::parseBaseClassesList(
-    const TSNode& _node, AccessSpecifier _defaultAccess)
+std::shared_ptr<Node> Parser::parseFriend(const TSNode& _node)
 {
-    std::vector<std::pair<AccessSpecifier, std::string>> baseClasses = {};
-    std::pair<AccessSpecifier, std::string> currentAccess = {AccessSpecifier::Private, ""};
+    auto [start, end] = getPositionData(_node);
+    const uint32_t childCount = ts_node_child_count(_node);
 
-    for (uint32_t j = 0; j < ts_node_child_count(_node); ++j)
+    auto friendNode = std::make_shared<FriendNode>(start.row, start.column, end.row, end.column);
+
+    clearTemplateDeclaration();
+    friendNode->comment = getLeadingComment();
+
+    for (uint32_t i = 0; i < childCount; ++i)
     {
-        TSNode baseChild = ts_node_child(_node, j);
-        std::string type = ts_node_type(baseChild);
-        std::string text = getNodeText(baseChild, m_source->content);
+        TSNode child = ts_node_child(_node, i);
+        std::string childType = ts_node_type(child);
 
-        if (type == "access_specifier")
+        if (childType == "struct" || childType == "class")
         {
-            if (text == "public")
-                currentAccess.first = AccessSpecifier::Public;
-            else if (text == "protected")
-                currentAccess.first = AccessSpecifier::Protected;
-            else if (text == "private")
-                currentAccess.first = AccessSpecifier::Private;
+            friendNode->kind = getNodeText(child, m_source->content);
         }
-        else if (type == std::string("qualified_identifier") ||
-                 type == std::string("type_identifier"))
+        else if (childType == "type_identifier" || childType == "qualified_identifier")
         {
-            currentAccess.second = text;
-        }
-
-        if (!currentAccess.second.empty())
-        {
-            baseClasses.emplace_back(currentAccess);
-            currentAccess = {_defaultAccess, ""};
+            friendNode->name = getNodeText(child, m_source->content);
         }
     }
 
-    return baseClasses;
+    return friendNode;
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+// Member List Handlers
+/////////////////////////////////////////////////////////////////////////////////////////////
 
 void Parser::parseMemberList(const TSNode& _listNode, const std::string& _parentName,
                              std::vector<std::shared_ptr<Node>>& _memberVars,
@@ -1904,6 +1451,475 @@ void Parser::parseClassMemberList(
             _nestedTypes.emplace_back(std::make_pair(currentAccess, nested));
         }
     }
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+// Specialized Declarators
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+void Parser::parseInitDeclarator(const TSNode& _node, std::shared_ptr<VariableNode>& _varNode)
+{
+    const uint32_t childCount = ts_node_child_count(_node);
+
+    for (uint32_t i = 0; i < childCount; ++i)
+    {
+        TSNode child = ts_node_child(_node, i);
+        std::string type = ts_node_type(child);
+
+        if (type == "identifier" || type == "field_identifier")
+        {
+            _varNode->name = getNodeText(child, m_source->content);
+        }
+        else if (type == "number_literal" || type == "string_literal")
+        {
+            _varNode->initialValue = getNodeText(child, m_source->content);
+        }
+        else if (type == "reference_declarator" || type == "pointer_declarator")
+        {
+            const uint32_t subChildCount = ts_node_child_count(child);
+
+            for (uint32_t j = 0; j < subChildCount; ++j)
+            {
+                TSNode subChild = ts_node_child(child, j);
+                std::string subType = ts_node_type(subChild);
+
+                if (subType == "identifier")
+                {
+                    _varNode->name = getNodeText(subChild, m_source->content);
+                }
+                else if (subType == "number_literal" || subType == "string_literal")
+                {
+                    _varNode->initialValue = getNodeText(subChild, m_source->content);
+                }
+            }
+        }
+    }
+}
+
+void Parser::parseFunctionDeclarator(const TSNode& _node, std::shared_ptr<FunctionNode>& _fn)
+{
+    const uint32_t childCount = ts_node_child_count(_node);
+
+    for (uint32_t i = 0; i < childCount; ++i)
+    {
+        TSNode child = ts_node_child(_node, i);
+        std::string type = ts_node_type(child);
+
+        if (type == "identifier" || type == "field_identifier" || type == "destructor_name")
+        {
+            _fn->name = getNodeText(child, m_source->content);
+        }
+        else if (type == "template_function" || type == "template_method")
+        {
+            if (ts_node_child_count(child) > 1)
+            {
+                TSNode argList = ts_node_child(child, 1);
+
+                if (std::string(ts_node_type(argList)) == "template_argument_list")
+                {
+                    _fn->templateArgs = parseTemplateArgumentsList(argList);
+                }
+            }
+        }
+        else if (type == "parameter_list")
+        {
+            _fn->parameters = parseFunctionParametersList(child);
+        }
+        else if (type == "noexcept")
+        {
+            _fn->isNoexcept = true;
+        }
+        else if (type == "override")
+        {
+            _fn->isOverride = true;
+        }
+        else if (type == "final")
+        {
+            _fn->isFinal = true;
+        }
+        else if (type == "const")
+        {
+            _fn->isConst = true;
+        }
+    }
+}
+
+void Parser::parseOperatorDeclarator(const TSNode& _node, std::shared_ptr<OperatorNode>& _op)
+{
+    const uint32_t childCount = ts_node_child_count(_node);
+
+    for (uint32_t i = 0; i < childCount; ++i)
+    {
+        TSNode child = ts_node_child(_node, i);
+        std::string type = ts_node_type(child);
+
+        if (type == "operator_name")
+        {
+            _op->operatorSymbol =
+                getNodeText(child, m_source->content).substr(8); // remove "operator"
+        }
+        else if (type == "parameter_list")
+        {
+            _op->parameters = parseFunctionParametersList(child);
+        }
+        else if (type == "template_function" || type == "template_method")
+        {
+            if (ts_node_child_count(child) > 1)
+            {
+                TSNode argList = ts_node_child(child, 1);
+
+                if (std::string(ts_node_type(argList)) == "template_argument_list")
+                {
+                    _op->templateArgs = parseTemplateArgumentsList(argList);
+                }
+            }
+        }
+        else if (type == "virtual")
+        {
+            _op->isVirtual = true;
+        }
+        else if (type == "override")
+        {
+            _op->isOverride = true;
+        }
+        else if (type == "final")
+        {
+            _op->isFinal = true;
+        }
+        else if (type == "pure_virtual_specifier")
+        {
+            _op->isPureVirtual = true;
+        }
+        else if (type == "noexcept")
+        {
+            _op->isNoexcept = true;
+        }
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+// Template & Type Metadata Helpers
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+std::shared_ptr<TemplateNode> Parser::parseTemplateDeclaration(const TSNode& _node)
+{
+    auto [start, end] = getPositionData(_node);
+    const uint32_t childCount = ts_node_child_count(_node);
+
+    auto templateDeclNode =
+        std::make_shared<TemplateNode>(start.row, start.column, end.row, end.column);
+
+    for (uint32_t i = 0; i < childCount; ++i)
+    {
+        TSNode child = ts_node_child(_node, i);
+        std::string childType = ts_node_type(child);
+
+        if (childType == "template_parameter_list")
+        {
+            templateDeclNode->parameters = parseTemplateParameterList(child);
+        }
+    }
+
+    return templateDeclNode;
+}
+
+std::vector<TemplateParameter> Parser::parseTemplateParameterList(const TSNode& _node)
+{
+    std::vector<TemplateParameter> parameters;
+
+    const uint32_t paramCount = ts_node_child_count(_node);
+
+    for (uint32_t j = 0; j < paramCount; ++j)
+    {
+        TSNode param = ts_node_child(_node, j);
+        std::string paramType = ts_node_type(param);
+
+        TemplateParameter tp;
+
+        if (paramType == "type_parameter_declaration")
+        {
+            // e.g. "typename T"
+            tp.paramKind = TemplateParameterKind::Type;
+
+            for (uint32_t k = 0; k < ts_node_child_count(param); ++k)
+            {
+                TSNode sub = ts_node_child(param, k);
+                std::string subType = ts_node_type(sub);
+
+                if (subType == "typename" || subType == "class")
+                {
+                    tp.keyword = getNodeText(sub, m_source->content);
+                }
+                else if (subType == "type_identifier")
+                {
+                    tp.name = getNodeText(sub, m_source->content);
+                }
+            }
+        }
+        else if (paramType == "variadic_type_parameter_declaration")
+        {
+            tp.paramKind = TemplateParameterKind::Type;
+            tp.isVariadic = true;
+
+            for (uint32_t k = 0; k < ts_node_child_count(param); ++k)
+            {
+                TSNode sub = ts_node_child(param, k);
+                std::string subType = ts_node_type(sub);
+
+                if (subType == "class" || subType == "typename")
+                {
+                    tp.keyword = getNodeText(sub, m_source->content);
+                }
+                else if (subType == "type_identifier")
+                {
+                    tp.name = getNodeText(sub, m_source->content);
+                }
+            }
+        }
+        else if (paramType == "optional_type_parameter_declaration")
+        {
+            // e.g. "typename T = int"
+            tp.paramKind = TemplateParameterKind::Type;
+
+            for (uint32_t k = 0; k < ts_node_child_count(param); ++k)
+            {
+                TSNode sub = ts_node_child(param, k);
+                std::string subType = ts_node_type(sub);
+
+                if (subType == "typename" || subType == "class")
+                {
+                    tp.keyword = getNodeText(sub, m_source->content);
+                }
+                else if (subType == "type_identifier")
+                {
+                    if (tp.name.empty() && tp.defaultValue.empty())
+                        tp.name = getNodeText(sub, m_source->content);
+                    else
+                        tp.defaultValue = getNodeText(sub, m_source->content);
+                }
+                else if (subType == "type_descriptor" || subType == "template_type" ||
+                         subType == "primitive_type" || subType == "qualified_identifier")
+                {
+                    tp.defaultValue = getNodeText(sub, m_source->content);
+                }
+            }
+        }
+        else if (paramType == "parameter_declaration")
+        {
+            // Non-type param: e.g. "int N" or "auto V"
+            tp.paramKind = TemplateParameterKind::NonType;
+            tp.typeSignature = parseTypeSignature(param);
+
+            for (uint32_t k = 0; k < ts_node_child_count(param); ++k)
+            {
+                TSNode sub = ts_node_child(param, k);
+                std::string subType = ts_node_type(sub);
+
+                if (subType == "identifier")
+                {
+                    tp.name = getNodeText(sub, m_source->content);
+                }
+                else if (subType == "variadic_declarator")
+                {
+                    tp.isVariadic = true;
+                    // The name is inside the variadic_declarator
+                    for (uint32_t m = 0; m < ts_node_child_count(sub); ++m)
+                    {
+                        TSNode vsub = ts_node_child(sub, m);
+                        if (std::string(ts_node_type(vsub)) == "identifier")
+                        {
+                            tp.name = getNodeText(vsub, m_source->content);
+                        }
+                    }
+                }
+            }
+        }
+        else if (paramType == "optional_parameter_declaration")
+        {
+            // Non-type with default: e.g. "int N = 42"
+            tp.paramKind = TemplateParameterKind::NonType;
+            tp.typeSignature = parseTypeSignature(param);
+
+            for (uint32_t k = 0; k < ts_node_child_count(param); ++k)
+            {
+                TSNode sub = ts_node_child(param, k);
+                std::string subType = ts_node_type(sub);
+
+                if (subType == "identifier")
+                {
+                    tp.name = getNodeText(sub, m_source->content);
+                }
+                else if (subType == "number_literal" || subType == "string_literal" ||
+                         subType == "char_literal" || subType == "boolean_literal" ||
+                         subType == "floating_point_literal" || subType == "template_type" ||
+                         subType == "type_descriptor" || subType == "qualified_identifier")
+                {
+                    tp.defaultValue = getNodeText(sub, m_source->content);
+                }
+            }
+        }
+        else if (paramType == "template_template_parameter_declaration")
+        {
+            // e.g. "template<typename> class C"
+            // AST: template_template_parameter_declaration
+            //        template_parameter_list (inner params)
+            //        type_parameter_declaration (keyword + name)
+            tp.paramKind = TemplateParameterKind::TemplateTemplate;
+
+            for (uint32_t k = 0; k < ts_node_child_count(param); ++k)
+            {
+                TSNode sub = ts_node_child(param, k);
+                std::string subType = ts_node_type(sub);
+
+                if (subType == "template_parameter_list")
+                {
+                    tp.innerParameters = parseTemplateParameterList(sub);
+                }
+                else if (subType == "type_parameter_declaration")
+                {
+                    // Contains "class C" or "typename C"
+                    for (uint32_t m = 0; m < ts_node_child_count(sub); ++m)
+                    {
+                        TSNode inner = ts_node_child(sub, m);
+                        std::string innerType = ts_node_type(inner);
+
+                        if (innerType == "typename" || innerType == "class")
+                        {
+                            tp.keyword = getNodeText(inner, m_source->content);
+                        }
+                        else if (innerType == "type_identifier")
+                        {
+                            tp.name = getNodeText(inner, m_source->content);
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            continue;
+        }
+
+        if (!tp.keyword.empty() || !tp.name.empty() || !tp.typeSignature.baseType.empty() ||
+            tp.paramKind == TemplateParameterKind::TemplateTemplate)
+        {
+            parameters.emplace_back(std::move(tp));
+        }
+    }
+
+    return parameters;
+}
+
+std::vector<TemplateArgument> Parser::parseTemplateArgumentsList(const TSNode& node)
+{
+    std::vector<TemplateArgument> args;
+
+    const uint32_t count = ts_node_child_count(node);
+
+    args.reserve(count);
+
+    for (uint32_t i = 0; i < count; ++i)
+    {
+        TSNode child = ts_node_child(node, i);
+
+        if (!ts_node_is_named(child)) continue;
+
+        std::string type = ts_node_type(child);
+
+        TemplateArgument arg;
+
+        if (type == "type_descriptor" || type == "primitive_type" || type == "type_identifier")
+        {
+            arg.typeSignature = parseTypeSignature(child);
+        }
+        else if (type == "number_literal" || type == "string_literal" || type == "true" ||
+                 type == "false" || type == "identifier" || type == "qualified_identifier")
+        {
+            arg.value = getNodeText(child, m_source->content);
+        }
+        else
+        {
+            // fallback: raw text
+            arg.value = getNodeText(child, m_source->content);
+        }
+
+        args.emplace_back(std::move(arg));
+    }
+
+    return args;
+}
+
+std::vector<std::pair<AccessSpecifier, std::string>> Parser::parseBaseClassesList(
+    const TSNode& _node, AccessSpecifier _defaultAccess)
+{
+    std::vector<std::pair<AccessSpecifier, std::string>> baseClasses = {};
+    std::pair<AccessSpecifier, std::string> currentAccess = {AccessSpecifier::Private, ""};
+
+    for (uint32_t j = 0; j < ts_node_child_count(_node); ++j)
+    {
+        TSNode baseChild = ts_node_child(_node, j);
+        std::string type = ts_node_type(baseChild);
+        std::string text = getNodeText(baseChild, m_source->content);
+
+        if (type == "access_specifier")
+        {
+            if (text == "public")
+                currentAccess.first = AccessSpecifier::Public;
+            else if (text == "protected")
+                currentAccess.first = AccessSpecifier::Protected;
+            else if (text == "private")
+                currentAccess.first = AccessSpecifier::Private;
+        }
+        else if (type == std::string("qualified_identifier") ||
+                 type == std::string("type_identifier"))
+        {
+            currentAccess.second = text;
+        }
+
+        if (!currentAccess.second.empty())
+        {
+            baseClasses.emplace_back(currentAccess);
+            currentAccess = {_defaultAccess, ""};
+        }
+    }
+
+    return baseClasses;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+// "Sticky" State Management (Floating Nodes)
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+std::shared_ptr<CommentNode> Parser::parseComment(const TSNode& _node)
+{
+    auto [start, end] = getPositionData(_node);
+
+    auto text = m_source->content.substr(ts_node_start_byte(_node),
+                                         ts_node_end_byte(_node) - ts_node_start_byte(_node));
+
+    return std::make_shared<CommentNode>(text, start.row, start.column, end.row, end.column);
+}
+
+std::shared_ptr<CommentNode> Parser::getLeadingComment()
+{
+    if (!m_leadingComment) return nullptr;
+
+    auto copy = m_leadingComment;
+
+    m_leadingComment = nullptr;
+
+    return copy;
+}
+
+std::shared_ptr<TemplateNode> Parser::getTemplateDeclaration()
+{
+    if (!m_templateDeclaration) return nullptr;
+
+    auto copy = m_templateDeclaration;
+
+    m_templateDeclaration = nullptr;
+
+    return copy;
 }
 
 } // namespace codex

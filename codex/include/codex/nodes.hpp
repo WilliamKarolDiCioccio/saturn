@@ -255,7 +255,7 @@ inline std::string TypeSignature::toString() const
     return result;
 }
 
-struct GenericParameter
+struct FunctionParameter
 {
     TypeSignature typeSignature;
     std::string name;
@@ -822,7 +822,7 @@ struct FunctionNode final : Node
     std::vector<std::string> attributes;
     TypeSignature returnSignature;
     std::string name;
-    std::vector<GenericParameter> parameters;
+    std::vector<FunctionParameter> parameters;
     std::shared_ptr<Node> templateDecl;
     std::vector<TemplateArgument> templateArgs;
 
@@ -916,7 +916,7 @@ struct ConstructorNode final : Node
     bool isMoveConstructor = false;
 
     std::string name;
-    std::vector<GenericParameter> parameters;
+    std::vector<FunctionParameter> parameters;
     std::shared_ptr<Node> templateDecl;
     std::vector<TemplateArgument> templateArgs;
 
@@ -1046,7 +1046,7 @@ struct OperatorNode final : Node
 
     std::string operatorSymbol;
     TypeSignature returnSignature;
-    std::vector<GenericParameter> parameters;
+    std::vector<FunctionParameter> parameters;
     std::shared_ptr<Node> templateDecl;
     std::vector<TemplateArgument> templateArgs;
 
