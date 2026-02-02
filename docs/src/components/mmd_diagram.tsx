@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import Modal from "react-modal";
 
+const svgs = import.meta.glob<{ default: ImageMetadata }>(
+  "/src/assets/mmds/*.svg",
+  { eager: true },
+);
+
 type MermaidDiagramProps = {
   name: string;
   alt?: string;
@@ -67,7 +72,9 @@ export default function MermaidDiagram({
 
   const handleMouseUp = () => setIsDragging(false);
 
-  const src = `/src/assets/mmds/${name}_${theme}.svg`;
+  const srcPath = `/src/assets/mmds/${name}_${theme}.svg`;
+
+  const src = (svgs[srcPath] as { default: ImageMetadata })?.default?.src;
 
   return (
     <>
