@@ -3,6 +3,9 @@ set(CODEX_SOURCES
     "src/source_extractor.cpp"
     "src/preprocessor.cpp"
     "src/parser.cpp"
+    "src/symbols_database.cpp"
+    "src/include_graph.cpp"
+    "src/analyzer.cpp"
 )
 
 add_library(codex STATIC ${CODEX_SOURCES})

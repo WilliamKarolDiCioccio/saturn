@@ -12,6 +12,14 @@ inline std::shared_ptr<Source> makeSource(const std::string& _content,
     return std::make_shared<Source>(_name, std::filesystem::path(_name), _content, "utf-8", 0);
 }
 
+inline std::shared_ptr<Source> makeSourceWithPath(const std::string& content,
+                                                  const std::string& path,
+                                                  const std::string& name = "")
+{
+    std::string n = name.empty() ? std::filesystem::path(path).filename().string() : name;
+    return std::make_shared<Source>(n, std::filesystem::path(path), content, "utf-8", 0);
+}
+
 // Helper to parse a single source string
 inline std::shared_ptr<SourceNode> parseSingle(const std::string& _content)
 {
@@ -19,6 +27,14 @@ inline std::shared_ptr<SourceNode> parseSingle(const std::string& _content)
     Parser parser;
     auto result = parser.parse(src);
     return result;
+}
+
+inline std::shared_ptr<SourceNode> parseWithPath(const std::string& content,
+                                                 const std::string& path)
+{
+    auto src = makeSourceWithPath(content, path);
+    Parser parser;
+    return parser.parse(src);
 }
 
 inline std::function<void(TSNode, int)> dumpAST(TSNode _node, int _depth, const std::string& _code)

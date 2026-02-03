@@ -1,6 +1,7 @@
 set(TEST_SOURCES
     "unit/parser_test.cpp"
     "unit/preprocessor_test.cpp"
+    "unit/analyzer_test.cpp"
 )
 
 add_executable(codex_tests ${TEST_SOURCES} "main.cpp")

@@ -38,11 +38,15 @@
 - **`FilesCollector`** (`files_collector.hpp`) — Recursively collects .hpp/.cpp files from directory
 - **`Preprocessor`** (`preprocessor.hpp`) — Handles #include, #define, preprocessor directives
 - **`SourceExtractor`** (`source_extractor.hpp`) — Extracts structured data from SourceNode tree
+- **`Analyzer`** (`analyzer.hpp`) — Post-parse symbol indexer + cross-reference linker
+- **`SymbolsDatabase`** (`symbols_database.hpp`) — Symbol registry with multi-key lookup
+- **`IncludeGraph`** (`include_graph.hpp`) — Include dependency DAG with topological sort
+- **`Symbol`** / **`SymbolID`** / **`SymbolKind`** (`symbol.hpp`) — Symbol data types
 
 ### Invariants (NEVER violate)
 
 1. **Tree-sitter dependency**: MUST use tree-sitter-cpp for parsing (no hand-written lexer/parser)
-2. **Syntax-only analysis**: NEVER attempt semantic analysis (type resolution, overload resolution, template instantiation)
+2. **Syntax-only parser**: Parser MUST NOT attempt semantic analysis. Post-parse Analyzer may do best-effort symbol indexing and name resolution (no overload resolution, no template instantiation).
 3. **No saturn coupling**: MUST remain independent of saturn engine (can parse any C++ project)
 4. **NodeKind completeness**: Every C++ construct in tree-sitter grammar MUST map to NodeKind entry
 5. **Source immutability**: Source struct fields MUST NOT be modified after construction (treat as immutable)
