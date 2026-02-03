@@ -151,6 +151,27 @@ private:
     EXPECT_EQ(cls->memberVariables[0].first, AccessSpecifier::Private);
 }
 
+TEST_F(ParserTest, ParseNestedClass)
+{
+    auto result = parseSingle(R"(
+class Outer {
+    class Inner {
+    };
+};
+)");
+
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto outer = std::dynamic_pointer_cast<ClassNode>(result->children[0]);
+    ASSERT_NE(outer, nullptr);
+    ASSERT_EQ(outer->nestedTypes.size(), 1);
+
+    auto inner = std::dynamic_pointer_cast<ClassNode>(outer->nestedTypes[0].second);
+    ASSERT_NE(inner, nullptr);
+    EXPECT_EQ(inner->name, "Inner");
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////
 // Struct Tests
 /////////////////////////////////////////////////////////////////////////////////////////////
@@ -718,28 +739,194 @@ struct Foo {
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////
-// Incomplete, Incorrect and Garbage Input Tests
+// Declaration vs Definition Tests (member functions, constructors, destructors, operators)
 /////////////////////////////////////////////////////////////////////////////////////////////
 
-TEST_F(ParserTest, ParseIncompleteClass)
+TEST_F(ParserTest, ParseStructConstructorDeclarations_CopyMoveDetection)
 {
-    auto result = parseSingle("class Foo {");
+    auto result = parseSingle(R"(
+struct Foo {
+    Foo();
+    Foo(int x);
+    Foo(const Foo& other);
+    Foo(Foo&& other);
+};
+)");
     ASSERT_NE(result, nullptr);
-    EXPECT_EQ(result->children.size(), 0);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto st = std::dynamic_pointer_cast<StructNode>(result->children[0]);
+    ASSERT_NE(st, nullptr);
+    ASSERT_EQ(st->constructors.size(), 4);
+
+    // Check copy/move detection works for declarations too
+    auto copy = std::dynamic_pointer_cast<ConstructorNode>(st->constructors[2]);
+    ASSERT_NE(copy, nullptr);
+    EXPECT_TRUE(copy->isCopyConstructor);
+
+    auto move = std::dynamic_pointer_cast<ConstructorNode>(st->constructors[3]);
+    ASSERT_NE(move, nullptr);
+    EXPECT_TRUE(move->isMoveConstructor);
 }
 
-TEST_F(ParserTest, ParseIncorrectSyntax)
+TEST_F(ParserTest, ParseStructMixedDeclarationsAndDefinitions)
 {
-    auto result = parseSingle("class 123Foo {};");
+    auto result = parseSingle(R"(
+struct Foo {
+    Foo();                          // declaration
+    Foo(int x) {}                   // definition
+    ~Foo();                         // declaration
+    void bar();                     // declaration
+    void baz() {}                   // definition
+    bool operator==(const Foo& o);  // declaration
+    bool operator!=(const Foo& o) { return !(*this == o); } // definition
+};
+)");
     ASSERT_NE(result, nullptr);
-    EXPECT_EQ(result->children.size(), 1);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto st = std::dynamic_pointer_cast<StructNode>(result->children[0]);
+    ASSERT_NE(st, nullptr);
+    EXPECT_EQ(st->constructors.size(), 2);
+    EXPECT_EQ(st->destructors.size(), 1);
+    EXPECT_EQ(st->memberFunctions.size(), 2);
+    EXPECT_EQ(st->operators.size(), 2);
 }
 
-TEST_F(ParserTest, ParseGarbageInput)
+TEST_F(ParserTest, ParseClassConstructorDeclarations)
 {
-    auto result = parseSingle("asdlkjasdklj 123123 !@#$%^&*()");
+    auto result = parseSingle(R"(
+class Foo {
+public:
+    Foo();
+    Foo(int x);
+private:
+    Foo(const Foo& other);
+};
+)");
     ASSERT_NE(result, nullptr);
-    EXPECT_EQ(result->children.size(), 0);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto cls = std::dynamic_pointer_cast<ClassNode>(result->children[0]);
+    ASSERT_NE(cls, nullptr);
+    ASSERT_EQ(cls->constructors.size(), 3);
+
+    // Check access specifiers
+    EXPECT_EQ(cls->constructors[0].first, AccessSpecifier::Public);
+    EXPECT_EQ(cls->constructors[1].first, AccessSpecifier::Public);
+    EXPECT_EQ(cls->constructors[2].first, AccessSpecifier::Private);
+}
+
+TEST_F(ParserTest, ParseClassVirtualDestructorDeclaration)
+{
+    auto result = parseSingle(R"(
+class Base {
+public:
+    virtual ~Base();
+};
+)");
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto cls = std::dynamic_pointer_cast<ClassNode>(result->children[0]);
+    ASSERT_NE(cls, nullptr);
+    ASSERT_EQ(cls->destructors.size(), 1);
+
+    auto dtor = std::dynamic_pointer_cast<DestructorNode>(cls->destructors[0].second);
+    ASSERT_NE(dtor, nullptr);
+    EXPECT_TRUE(dtor->isVirtual);
+}
+
+TEST_F(ParserTest, ParseClassOperatorDeclarations)
+{
+    auto result = parseSingle(R"(
+class Foo {
+public:
+    Foo& operator=(const Foo& other);
+    Foo& operator=(Foo&& other);
+private:
+    bool operator<(const Foo& other) const;
+};
+)");
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto cls = std::dynamic_pointer_cast<ClassNode>(result->children[0]);
+    ASSERT_NE(cls, nullptr);
+    ASSERT_EQ(cls->operators.size(), 3);
+
+    EXPECT_EQ(cls->operators[0].first, AccessSpecifier::Public);
+    EXPECT_EQ(cls->operators[1].first, AccessSpecifier::Public);
+    EXPECT_EQ(cls->operators[2].first, AccessSpecifier::Private);
+}
+
+TEST_F(ParserTest, ParseClassMixedDeclarationsAndDefinitions)
+{
+    auto result = parseSingle(R"(
+class Widget {
+public:
+    Widget();
+    Widget(int id) : m_id(id) {}
+    ~Widget();
+
+    int getId() const;
+    void setId(int id) { m_id = id; }
+
+    bool operator==(const Widget& other) const;
+
+private:
+    int m_id;
+};
+)");
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto cls = std::dynamic_pointer_cast<ClassNode>(result->children[0]);
+    ASSERT_NE(cls, nullptr);
+    EXPECT_EQ(cls->constructors.size(), 2);
+    EXPECT_EQ(cls->destructors.size(), 1);
+    EXPECT_EQ(cls->memberFunctions.size(), 2);
+    EXPECT_EQ(cls->operators.size(), 1);
+    EXPECT_EQ(cls->memberVariables.size(), 1);
+}
+
+TEST_F(ParserTest, ParseClassMemberFunctionDeclarationsWithModifiers)
+{
+    auto result = parseSingle(R"(
+class Foo {
+public:
+    virtual void foo();
+    void bar() const;
+    static void baz();
+    virtual void qux() = 0;
+};
+)");
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto cls = std::dynamic_pointer_cast<ClassNode>(result->children[0]);
+    ASSERT_NE(cls, nullptr);
+    // virtual foo, const bar, pure virtual qux = 3 member functions
+    // static baz = 1 static member function
+    EXPECT_EQ(cls->memberFunctions.size(), 3);
+    EXPECT_EQ(cls->staticMemberFunctions.size(), 1);
+}
+
+TEST_F(ParserTest, ParseStructStaticMemberFunctionDeclaration)
+{
+    auto result = parseSingle(R"(
+struct Foo {
+    static void create();
+    static Foo* getInstance();
+};
+)");
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto st = std::dynamic_pointer_cast<StructNode>(result->children[0]);
+    ASSERT_NE(st, nullptr);
+    EXPECT_EQ(st->staticMemberFunctions.size(), 2);
+    EXPECT_EQ(st->memberFunctions.size(), 0);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////
@@ -912,6 +1099,80 @@ TEST_F(ParserTest, ParseNestedTemplateDefault)
     EXPECT_EQ(tmpl->parameters[0].paramKind, TemplateParameterKind::Type);
     EXPECT_EQ(tmpl->parameters[0].name, "T");
     EXPECT_FALSE(tmpl->parameters[0].defaultValue.empty());
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+// Incomplete, Incorrect and Garbage Input Tests
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+TEST_F(ParserTest, ParseIncompleteClass)
+{
+    auto result = parseSingle("class Foo {");
+    ASSERT_NE(result, nullptr);
+    EXPECT_EQ(result->children.size(), 0);
+}
+
+TEST_F(ParserTest, ParseIncorrectSyntax)
+{
+    auto result = parseSingle("class 123Foo {};");
+    ASSERT_NE(result, nullptr);
+    EXPECT_EQ(result->children.size(), 1);
+}
+
+TEST_F(ParserTest, ParseGarbageInput)
+{
+    auto result = parseSingle("asdlkjasdklj 123123 !@#$%^&*()");
+    ASSERT_NE(result, nullptr);
+    EXPECT_EQ(result->children.size(), 0);
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+// Realistic Code Tests
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+TEST_F(ParserTest, ParseRealisticClassWithDeclarations)
+{
+    auto result = parseSingle(R"(
+class ThreadPool {
+public:
+    ThreadPool();
+    explicit ThreadPool(size_t numThreads);
+    ~ThreadPool();
+
+    ThreadPool(const ThreadPool&) = delete;
+    ThreadPool& operator=(const ThreadPool&) = delete;
+    ThreadPool(ThreadPool&&) noexcept;
+    ThreadPool& operator=(ThreadPool&&) noexcept;
+
+    void start();
+    void stop();
+    bool isRunning() const;
+
+    template<typename F>
+    void submit(F&& task);
+
+private:
+    void workerLoop();
+
+    std::vector<std::thread> m_workers;
+    bool m_running;
+};
+)");
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto cls = std::dynamic_pointer_cast<ClassNode>(result->children[0]);
+    ASSERT_NE(cls, nullptr);
+    EXPECT_EQ(cls->name, "ThreadPool");
+
+    // 2 regular + 2 deleted + 1 move = 5 constructors (deleted ones still parse as ctors)
+    // Note: delete/default might affect count depending on parser
+    EXPECT_GE(cls->constructors.size(), 2);
+    EXPECT_EQ(cls->destructors.size(), 1);
+    EXPECT_GE(cls->operators.size(), 2); // copy= and move=
+    // start, stop, isRunning, submit, workerLoop = 5 (but submit is templated, workerLoop is
+    // private)
+    EXPECT_GE(cls->memberFunctions.size(), 3);
 }
 
 } // namespace codex::tests

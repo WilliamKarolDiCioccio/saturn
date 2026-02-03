@@ -1009,14 +1009,7 @@ std::shared_ptr<ClassNode> Parser::parseClass(const TSNode& _node)
                 }
             }
         }
-    }
-
-    for (uint32_t i = 0; i < childCount; ++i)
-    {
-        TSNode child = ts_node_child(_node, i);
-        std::string childType = ts_node_type(child);
-
-        if (childType == "base_class_clause")
+        else if (childType == "base_class_clause")
         {
             classNode->baseClasses = parseBaseClassesList(child, AccessSpecifier::Private);
         }
@@ -1290,35 +1283,66 @@ void Parser::parseMemberList(const TSNode& _listNode, const std::string& _parent
 
     for (uint32_t j = 0; j < fieldCount; ++j)
     {
-        TSNode subChild = ts_node_child(_listNode, j);
-        std::string subType = ts_node_type(subChild);
+        TSNode child = ts_node_child(_listNode, j);
+        std::string childType = ts_node_type(child);
 
-        if (subType == "comment")
+        if (childType == "comment")
         {
-            m_leadingComment = parseComment(subChild);
+            m_leadingComment = parseComment(child);
         }
-        else if (subType == "template_declaration")
+        else if (childType == "template_declaration")
         {
-            m_templateDeclaration = parseTemplateDeclaration(subChild);
+            m_templateDeclaration = parseTemplateDeclaration(child);
         }
-        if (subType == "field_declaration")
+        if (childType == "field_declaration" || childType == "declaration")
         {
-            auto declNode = parseAmbiguousDeclaration(subChild);
+            const uint32_t childCount = ts_node_child_count(child);
 
-            if (declNode->kind == NodeKind::Variable)
+            TSNode firstSubChild = ts_node_child(child, 0);
+            std::string firstSubChildType = ts_node_type(firstSubChild);
+
+            if (firstSubChildType == "struct_specifier" || firstSubChildType == "class_specifier" ||
+                firstSubChildType == "union_specifier" || firstSubChildType == "enum_specifier")
             {
-                auto varNode = std::dynamic_pointer_cast<VariableNode>(declNode);
-                (varNode->isStatic ? _staticMemberVars : _memberVars).emplace_back(declNode);
+                auto nested = dispatch(firstSubChild);
+                _nestedTypes.emplace_back(nested);
             }
-            else if (declNode->kind == NodeKind::Function)
+            else
             {
-                auto funcNode = std::dynamic_pointer_cast<FunctionNode>(declNode);
-                (funcNode->isStatic ? _staticMemberFuncs : _memberFuncs).emplace_back(declNode);
+                auto declNode = parseAmbiguousDeclaration(child);
+
+                if (declNode->kind == NodeKind::Variable)
+                {
+                    auto varNode = std::dynamic_pointer_cast<VariableNode>(declNode);
+                    (varNode->isStatic ? _staticMemberVars : _memberVars).emplace_back(declNode);
+                }
+                else if (declNode->kind == NodeKind::Function)
+                {
+                    auto funcNode = std::dynamic_pointer_cast<FunctionNode>(declNode);
+
+                    if (funcNode->name == _parentName) // constructor
+                    {
+                        _ctors.emplace_back(toConstructorNode(funcNode, _parentName));
+                    }
+                    else if (!funcNode->name.empty() && funcNode->name[0] == '~') // destructor
+                    {
+                        _dtors.emplace_back(toDestructorNode(funcNode));
+                    }
+                    else
+                    {
+                        (funcNode->isStatic ? _staticMemberFuncs : _memberFuncs)
+                            .emplace_back(funcNode);
+                    }
+                }
+                else
+                {
+                    _ops.emplace_back(declNode);
+                }
             }
         }
-        else if (subType == "function_definition")
+        else if (childType == "function_definition")
         {
-            auto defNode = parseAmbiguousDefinition(subChild);
+            auto defNode = parseAmbiguousDefinition(child);
 
             if (defNode->kind == NodeKind::Function)
             {
@@ -1342,15 +1366,9 @@ void Parser::parseMemberList(const TSNode& _listNode, const std::string& _parent
                 _ops.emplace_back(defNode);
             }
         }
-        else if (subType == "friend_declaration")
+        else if (childType == "friend_declaration")
         {
-            _friends.emplace_back(parseFriend(subChild));
-        }
-        else if (subType == "struct_specifier" || subType == "class_specifier" ||
-                 subType == "union_specifier" || subType == "enum_specifier")
-        {
-            auto nested = dispatch(subChild);
-            _nestedTypes.emplace_back(nested);
+            _friends.emplace_back(parseFriend(child));
         }
     }
 }
@@ -1373,20 +1391,20 @@ void Parser::parseClassMemberList(
 
     for (uint32_t j = 0; j < fieldCount; ++j)
     {
-        TSNode subChild = ts_node_child(_listNode, j);
-        std::string subType = ts_node_type(subChild);
+        TSNode child = ts_node_child(_listNode, j);
+        std::string childType = ts_node_type(child);
 
-        if (subType == "comment")
+        if (childType == "comment")
         {
-            m_leadingComment = parseComment(subChild);
+            m_leadingComment = parseComment(child);
         }
-        else if (subType == "template_declaration")
+        else if (childType == "template_declaration")
         {
-            m_templateDeclaration = parseTemplateDeclaration(subChild);
+            m_templateDeclaration = parseTemplateDeclaration(child);
         }
-        else if (subType == "access_specifier")
+        else if (childType == "access_specifier")
         {
-            std::string txt = getNodeText(subChild, m_source->content);
+            std::string txt = getNodeText(child, m_source->content);
 
             if (txt == "public")
                 currentAccess = AccessSpecifier::Public;
@@ -1395,26 +1413,58 @@ void Parser::parseClassMemberList(
             else if (txt == "private")
                 currentAccess = AccessSpecifier::Private;
         }
-        else if (subType == "field_declaration")
+        else if (childType == "field_declaration" || childType == "declaration")
         {
-            auto declNode = parseAmbiguousDeclaration(subChild);
+            const uint32_t childCount = ts_node_child_count(child);
 
-            if (declNode->kind == NodeKind::Variable)
+            TSNode firstSubChild = ts_node_child(child, 0);
+            std::string firstSubChildType = ts_node_type(firstSubChild);
+
+            if (firstSubChildType == "struct_specifier" || firstSubChildType == "class_specifier" ||
+                firstSubChildType == "union_specifier" || firstSubChildType == "enum_specifier")
             {
-                auto varNode = std::dynamic_pointer_cast<VariableNode>(declNode);
-                (varNode->isStatic ? _staticMemberVars : _memberVars)
-                    .emplace_back(std::make_pair(currentAccess, declNode));
+                auto nested = dispatch(firstSubChild);
+                _nestedTypes.emplace_back(std::make_pair(currentAccess, nested));
             }
-            else if (declNode->kind == NodeKind::Function)
+            else
             {
-                auto funcNode = std::dynamic_pointer_cast<FunctionNode>(declNode);
-                (funcNode->isStatic ? _staticMemberFuncs : _memberFuncs)
-                    .emplace_back(std::make_pair(currentAccess, declNode));
+                auto declNode = parseAmbiguousDeclaration(child);
+
+                if (declNode->kind == NodeKind::Variable)
+                {
+                    auto varNode = std::dynamic_pointer_cast<VariableNode>(declNode);
+                    (varNode->isStatic ? _staticMemberVars : _memberVars)
+                        .emplace_back(std::make_pair(currentAccess, declNode));
+                }
+                else if (declNode->kind == NodeKind::Function)
+                {
+                    auto funcNode = std::dynamic_pointer_cast<FunctionNode>(declNode);
+
+                    if (funcNode->name == _parentName) // constructor
+                    {
+                        _ctors.emplace_back(std::make_pair(
+                            currentAccess, toConstructorNode(funcNode, _parentName)));
+                    }
+                    else if (!funcNode->name.empty() && funcNode->name[0] == '~') // destructor
+                    {
+                        _dtors.emplace_back(
+                            std::make_pair(currentAccess, toDestructorNode(funcNode)));
+                    }
+                    else
+                    {
+                        (funcNode->isStatic ? _staticMemberFuncs : _memberFuncs)
+                            .emplace_back(std::make_pair(currentAccess, funcNode));
+                    }
+                }
+                else
+                {
+                    _ops.emplace_back(std::make_pair(currentAccess, declNode));
+                }
             }
         }
-        else if (subType == "function_definition")
+        else if (childType == "function_definition")
         {
-            auto defNode = parseAmbiguousDefinition(subChild);
+            auto defNode = parseAmbiguousDefinition(child);
 
             if (defNode->kind == NodeKind::Function)
             {
@@ -1440,15 +1490,9 @@ void Parser::parseClassMemberList(
                 _ops.emplace_back(std::make_pair(currentAccess, defNode));
             }
         }
-        else if (subType == "friend_declaration")
+        else if (childType == "friend_declaration")
         {
-            _friends.emplace_back(std::make_pair(currentAccess, parseFriend(subChild)));
-        }
-        else if (subType == "struct_specifier" || subType == "class_specifier" ||
-                 subType == "union_specifier" || subType == "enum_specifier")
-        {
-            auto nested = dispatch(subChild);
-            _nestedTypes.emplace_back(std::make_pair(currentAccess, nested));
+            _friends.emplace_back(std::make_pair(currentAccess, parseFriend(child)));
         }
     }
 }
