@@ -221,7 +221,7 @@ TEST_F(ParserTest, ParseFreeFunction)
 
 TEST_F(ParserTest, ParseFunctionWithParameters)
 {
-    auto result = parseSingle("int add(int a, int b);");
+    auto result = parseSingle("int add(int a, int* b, int& c);");
     ASSERT_NE(result, nullptr);
     ASSERT_EQ(result->children.size(), 1);
 
@@ -229,14 +229,25 @@ TEST_F(ParserTest, ParseFunctionWithParameters)
     ASSERT_NE(fn, nullptr);
     EXPECT_EQ(fn->name, "add");
     EXPECT_EQ(fn->returnSignature.baseType, "int");
-    ASSERT_EQ(fn->parameters.size(), 2);
+    ASSERT_EQ(fn->parameters.size(), 3);
+
     EXPECT_EQ(fn->parameters[0].name, "a");
+    EXPECT_EQ(fn->parameters[0].typeSignature.baseType, "int");
+    EXPECT_FALSE(fn->parameters[0].typeSignature.isPointer);
+
     EXPECT_EQ(fn->parameters[1].name, "b");
+    EXPECT_EQ(fn->parameters[1].typeSignature.baseType, "int");
+    EXPECT_TRUE(fn->parameters[1].typeSignature.isPointer);
+
+    EXPECT_EQ(fn->parameters[2].name, "c");
+    EXPECT_EQ(fn->parameters[2].typeSignature.baseType, "int");
+    EXPECT_FALSE(fn->parameters[2].typeSignature.isPointer);
+    EXPECT_TRUE(fn->parameters[2].typeSignature.isLValueRef);
 }
 
 TEST_F(ParserTest, ParseFunctionWithDefaultParameters)
 {
-    auto result = parseSingle("void foo(int a = 10, double b = 3.14);");
+    auto result = parseSingle("void foo(int* a = nullptr, double&& b = 3.14);");
     ASSERT_NE(result, nullptr);
     ASSERT_EQ(result->children.size(), 1);
 
@@ -244,7 +255,15 @@ TEST_F(ParserTest, ParseFunctionWithDefaultParameters)
     ASSERT_NE(fn, nullptr);
     EXPECT_EQ(fn->name, "foo");
     ASSERT_EQ(fn->parameters.size(), 2);
-    EXPECT_EQ(fn->parameters[0].defaultValue, "10");
+
+    EXPECT_EQ(fn->parameters[0].name, "a");
+    EXPECT_EQ(fn->parameters[0].typeSignature.baseType, "int");
+    EXPECT_TRUE(fn->parameters[0].typeSignature.isPointer);
+    EXPECT_EQ(fn->parameters[0].defaultValue, "nullptr");
+
+    EXPECT_EQ(fn->parameters[1].name, "b");
+    EXPECT_EQ(fn->parameters[1].typeSignature.baseType, "double");
+    EXPECT_TRUE(fn->parameters[1].typeSignature.isRValueRef);
     EXPECT_EQ(fn->parameters[1].defaultValue, "3.14");
 }
 

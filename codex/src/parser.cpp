@@ -1177,13 +1177,31 @@ std::vector<FunctionParameter> Parser::parseFunctionParametersList(const TSNode&
 
         for (uint32_t j = 0; j < subCount; ++j)
         {
-            TSNode sub = ts_node_child(child, j);
-            std::string subType = ts_node_type(sub);
-            auto text = getNodeText(sub, m_source->content);
+            TSNode subChild = ts_node_child(child, j);
+            std::string subType = ts_node_type(subChild);
 
-            if (subType == std::string("identifier"))
+            if (subType == "reference_declarator" || subType == "pointer_declarator")
             {
-                gp.name = getNodeText(sub, m_source->content);
+                const uint32_t subChildCount = ts_node_child_count(subChild);
+
+                for (uint32_t j = 0; j < subChildCount; ++j)
+                {
+                    TSNode subSubChild = ts_node_child(subChild, j);
+                    std::string subSubType = ts_node_type(subSubChild);
+
+                    if (subSubType == "identifier")
+                    {
+                        gp.name = getNodeText(subSubChild, m_source->content);
+                    }
+                    else if (subSubType == "number_literal" || subSubType == "string_literal")
+                    {
+                        gp.defaultValue = getNodeText(subSubChild, m_source->content);
+                    }
+                }
+            }
+            else if (subType == std::string("identifier"))
+            {
+                gp.name = getNodeText(subChild, m_source->content);
             }
             else if (subType == std::string("=") || subType == std::string("default_value"))
             {
@@ -1516,7 +1534,7 @@ void Parser::parseInitDeclarator(const TSNode& _node, std::shared_ptr<VariableNo
         }
         else if (type == "number_literal" || type == "string_literal")
         {
-            _varNode->initialValue = getNodeText(child, m_source->content);
+            _varNode->defaultValue = getNodeText(child, m_source->content);
         }
         else if (type == "reference_declarator" || type == "pointer_declarator")
         {
@@ -1533,7 +1551,7 @@ void Parser::parseInitDeclarator(const TSNode& _node, std::shared_ptr<VariableNo
                 }
                 else if (subType == "number_literal" || subType == "string_literal")
                 {
-                    _varNode->initialValue = getNodeText(subChild, m_source->content);
+                    _varNode->defaultValue = getNodeText(subChild, m_source->content);
                 }
             }
         }

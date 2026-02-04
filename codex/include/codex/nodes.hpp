@@ -726,7 +726,7 @@ struct VariableNode final : Node
 
     TypeSignature typeSignature;
     std::string name;
-    std::string initialValue;
+    std::string defaultValue;
 
     explicit VariableNode(int _startLine, int _startColumn, int _endLine, int _endColumn)
         : Node(NodeKind::Variable, _startLine, _startColumn, _endLine, _endColumn) {};
@@ -757,9 +757,9 @@ struct VariableNode final : Node
 
         result += "\n" + indent + "  Type: " + typeSignature.toString();
 
-        if (!initialValue.empty())
+        if (!defaultValue.empty())
         {
-            result += "\n" + indent + "  Initial Value: " + initialValue;
+            result += "\n" + indent + "  Initial Value: " + defaultValue;
         }
 
         if (comment)
