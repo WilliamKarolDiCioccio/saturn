@@ -13,5 +13,12 @@ target_link_libraries(
 add_test(NAME codex_tests COMMAND codex_tests)
 
 include("${CMAKE_SOURCE_DIR}/cmake/ConfigureForBuildType.cmake")
+include("${CMAKE_SOURCE_DIR}/cmake/ConfigureTestCoverageGeneration.cmake")
 
 configure_for_build_type(codex_tests)
+enable_test_coverage(codex_tests)
+
+# Coverage report for codex library
+add_coverage_report(codex_coverage
+  TARGETS codex_tests
+  EXCLUDE "*/codex/tests/*")

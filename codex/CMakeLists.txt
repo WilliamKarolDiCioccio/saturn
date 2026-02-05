@@ -33,5 +33,7 @@ target_precompile_headers(
   <tree_sitter/api.h>)
 
 include("${CMAKE_SOURCE_DIR}/cmake/ConfigureForBuildType.cmake")
+include("${CMAKE_SOURCE_DIR}/cmake/ConfigureTestCoverageGeneration.cmake")
 
 configure_for_build_type(codex)
+enable_test_coverage(codex)
