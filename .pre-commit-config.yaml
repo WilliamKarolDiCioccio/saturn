@@ -8,6 +8,14 @@ repos:
       - id: check-yaml
       - id: check-added-large-files
 
+  # Codespell for spellchecking commit messages
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.1
+    hooks:
+      - id: codespell
+        name: spellcheck commit message
+        stages: [commit-msg]
+
   # Ruff for Python linting and formatting
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.14.10
