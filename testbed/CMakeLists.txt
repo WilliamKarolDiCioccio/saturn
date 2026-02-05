@@ -39,7 +39,7 @@ include("${CMAKE_SOURCE_DIR}/cmake/ConfigureForBuildType.cmake")
 
 configure_for_build_type(testbed)
 
-include("${CMAKE_SOURCE_DIR}/cmake/ConfigSIMD.cmake")
+include("${CMAKE_SOURCE_DIR}/cmake/ConfigureSIMD.cmake")
 
 # ----------------------------------------
 # Shader Compilation Setup

@@ -243,7 +243,7 @@ include("${CMAKE_SOURCE_DIR}/cmake/ConfigureForBuildType.cmake")
 
 configure_for_build_type(saturn)
 
-include("${CMAKE_SOURCE_DIR}/cmake/ConfigSIMD.cmake")
+include("${CMAKE_SOURCE_DIR}/cmake/ConfigureSIMD.cmake")
 
 # ----------------------------------------
 # Post-Build Step
