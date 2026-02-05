@@ -96,6 +96,7 @@ auto toConstructorNode = [](const std::shared_ptr<FunctionNode>& func,
     ctor->isDefaulted = false;
     ctor->isDeleted = false;
 
+    ctor->attributes = func->attributes;
     ctor->parameters = func->parameters;
     ctor->templateDecl = func->templateDecl;
     ctor->templateArgs = func->templateArgs;
@@ -144,6 +145,7 @@ auto toDestructorNode =
     dtor->isDefaulted = false;
     dtor->isDeleted = false;
 
+    dtor->attributes = func->attributes;
     dtor->comment = func->comment;
     return dtor;
 };
@@ -161,6 +163,12 @@ auto determineKind = [](const TSNode& _node) -> NodeKind
     }
 
     return NodeKind::Function;
+};
+
+auto isDeclaratorWrapper = [](const std::string& _nodeType) -> bool
+{
+    return _nodeType == "reference_declarator" || _nodeType == "pointer_declarator" ||
+           _nodeType == "array_declarator";
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////
@@ -258,6 +266,8 @@ std::shared_ptr<Node> Parser::dispatch(TSNode _node)
     {
         return parseConcept(_node);
     }
+    // These also need to be parsed inside parseAmbiguousDeclaration for attributed types as they
+    // will be wrapped in a "declaration" node
     else if (type == "union_specifier")
     {
         return parseUnion(_node);
@@ -277,34 +287,31 @@ std::shared_ptr<Node> Parser::dispatch(TSNode _node)
 std::shared_ptr<Node> Parser::parseAmbiguousDeclaration(const TSNode& _node)
 {
     NodeKind kind = NodeKind::Variable;
-
-    uint32_t childCount = ts_node_child_count(_node);
+    const uint32_t childCount = ts_node_child_count(_node);
 
     for (uint32_t i = 0; i < childCount; ++i)
     {
         TSNode child = ts_node_child(_node, i);
         std::string childType = ts_node_type(child);
 
+        // Check if this is a direct function declarator
         if (childType == "function_declarator")
         {
             kind = determineKind(child);
         }
-        else if (childType == "reference_declarator" || childType == "pointer_declarator" ||
-                 childType == "array_declarator")
+        // Check if function declarator is nested within pointer/reference/array declarator
+        else if (isDeclaratorWrapper(childType))
         {
-            uint32_t subChildCount = ts_node_child_count(child);
-
-            for (uint32_t j = 0; j < subChildCount; ++j)
+            if (tryFindNestedFunctionDeclarator(child, kind))
             {
-                TSNode subChild = ts_node_child(child, j);
-                std::string subChildType = ts_node_type(subChild);
-
-                if (subChildType == "function_declarator")
-                {
-                    kind = determineKind(subChild);
-                    break;
-                }
+                // kind has been updated by reference
             }
+        }
+        // Handle attributed declarations (struct/class/union with attributes)
+        else if (childType == "attribute_declaration")
+        {
+            std::shared_ptr<Node> attributedNode = parseAttributedTypeDeclaration(child);
+            if (attributedNode) return attributedNode;
         }
     }
 
@@ -314,9 +321,65 @@ std::shared_ptr<Node> Parser::parseAmbiguousDeclaration(const TSNode& _node)
             return parseFunction(_node);
         case NodeKind::Operator:
             return parseOperator(_node);
-        default:
+        case NodeKind::Variable:
             return parseVariable(_node);
+        default:
+            return std::make_shared<Node>((NodeKind)0, 0, 0, 0, 0);
     }
+}
+
+// Helper: Search for nested function declarator and update kind if found
+bool Parser::tryFindNestedFunctionDeclarator(const TSNode& declaratorNode, NodeKind& outKind)
+{
+    const uint32_t subChildCount = ts_node_child_count(declaratorNode);
+    for (uint32_t j = 0; j < subChildCount; ++j)
+    {
+        TSNode subChild = ts_node_child(declaratorNode, j);
+        if (ts_node_type(subChild) == std::string("function_declarator"))
+        {
+            outKind = determineKind(subChild);
+            return true;
+        }
+    }
+    return false;
+}
+
+// Helper: Parse attributed type declarations (struct/class/union with attributes)
+std::shared_ptr<Node> Parser::parseAttributedTypeDeclaration(TSNode attributeNode)
+{
+    // Collect all consecutive attribute declarations
+    std::vector<std::string> attributes;
+    TSNode currNode = attributeNode;
+    std::string currNodeType = ts_node_type(currNode);
+
+    while (currNodeType == "attribute_declaration")
+    {
+        attributes.push_back(getNodeText(currNode, m_source->content));
+        currNode = ts_node_next_sibling(currNode);
+        currNodeType = ts_node_type(currNode);
+    }
+
+    // Parse the type declaration and attach attributes
+    if (currNodeType == "union_specifier")
+    {
+        std::shared_ptr<UnionNode> unionNode = parseUnion(currNode);
+        unionNode->attributes = std::move(attributes);
+        return unionNode;
+    }
+    else if (currNodeType == "struct_specifier")
+    {
+        std::shared_ptr<StructNode> structNode = parseStruct(currNode);
+        structNode->attributes = std::move(attributes);
+        return structNode;
+    }
+    else if (currNodeType == "class_specifier")
+    {
+        std::shared_ptr<ClassNode> classNode = parseClass(currNode);
+        classNode->attributes = std::move(attributes);
+        return classNode;
+    }
+
+    return nullptr;
 }
 
 std::shared_ptr<Node> Parser::parseAmbiguousDefinition(const TSNode& _node)
@@ -864,7 +927,11 @@ std::shared_ptr<UnionNode> Parser::parseUnion(const TSNode& _node)
         TSNode child = ts_node_child(_node, i);
         std::string childType = ts_node_type(child);
 
-        if (childType == "type_identifier")
+        if (childType == "attribute_declaration")
+        {
+            unionNode->attributes.emplace_back(getNodeText(child, m_source->content));
+        }
+        else if (childType == "type_identifier")
         {
             unionNode->name = getNodeText(child, m_source->content);
         }
@@ -924,7 +991,11 @@ std::shared_ptr<StructNode> Parser::parseStruct(const TSNode& _node)
         TSNode child = ts_node_child(_node, i);
         std::string childType = ts_node_type(child);
 
-        if (childType == "type_identifier")
+        if (childType == "attribute_declaration")
+        {
+            structNode->attributes.emplace_back(getNodeText(child, m_source->content));
+        }
+        else if (childType == "type_identifier")
         {
             structNode->name = getNodeText(child, m_source->content);
         }
@@ -988,7 +1059,11 @@ std::shared_ptr<ClassNode> Parser::parseClass(const TSNode& _node)
         TSNode child = ts_node_child(_node, i);
         std::string childType = ts_node_type(child);
 
-        if (childType == "type_identifier")
+        if (childType == "attribute_declaration")
+        {
+            classNode->attributes.emplace_back(getNodeText(child, m_source->content));
+        }
+        else if (childType == "type_identifier")
         {
             classNode->name = getNodeText(child, m_source->content);
         }
@@ -1050,7 +1125,11 @@ std::shared_ptr<VariableNode> Parser::parseVariable(const TSNode& _node)
         TSNode child = ts_node_child(_node, i);
         std::string childType = ts_node_type(child);
 
-        if (childType == "identifier" || childType == "field_identifier")
+        if (childType == "attribute_declaration")
+        {
+            varNode->attributes.emplace_back(getNodeText(child, m_source->content));
+        }
+        else if (childType == "identifier" || childType == "field_identifier")
         {
             varNode->name = getNodeText(child, m_source->content);
         }
@@ -1232,7 +1311,11 @@ std::shared_ptr<OperatorNode> Parser::parseOperator(const TSNode& _node)
         TSNode child = ts_node_child(_node, i);
         std::string type = ts_node_type(child);
 
-        if (type == "function_declarator")
+        if (type == "attribute_declaration")
+        {
+            opNode->attributes.emplace_back(getNodeText(child, m_source->content));
+        }
+        else if (type == "function_declarator")
         {
             parseOperatorDeclarator(child, opNode);
         }
@@ -1823,9 +1906,6 @@ std::vector<TemplateParameter> Parser::parseTemplateParameterList(const TSNode& 
         else if (paramType == "template_template_parameter_declaration")
         {
             // e.g. "template<typename> class C"
-            // AST: template_template_parameter_declaration
-            //        template_parameter_list (inner params)
-            //        type_parameter_declaration (keyword + name)
             tp.paramKind = TemplateParameterKind::TemplateTemplate;
 
             for (uint32_t k = 0; k < ts_node_child_count(param); ++k)

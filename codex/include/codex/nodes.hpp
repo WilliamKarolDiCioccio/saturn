@@ -724,6 +724,7 @@ struct VariableNode final : Node
     bool isExtern = false;
     bool isConstinit = false;
 
+    std::vector<std::string> attributes;
     TypeSignature typeSignature;
     std::string name;
     std::string defaultValue;
@@ -760,6 +761,16 @@ struct VariableNode final : Node
         if (!defaultValue.empty())
         {
             result += "\n" + indent + "  Initial Value: " + defaultValue;
+        }
+
+        if (!attributes.empty())
+        {
+            result += "\n" + indent + "  Attributes: ";
+            for (size_t i = 0; i < attributes.size(); ++i)
+            {
+                if (i > 0) result += ", ";
+                result += attributes[i];
+            }
         }
 
         if (comment)
@@ -915,6 +926,7 @@ struct ConstructorNode final : Node
     bool isCopyConstructor = false;
     bool isMoveConstructor = false;
 
+    std::vector<std::string> attributes;
     std::string name;
     std::vector<FunctionParameter> parameters;
     std::shared_ptr<Node> templateDecl;
@@ -958,6 +970,16 @@ struct ConstructorNode final : Node
             }
         }
 
+        if (!attributes.empty())
+        {
+            result += "\n" + indent + "  Attributes: ";
+            for (size_t i = 0; i < attributes.size(); ++i)
+            {
+                if (i > 0) result += ", ";
+                result += attributes[i];
+            }
+        }
+
         if (templateDecl)
         {
             result += "\n" + templateDecl->toString(_depth + 1);
@@ -992,6 +1014,7 @@ struct DestructorNode final : Node
     bool isInline = false;
     bool isConstexpr = false;
 
+    std::vector<std::string> attributes;
     std::string name;
 
     explicit DestructorNode(int _startLine, int _startColumn, int _endLine, int _endColumn)
@@ -1022,6 +1045,16 @@ struct DestructorNode final : Node
             result += "]";
         }
 
+        if (!attributes.empty())
+        {
+            result += "\n" + indent + "  Attributes: ";
+            for (size_t i = 0; i < attributes.size(); ++i)
+            {
+                if (i > 0) result += ", ";
+                result += attributes[i];
+            }
+        }
+
         if (comment)
         {
             result += "\n" + comment->toString(_depth + 1);
@@ -1044,6 +1077,7 @@ struct OperatorNode final : Node
     bool isConstexpr = false;
     bool isExplicit = false;
 
+    std::vector<std::string> attributes;
     std::string operatorSymbol;
     TypeSignature returnSignature;
     std::vector<FunctionParameter> parameters;
@@ -1092,6 +1126,16 @@ struct OperatorNode final : Node
             }
         }
 
+        if (!attributes.empty())
+        {
+            result += "\n" + indent + "  Attributes: ";
+            for (size_t i = 0; i < attributes.size(); ++i)
+            {
+                if (i > 0) result += ", ";
+                result += attributes[i];
+            }
+        }
+
         if (templateDecl)
         {
             result += "\n" + templateDecl->toString(_depth + 1);
@@ -1120,6 +1164,7 @@ struct UnionNode final : Node
 {
     bool isAnonymous = false;
 
+    std::vector<std::string> attributes;
     std::string name;
     std::shared_ptr<Node> templateDecl;
     std::vector<TemplateArgument> templateArgs;
@@ -1143,6 +1188,16 @@ struct UnionNode final : Node
         if (isAnonymous)
         {
             result += " [anonymous]";
+        }
+
+        if (!attributes.empty())
+        {
+            result += "\n" + indent + "  Attributes: ";
+            for (size_t i = 0; i < attributes.size(); ++i)
+            {
+                if (i > 0) result += ", ";
+                result += attributes[i];
+            }
         }
 
         if (templateDecl)
@@ -1258,6 +1313,7 @@ struct StructNode final : Node
 {
     bool isFinal = false;
 
+    std::vector<std::string> attributes;
     std::string name;
     std::shared_ptr<Node> templateDecl;
     std::vector<TemplateArgument> templateArgs;
@@ -1284,6 +1340,16 @@ struct StructNode final : Node
         if (isFinal)
         {
             result += " [final]";
+        }
+
+        if (!attributes.empty())
+        {
+            result += "\n" + indent + "  Attributes: ";
+            for (size_t i = 0; i < attributes.size(); ++i)
+            {
+                if (i > 0) result += ", ";
+                result += attributes[i];
+            }
         }
 
         if (!baseClasses.empty())
@@ -1407,6 +1473,7 @@ struct ClassNode final : Node
 {
     bool isFinal = false;
 
+    std::vector<std::string> attributes;
     std::string name;
     std::shared_ptr<Node> templateDecl;
     std::vector<TemplateArgument> templateArgs;
@@ -1433,6 +1500,16 @@ struct ClassNode final : Node
         if (isFinal)
         {
             result += " [final]";
+        }
+
+        if (!attributes.empty())
+        {
+            result += "\n" + indent + "  Attributes: ";
+            for (size_t i = 0; i < attributes.size(); ++i)
+            {
+                if (i > 0) result += ", ";
+                result += attributes[i];
+            }
         }
 
         if (!baseClasses.empty())

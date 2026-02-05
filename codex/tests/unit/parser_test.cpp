@@ -1121,6 +1121,176 @@ TEST_F(ParserTest, ParseNestedTemplateDefault)
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////
+// Attribute Tests
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+TEST_F(ParserTest, ParseFunctionWithNodiscardAttribute)
+{
+    auto result = parseSingle("[[nodiscard]] int getValue();");
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto fn = std::dynamic_pointer_cast<FunctionNode>(result->children[0]);
+    ASSERT_NE(fn, nullptr);
+    EXPECT_EQ(fn->name, "getValue");
+    ASSERT_EQ(fn->attributes.size(), 1);
+    EXPECT_EQ(fn->attributes[0], "[[nodiscard]]");
+}
+
+TEST_F(ParserTest, ParseFunctionWithMultipleAttributes)
+{
+    auto result = parseSingle("[[nodiscard]] [[deprecated]] int getValue();");
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto fn = std::dynamic_pointer_cast<FunctionNode>(result->children[0]);
+    ASSERT_NE(fn, nullptr);
+    ASSERT_EQ(fn->attributes.size(), 2);
+    EXPECT_EQ(fn->attributes[0], "[[nodiscard]]");
+    EXPECT_EQ(fn->attributes[1], "[[deprecated]]");
+}
+
+TEST_F(ParserTest, ParseClassWithMultipleAttributes)
+{
+    auto result = parseSingle("[[deprecated]] [[nodiscard]] class Foo {};");
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto cls = std::dynamic_pointer_cast<ClassNode>(result->children[0]);
+    ASSERT_NE(cls, nullptr);
+    ASSERT_EQ(cls->attributes.size(), 2);
+    EXPECT_EQ(cls->attributes[0], "[[deprecated]]");
+    EXPECT_EQ(cls->attributes[1], "[[nodiscard]]");
+}
+
+TEST_F(ParserTest, ParseConstructorWithAttribute)
+{
+    auto result = parseSingle(R"(
+struct Foo {
+    [[nodiscard]] Foo(int x);
+};
+)");
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto st = std::dynamic_pointer_cast<StructNode>(result->children[0]);
+    ASSERT_NE(st, nullptr);
+    ASSERT_EQ(st->constructors.size(), 1);
+
+    auto ctor = std::dynamic_pointer_cast<ConstructorNode>(st->constructors[0]);
+    ASSERT_NE(ctor, nullptr);
+    ASSERT_EQ(ctor->attributes.size(), 1);
+    EXPECT_EQ(ctor->attributes[0], "[[nodiscard]]");
+}
+
+TEST_F(ParserTest, ParseDestructorWithAttribute)
+{
+    auto result = parseSingle(R"(
+class Foo {
+public:
+    [[deprecated("use release() instead")]] ~Foo();
+};
+)");
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto cls = std::dynamic_pointer_cast<ClassNode>(result->children[0]);
+    ASSERT_NE(cls, nullptr);
+    ASSERT_EQ(cls->destructors.size(), 1);
+
+    auto dtor = std::dynamic_pointer_cast<DestructorNode>(cls->destructors[0].second);
+    ASSERT_NE(dtor, nullptr);
+    ASSERT_EQ(dtor->attributes.size(), 1);
+    EXPECT_TRUE(dtor->attributes[0].find("[[deprecated") != std::string::npos);
+}
+
+TEST_F(ParserTest, ParseOperatorWithNodiscardAttribute)
+{
+    auto result = parseSingle(R"(
+struct Foo {
+    [[nodiscard]] bool operator==(const Foo& other) const;
+};
+)");
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto st = std::dynamic_pointer_cast<StructNode>(result->children[0]);
+    ASSERT_NE(st, nullptr);
+    ASSERT_EQ(st->operators.size(), 1);
+
+    auto op = std::dynamic_pointer_cast<OperatorNode>(st->operators[0]);
+    ASSERT_NE(op, nullptr);
+    ASSERT_EQ(op->attributes.size(), 1);
+    EXPECT_EQ(op->attributes[0], "[[nodiscard]]");
+}
+
+TEST_F(ParserTest, ParseVariableWithMaybeUnusedAttribute)
+{
+    auto result = parseSingle("[[maybe_unused]] int debugFlag;");
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto var = std::dynamic_pointer_cast<VariableNode>(result->children[0]);
+    ASSERT_NE(var, nullptr);
+    EXPECT_EQ(var->name, "debugFlag");
+    ASSERT_EQ(var->attributes.size(), 1);
+    EXPECT_EQ(var->attributes[0], "[[maybe_unused]]");
+}
+
+TEST_F(ParserTest, ParseClassWithDeprecatedAttribute)
+{
+    auto result = parseSingle("[[deprecated]] class OldWidget {};");
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto cls = std::dynamic_pointer_cast<ClassNode>(result->children[0]);
+    ASSERT_NE(cls, nullptr);
+    EXPECT_EQ(cls->name, "OldWidget");
+    ASSERT_EQ(cls->attributes.size(), 1);
+    EXPECT_EQ(cls->attributes[0], "[[deprecated]]");
+}
+
+TEST_F(ParserTest, ParseStructWithCustomAttribute)
+{
+    auto result = parseSingle("[[codex::export]] struct APIData {};");
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto st = std::dynamic_pointer_cast<StructNode>(result->children[0]);
+    ASSERT_NE(st, nullptr);
+    EXPECT_EQ(st->name, "APIData");
+    ASSERT_EQ(st->attributes.size(), 1);
+    EXPECT_EQ(st->attributes[0], "[[codex::export]]");
+}
+
+TEST_F(ParserTest, ParseAttributeWithArgument)
+{
+    auto result = parseSingle(R"([[deprecated("use NewFunc instead")]] void oldFunc();)");
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto fn = std::dynamic_pointer_cast<FunctionNode>(result->children[0]);
+    ASSERT_NE(fn, nullptr);
+    EXPECT_EQ(fn->name, "oldFunc");
+    ASSERT_EQ(fn->attributes.size(), 1);
+    EXPECT_TRUE(fn->attributes[0].find("deprecated") != std::string::npos);
+    EXPECT_TRUE(fn->attributes[0].find("use NewFunc instead") != std::string::npos);
+}
+
+TEST_F(ParserTest, ParseUnionWithAttribute)
+{
+    auto result = parseSingle("[[deprecated]] union OldData { int i; float f; };");
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto un = std::dynamic_pointer_cast<UnionNode>(result->children[0]);
+    ASSERT_NE(un, nullptr);
+    EXPECT_EQ(un->name, "OldData");
+    ASSERT_EQ(un->attributes.size(), 1);
+    EXPECT_EQ(un->attributes[0], "[[deprecated]]");
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////
 // Incomplete, Incorrect and Garbage Input Tests
 /////////////////////////////////////////////////////////////////////////////////////////////
 
