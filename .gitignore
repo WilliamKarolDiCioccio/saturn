@@ -82,3 +82,8 @@ local.properties
 
 # Claude Code local settings
 .claude/settings.local.json
+
+# Coverage reports
+CoverageReport**/
+coverage/
+*.lcov
