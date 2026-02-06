@@ -14,8 +14,10 @@ add_test(NAME codex_tests COMMAND codex_tests)
 
 include("${CMAKE_SOURCE_DIR}/cmake/ConfigureForBuildType.cmake")
 include("${CMAKE_SOURCE_DIR}/cmake/ConfigureTestCoverageGeneration.cmake")
+include("${CMAKE_SOURCE_DIR}/cmake/ConfigureRuntimeDLLs.cmake")
 
 configure_for_build_type(codex_tests)
+configure_runtime_dlls(codex_tests)
 enable_test_coverage(codex_tests)
 
 # Coverage report for codex library

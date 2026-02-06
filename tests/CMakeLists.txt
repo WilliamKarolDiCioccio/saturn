@@ -6,14 +6,9 @@ target_link_libraries(cross_project_tests PRIVATE saturn GTest::gtest GTest::gte
 
 add_test(NAME cross_project_tests COMMAND test_projects_interaction)
 
-if(WIN32)
-  add_custom_command(
-    TARGET cross_project_tests
-    POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:cross_project_tests>
-            $<TARGET_FILE_DIR:cross_project_tests>
-    COMMAND_EXPAND_LISTS)
-endif()
+include("${CMAKE_SOURCE_DIR}/cmake/ConfigureRuntimeDLLs.cmake")
+
+configure_runtime_dlls(cross_project_tests)
 
 include ("${CMAKE_SOURCE_DIR}/cmake/ConfigureForBuildType.cmake")
 

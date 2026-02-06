@@ -232,8 +232,9 @@ else()
 
   find_path(COLORCONSOLE_INCLUDE_DIRS "colorconsole.hpp")
   target_include_directories(saturn PRIVATE ${COLORCONSOLE_INCLUDE_DIRS})
-  target_link_libraries(saturn PRIVATE glfw glfw3webgpu webgpu volk::volk
+  target_link_libraries(saturn PRIVATE glfw glfw3webgpu volk::volk
                                        GPUOpen::VulkanMemoryAllocator)
+  target_link_libraries(saturn PUBLIC webgpu)
 endif()
 
 # ----------------------------------------
