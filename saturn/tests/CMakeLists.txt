@@ -14,14 +14,9 @@ target_link_libraries(
 
 add_test(NAME saturn_tests COMMAND test_saturn)
 
-if(WIN32)
-  add_custom_command(
-    TARGET saturn_tests
-    POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:saturn_tests>
-            $<TARGET_FILE_DIR:saturn_tests>
-    COMMAND_EXPAND_LISTS)
-endif()
+include("${CMAKE_SOURCE_DIR}/cmake/ConfigureRuntimeDLLs.cmake")
+
+configure_runtime_dlls(saturn_tests)
 
 include("${CMAKE_SOURCE_DIR}/cmake/ConfigureForBuildType.cmake")
 

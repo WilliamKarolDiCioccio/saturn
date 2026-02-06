@@ -104,11 +104,6 @@ endif()
 # Copy Runtime DLLs (for Windows)
 # ----------------------------------------
 
-if(WIN32)
-  add_custom_command(
-    TARGET testbed
-    POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:testbed>
-            $<TARGET_FILE_DIR:testbed>
-    COMMAND_EXPAND_LISTS)
-endif()
+include("${CMAKE_SOURCE_DIR}/cmake/ConfigureRuntimeDLLs.cmake")
+
+configure_runtime_dlls(testbed)
