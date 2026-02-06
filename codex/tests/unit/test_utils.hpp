@@ -2,6 +2,8 @@
 #include <codex/nodes.hpp>
 #include <codex/parser.hpp>
 
+#include <functional>
+
 namespace codex::tests
 {
 
@@ -21,20 +23,19 @@ inline std::shared_ptr<Source> makeSourceWithPath(const std::string& content,
 }
 
 // Helper to parse a single source string
-inline std::shared_ptr<SourceNode> parseSingle(const std::string& _content)
+inline std::shared_ptr<SourceNode> parseSingle(const std::string& _content, Parser& _parser)
 {
     auto src = makeSource(_content);
-    Parser parser;
-    auto result = parser.parse(src);
-    return result;
+    _parser.reset(); // Ensure parser is reset before parsing new source
+    return _parser.parse(src);
 }
 
 inline std::shared_ptr<SourceNode> parseWithPath(const std::string& content,
-                                                 const std::string& path)
+                                                 const std::string& path, Parser& _parser)
 {
     auto src = makeSourceWithPath(content, path);
-    Parser parser;
-    return parser.parse(src);
+    _parser.reset(); // Ensure parser is reset before parsing new source
+    return _parser.parse(src);
 }
 
 inline std::function<void(TSNode, int)> dumpAST(TSNode _node, int _depth, const std::string& _code)
@@ -51,6 +52,6 @@ inline std::function<void(TSNode, int)> dumpAST(TSNode _node, int _depth, const 
 
     uint32_t count = ts_node_child_count(_node);
     for (uint32_t i = 0; i < count; ++i) dumpAST(ts_node_child(_node, i), _depth + 1, _code);
-};
+}
 
 } // namespace codex::tests

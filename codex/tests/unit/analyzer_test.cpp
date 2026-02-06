@@ -14,6 +14,13 @@ namespace codex::tests
 
 class IncludeGraphTest : public ::testing::Test
 {
+   protected:
+    Parser parser;
+
+    std::shared_ptr<SourceNode> parseWithPath(const std::string& content, const std::string& path)
+    {
+        return codex::tests::parseWithPath(content, path, parser);
+    }
 };
 
 TEST_F(IncludeGraphTest, AIncludesB_TopoOrderBThenA)
@@ -89,11 +96,12 @@ TEST_F(IncludeGraphTest, SystemIncludesIgnored)
 class AnalyzerIndexingTest : public ::testing::Test
 {
    protected:
+    Parser parser;
     Analyzer analyzer;
 
     AnalysisResult analyzeSingle(const std::string& code, const std::string& path = "test.hpp")
     {
-        auto node = parseWithPath(code, path);
+        auto node = parseWithPath(code, path, parser);
         return analyzer.analyze({node});
     }
 };
@@ -411,23 +419,26 @@ TEST_F(AnalyzerIndexingTest, FindByKind)
 class AnalyzerCrossRefTest : public ::testing::Test
 {
    protected:
+    Parser parser;
     Analyzer analyzer;
 
     AnalysisResult analyzeSingle(const std::string& code, const std::string& path = "test.hpp")
     {
-        auto node = parseWithPath(code, path);
+        auto node = parseWithPath(code, path, parser);
         return analyzer.analyze({node});
     }
 
     AnalysisResult analyzeMultiple(const std::vector<std::pair<std::string, std::string>>& files)
     {
         std::vector<std::shared_ptr<SourceNode>> nodes;
-        Parser parser;
+
         for (const auto& [code, path] : files)
         {
             auto src = makeSourceWithPath(code, path);
             nodes.push_back(parser.parse(src));
+            parser.reset(); // Reset parser state between files
         }
+
         return analyzer.analyze(nodes);
     }
 };
@@ -536,7 +547,13 @@ TEST_F(AnalyzerCrossRefTest, NamespaceBaseClass)
 class AnalyzerUsingNamespaceTest : public ::testing::Test
 {
    protected:
+    Parser parser;
     Analyzer analyzer;
+
+    std::shared_ptr<SourceNode> parseWithPath(const std::string& content, const std::string& path)
+    {
+        return codex::tests::parseWithPath(content, path, parser);
+    }
 };
 
 TEST_F(AnalyzerUsingNamespaceTest, UsingNamespaceResolvesType)
@@ -567,7 +584,19 @@ TEST_F(AnalyzerUsingNamespaceTest, UsingNamespaceResolvesType)
 // Misc / Edge Cases
 /////////////////////////////////////////////////////////////////////////////////////////////
 
-TEST(AnalyzerMisc, EmptyInput)
+class AnalyzerMisc : public ::testing::Test
+{
+   protected:
+    Parser parser;
+    Analyzer analyzer;
+
+    std::shared_ptr<SourceNode> parseWithPath(const std::string& content, const std::string& path)
+    {
+        return codex::tests::parseWithPath(content, path, parser);
+    }
+};
+
+TEST_F(AnalyzerMisc, EmptyInput)
 {
     Analyzer analyzer;
     auto result = analyzer.analyze({});
@@ -575,7 +604,7 @@ TEST(AnalyzerMisc, EmptyInput)
     EXPECT_TRUE(result.includeGraph.entries().empty());
 }
 
-TEST(AnalyzerMisc, SourceNodeLocation)
+TEST_F(AnalyzerMisc, SourceNodeLocation)
 {
     auto node = parseWithPath("struct Foo {};", "project/foo.hpp");
     Analyzer analyzer;
@@ -586,7 +615,7 @@ TEST(AnalyzerMisc, SourceNodeLocation)
     EXPECT_EQ(sym->location.filePath, std::filesystem::path("project/foo.hpp"));
 }
 
-TEST(AnalyzerMisc, ParentChildRelationship)
+TEST_F(AnalyzerMisc, ParentChildRelationship)
 {
     auto node = parseWithPath(R"(
         namespace ns {
@@ -621,7 +650,7 @@ TEST(AnalyzerMisc, ParentChildRelationship)
     EXPECT_TRUE(found);
 }
 
-TEST(AnalyzerMisc, SymbolIDInvalid)
+TEST_F(AnalyzerMisc, SymbolIDInvalid)
 {
     SymbolID id = SymbolID::invalid();
     EXPECT_EQ(id.value, 0u);

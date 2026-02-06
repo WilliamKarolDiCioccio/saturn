@@ -21,8 +21,12 @@ namespace codex::tests
 class ParserTest : public ::testing::Test
 {
    protected:
-    void SetUp() override {}
-    void TearDown() override {}
+    Parser parser;
+
+    std::shared_ptr<SourceNode> parseSingle(const std::string& _content)
+    {
+        return codex::tests::parseSingle(_content, parser);
+    }
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////
