@@ -1,4 +1,5 @@
 #include "mdx_generator.hpp"
+#include "comment_parser.hpp"
 #include "mdx_formatter.hpp"
 
 #include <iostream>
@@ -94,21 +95,55 @@ std::string MDXGenerator::getComment(const std::shared_ptr<codex::Node>& node) c
     return comment ? comment->text : "";
 }
 
+ParsedComment MDXGenerator::parseNodeComment(const std::shared_ptr<codex::Node>& node) const
+{
+    std::string raw = getComment(node);
+    if (raw.empty()) return {};
+    return CommentParser::parse(raw);
+}
+
+std::string MDXGenerator::formatSeeAlsoFromComment(const ParsedComment& parsed) const
+{
+    std::string result;
+    for (const auto& entry : parsed.seeAlso)
+    {
+        // URL
+        if (entry.starts_with("http://") || entry.starts_with("https://"))
+        {
+            result += "- [" + entry + "](" + entry + ")\n";
+            continue;
+        }
+
+        // Symbol lookup
+        std::string filename = m_linker.findFilename(entry);
+        if (!filename.empty())
+        {
+            result += "- [" + entry + "](/saturn/api_reference/" + filename + ")\n";
+            continue;
+        }
+
+        // Plain text
+        result += "- " + entry + "\n";
+    }
+    return result;
+}
+
 MDXFile MDXGenerator::generateClassDoc(const codex::Symbol& sym)
 {
     auto* classNode = dynamic_cast<codex::ClassNode*>(sym.node.get());
     if (!classNode) return {};
 
+    ParsedComment parsed = parseNodeComment(sym.node);
+
     MDXFile file;
     file.filename = CrossLinker::qualifiedToFilename(sym.qualifiedName);
     file.title = sym.name;
-    file.description = MDXFormatter::extractBrief(getComment(sym.node));
+    file.description = parsed.brief;
 
     std::ostringstream oss;
 
-    // Comment
-    std::string comment = MDXFormatter::formatComment(getComment(sym.node));
-    if (!comment.empty()) oss << comment << "\n\n";
+    std::string desc = !parsed.description.empty() ? parsed.description : parsed.brief;
+    if (!desc.empty()) oss << desc << "\n\n";
 
     // Source location
     oss << "*Defined in `" << MDXFormatter::formatSourceLocation(sym.location) << "`*\n\n";
@@ -117,7 +152,7 @@ MDXFile MDXGenerator::generateClassDoc(const codex::Symbol& sym)
     oss << generateInheritanceSection(sym);
 
     // Template
-    oss << generateTemplateSection(classNode->templateDecl);
+    oss << generateTemplateSection(classNode->templateDecl, parsed.tparams);
 
     // Constructors (public only)
     oss << generateConstructorsSection(classNode->constructors);
@@ -136,8 +171,11 @@ MDXFile MDXGenerator::generateClassDoc(const codex::Symbol& sym)
     oss << generateMemberVarsSection(classNode->memberVariables);
     oss << generateMemberVarsSection(classNode->staticMemberVariables);
 
+    // Notes
+    oss << MDXFormatter::formatNotesSection(parsed.notes);
+
     // See Also
-    oss << generateSeeAlsoSection(sym);
+    oss << generateSeeAlsoSection(sym, parsed);
 
     file.content = oss.str();
     return file;
@@ -148,16 +186,17 @@ MDXFile MDXGenerator::generateStructDoc(const codex::Symbol& sym)
     auto* structNode = dynamic_cast<codex::StructNode*>(sym.node.get());
     if (!structNode) return {};
 
+    ParsedComment parsed = parseNodeComment(sym.node);
+
     MDXFile file;
     file.filename = CrossLinker::qualifiedToFilename(sym.qualifiedName);
     file.title = sym.name;
-    file.description = MDXFormatter::extractBrief(getComment(sym.node));
+    file.description = parsed.brief;
 
     std::ostringstream oss;
 
-    // Comment
-    std::string comment = MDXFormatter::formatComment(getComment(sym.node));
-    if (!comment.empty()) oss << comment << "\n\n";
+    std::string desc = !parsed.description.empty() ? parsed.description : parsed.brief;
+    if (!desc.empty()) oss << desc << "\n\n";
 
     // Source location
     oss << "*Defined in `" << MDXFormatter::formatSourceLocation(sym.location) << "`*\n\n";
@@ -166,7 +205,7 @@ MDXFile MDXGenerator::generateStructDoc(const codex::Symbol& sym)
     oss << generateInheritanceSection(sym);
 
     // Template
-    oss << generateTemplateSection(structNode->templateDecl);
+    oss << generateTemplateSection(structNode->templateDecl, parsed.tparams);
 
     // Constructors
     oss << generateStructConstructorsSection(structNode->constructors);
@@ -185,8 +224,11 @@ MDXFile MDXGenerator::generateStructDoc(const codex::Symbol& sym)
     oss << generateStructMemberVarsSection(structNode->memberVariables);
     oss << generateStructMemberVarsSection(structNode->staticMemberVariables);
 
+    // Notes
+    oss << MDXFormatter::formatNotesSection(parsed.notes);
+
     // See Also
-    oss << generateSeeAlsoSection(sym);
+    oss << generateSeeAlsoSection(sym, parsed);
 
     file.content = oss.str();
     return file;
@@ -197,16 +239,17 @@ MDXFile MDXGenerator::generateEnumDoc(const codex::Symbol& sym)
     auto* enumNode = dynamic_cast<codex::EnumNode*>(sym.node.get());
     if (!enumNode) return {};
 
+    ParsedComment parsed = parseNodeComment(sym.node);
+
     MDXFile file;
     file.filename = CrossLinker::qualifiedToFilename(sym.qualifiedName);
     file.title = sym.name;
-    file.description = MDXFormatter::extractBrief(getComment(sym.node));
+    file.description = parsed.brief;
 
     std::ostringstream oss;
 
-    // Comment
-    std::string comment = MDXFormatter::formatComment(getComment(sym.node));
-    if (!comment.empty()) oss << comment << "\n\n";
+    std::string desc = !parsed.description.empty() ? parsed.description : parsed.brief;
+    if (!desc.empty()) oss << desc << "\n\n";
 
     // Source location
     oss << "*Defined in `" << MDXFormatter::formatSourceLocation(sym.location) << "`*\n\n";
@@ -234,6 +277,12 @@ MDXFile MDXGenerator::generateEnumDoc(const codex::Symbol& sym)
         oss << "\n";
     }
 
+    // Notes
+    oss << MDXFormatter::formatNotesSection(parsed.notes);
+
+    // See Also
+    oss << generateSeeAlsoSection(sym, parsed);
+
     file.content = oss.str();
     return file;
 }
@@ -243,16 +292,17 @@ MDXFile MDXGenerator::generateFunctionDoc(const codex::Symbol& sym)
     auto* fnNode = dynamic_cast<codex::FunctionNode*>(sym.node.get());
     if (!fnNode) return {};
 
+    ParsedComment parsed = parseNodeComment(sym.node);
+
     MDXFile file;
     file.filename = CrossLinker::qualifiedToFilename(sym.qualifiedName);
     file.title = sym.name;
-    file.description = MDXFormatter::extractBrief(getComment(sym.node));
+    file.description = parsed.brief;
 
     std::ostringstream oss;
 
-    // Comment
-    std::string comment = MDXFormatter::formatComment(getComment(sym.node));
-    if (!comment.empty()) oss << comment << "\n\n";
+    std::string desc = !parsed.description.empty() ? parsed.description : parsed.brief;
+    if (!desc.empty()) oss << desc << "\n\n";
 
     // Source location
     oss << "*Defined in `" << MDXFormatter::formatSourceLocation(sym.location) << "`*\n\n";
@@ -264,13 +314,13 @@ MDXFile MDXGenerator::generateFunctionDoc(const codex::Symbol& sym)
     oss << "```\n\n";
 
     // Template
-    oss << generateTemplateSection(fnNode->templateDecl);
+    oss << generateTemplateSection(fnNode->templateDecl, parsed.tparams);
 
     // Parameters
     if (!fnNode->parameters.empty())
     {
         oss << "## Parameters\n\n";
-        oss << MDXFormatter::formatParametersTable(fnNode->parameters, m_linker);
+        oss << MDXFormatter::formatParametersTable(fnNode->parameters, m_linker, parsed.params);
         oss << "\n";
     }
 
@@ -278,8 +328,16 @@ MDXFile MDXGenerator::generateFunctionDoc(const codex::Symbol& sym)
     if (!fnNode->returnSignature.baseType.empty() && fnNode->returnSignature.baseType != "void")
     {
         oss << "## Returns\n\n";
-        oss << m_linker.linkifyTypeSignature(fnNode->returnSignature) << "\n\n";
+        oss << MDXFormatter::formatReturnWithDescription(
+                   m_linker.linkifyTypeSignature(fnNode->returnSignature), parsed.returns)
+            << "\n\n";
     }
+
+    // Notes
+    oss << MDXFormatter::formatNotesSection(parsed.notes);
+
+    // See Also
+    oss << generateSeeAlsoSection(sym, parsed);
 
     file.content = oss.str();
     return file;
@@ -290,16 +348,17 @@ MDXFile MDXGenerator::generateTypeAliasDoc(const codex::Symbol& sym)
     auto* aliasNode = dynamic_cast<codex::TypeAliasNode*>(sym.node.get());
     if (!aliasNode) return {};
 
+    ParsedComment parsed = parseNodeComment(sym.node);
+
     MDXFile file;
     file.filename = CrossLinker::qualifiedToFilename(sym.qualifiedName);
     file.title = sym.name;
-    file.description = MDXFormatter::extractBrief(getComment(sym.node));
+    file.description = parsed.brief;
 
     std::ostringstream oss;
 
-    // Comment
-    std::string comment = MDXFormatter::formatComment(getComment(sym.node));
-    if (!comment.empty()) oss << comment << "\n\n";
+    std::string desc = !parsed.description.empty() ? parsed.description : parsed.brief;
+    if (!desc.empty()) oss << desc << "\n\n";
 
     // Source location
     oss << "*Defined in `" << MDXFormatter::formatSourceLocation(sym.location) << "`*\n\n";
@@ -311,11 +370,17 @@ MDXFile MDXGenerator::generateTypeAliasDoc(const codex::Symbol& sym)
     oss << "```\n\n";
 
     // Template
-    oss << generateTemplateSection(aliasNode->templateDecl);
+    oss << generateTemplateSection(aliasNode->templateDecl, parsed.tparams);
 
     // Aliased Type
     oss << "## Aliased Type\n\n";
     oss << m_linker.linkify(aliasNode->targetType) << "\n\n";
+
+    // Notes
+    oss << MDXFormatter::formatNotesSection(parsed.notes);
+
+    // See Also
+    oss << generateSeeAlsoSection(sym, parsed);
 
     file.content = oss.str();
     return file;
@@ -326,16 +391,17 @@ MDXFile MDXGenerator::generateConceptDoc(const codex::Symbol& sym)
     auto* conceptNode = dynamic_cast<codex::ConceptNode*>(sym.node.get());
     if (!conceptNode) return {};
 
+    ParsedComment parsed = parseNodeComment(sym.node);
+
     MDXFile file;
     file.filename = CrossLinker::qualifiedToFilename(sym.qualifiedName);
     file.title = sym.name;
-    file.description = MDXFormatter::extractBrief(getComment(sym.node));
+    file.description = parsed.brief;
 
     std::ostringstream oss;
 
-    // Comment
-    std::string comment = MDXFormatter::formatComment(getComment(sym.node));
-    if (!comment.empty()) oss << comment << "\n\n";
+    std::string desc = !parsed.description.empty() ? parsed.description : parsed.brief;
+    if (!desc.empty()) oss << desc << "\n\n";
 
     // Source location
     oss << "*Defined in `" << MDXFormatter::formatSourceLocation(sym.location) << "`*\n\n";
@@ -347,13 +413,19 @@ MDXFile MDXGenerator::generateConceptDoc(const codex::Symbol& sym)
     oss << "```\n\n";
 
     // Template
-    oss << generateTemplateSection(conceptNode->templateDecl);
+    oss << generateTemplateSection(conceptNode->templateDecl, parsed.tparams);
 
     // Constraint
     oss << "## Constraint\n\n";
     oss << "```cpp\n";
     oss << conceptNode->constraint << "\n";
     oss << "```\n\n";
+
+    // Notes
+    oss << MDXFormatter::formatNotesSection(parsed.notes);
+
+    // See Also
+    oss << generateSeeAlsoSection(sym, parsed);
 
     file.content = oss.str();
     return file;
@@ -364,16 +436,17 @@ MDXFile MDXGenerator::generateOperatorDoc(const codex::Symbol& sym)
     auto* opNode = dynamic_cast<codex::OperatorNode*>(sym.node.get());
     if (!opNode) return {};
 
+    ParsedComment parsed = parseNodeComment(sym.node);
+
     MDXFile file;
     file.filename = CrossLinker::qualifiedToFilename(sym.qualifiedName);
     file.title = "operator" + opNode->operatorSymbol;
-    file.description = MDXFormatter::extractBrief(getComment(sym.node));
+    file.description = parsed.brief;
 
     std::ostringstream oss;
 
-    // Comment
-    std::string comment = MDXFormatter::formatComment(getComment(sym.node));
-    if (!comment.empty()) oss << comment << "\n\n";
+    std::string desc = !parsed.description.empty() ? parsed.description : parsed.brief;
+    if (!desc.empty()) oss << desc << "\n\n";
 
     // Source location
     oss << "*Defined in `" << MDXFormatter::formatSourceLocation(sym.location) << "`*\n\n";
@@ -385,13 +458,13 @@ MDXFile MDXGenerator::generateOperatorDoc(const codex::Symbol& sym)
     oss << "```\n\n";
 
     // Template
-    oss << generateTemplateSection(opNode->templateDecl);
+    oss << generateTemplateSection(opNode->templateDecl, parsed.tparams);
 
     // Parameters
     if (!opNode->parameters.empty())
     {
         oss << "## Parameters\n\n";
-        oss << MDXFormatter::formatParametersTable(opNode->parameters, m_linker);
+        oss << MDXFormatter::formatParametersTable(opNode->parameters, m_linker, parsed.params);
         oss << "\n";
     }
 
@@ -399,8 +472,16 @@ MDXFile MDXGenerator::generateOperatorDoc(const codex::Symbol& sym)
     if (!opNode->returnSignature.baseType.empty() && opNode->returnSignature.baseType != "void")
     {
         oss << "## Returns\n\n";
-        oss << m_linker.linkifyTypeSignature(opNode->returnSignature) << "\n\n";
+        oss << MDXFormatter::formatReturnWithDescription(
+                   m_linker.linkifyTypeSignature(opNode->returnSignature), parsed.returns)
+            << "\n\n";
     }
+
+    // Notes
+    oss << MDXFormatter::formatNotesSection(parsed.notes);
+
+    // See Also
+    oss << generateSeeAlsoSection(sym, parsed);
 
     file.content = oss.str();
     return file;
@@ -420,7 +501,7 @@ std::string MDXGenerator::generateInheritanceSection(const codex::Symbol& sym)
             if (baseSym)
             {
                 std::string filename = CrossLinker::qualifiedToFilename(baseSym->qualifiedName);
-                oss << "- [" << baseSym->name << "](/reference/" << filename << ")\n";
+                oss << "- [" << baseSym->name << "](/saturn/api_reference/" << filename << ")\n";
             }
         }
         oss << "\n";
@@ -435,7 +516,7 @@ std::string MDXGenerator::generateInheritanceSection(const codex::Symbol& sym)
             if (derivedSym)
             {
                 std::string filename = CrossLinker::qualifiedToFilename(derivedSym->qualifiedName);
-                oss << "- [" << derivedSym->name << "](/reference/" << filename << ")\n";
+                oss << "- [" << derivedSym->name << "](/saturn/api_reference/" << filename << ")\n";
             }
         }
         oss << "\n";
@@ -444,7 +525,9 @@ std::string MDXGenerator::generateInheritanceSection(const codex::Symbol& sym)
     return oss.str();
 }
 
-std::string MDXGenerator::generateTemplateSection(const std::shared_ptr<codex::Node>& templateDecl)
+std::string MDXGenerator::generateTemplateSection(
+    const std::shared_ptr<codex::Node>& templateDecl,
+    const std::unordered_map<std::string, std::string>& tparamDescs)
 {
     if (!templateDecl) return "";
 
@@ -453,7 +536,10 @@ std::string MDXGenerator::generateTemplateSection(const std::shared_ptr<codex::N
 
     std::ostringstream oss;
     oss << "## Template Parameters\n\n";
-    oss << MDXFormatter::formatTemplateParamsTable(tmpl->parameters);
+    if (tparamDescs.empty())
+        oss << MDXFormatter::formatTemplateParamsTable(tmpl->parameters);
+    else
+        oss << MDXFormatter::formatTemplateParamsTable(tmpl->parameters, tparamDescs);
     oss << "\n";
 
     return oss.str();
@@ -479,8 +565,9 @@ std::string MDXGenerator::generateConstructorsSection(
         auto* ctor = dynamic_cast<codex::ConstructorNode*>(node.get());
         if (!ctor) continue;
 
-        std::string comment = MDXFormatter::formatComment(getComment(node));
-        if (!comment.empty()) oss << comment << "\n\n";
+        ParsedComment parsed = parseNodeComment(node);
+        std::string desc = !parsed.description.empty() ? parsed.description : parsed.brief;
+        if (!desc.empty()) oss << desc << "\n\n";
 
         oss << "```cpp\n";
         oss << MDXFormatter::formatConstructorSignature(*ctor) << ";\n";
@@ -489,9 +576,14 @@ std::string MDXGenerator::generateConstructorsSection(
         if (!ctor->parameters.empty())
         {
             oss << "**Parameters:**\n\n";
-            oss << MDXFormatter::formatParametersTable(ctor->parameters, m_linker);
+            oss << MDXFormatter::formatParametersTable(ctor->parameters, m_linker, parsed.params);
             oss << "\n";
         }
+
+        oss << MDXFormatter::formatNotesSection(parsed.notes);
+
+        std::string seeAlso = formatSeeAlsoFromComment(parsed);
+        if (!seeAlso.empty()) oss << "**See also:**\n\n" << seeAlso << "\n";
     }
 
     return oss.str();
@@ -517,8 +609,9 @@ std::string MDXGenerator::generateDestructorsSection(
         auto* dtor = dynamic_cast<codex::DestructorNode*>(node.get());
         if (!dtor) continue;
 
-        std::string comment = MDXFormatter::formatComment(getComment(node));
-        if (!comment.empty()) oss << comment << "\n\n";
+        ParsedComment parsed = parseNodeComment(node);
+        std::string desc = !parsed.description.empty() ? parsed.description : parsed.brief;
+        if (!desc.empty()) oss << desc << "\n\n";
 
         oss << "```cpp\n";
         oss << MDXFormatter::formatDestructorSignature(*dtor) << ";\n";
@@ -550,8 +643,9 @@ std::string MDXGenerator::generateMethodsSection(
 
         oss << "### " << fn->name << "\n\n";
 
-        std::string comment = MDXFormatter::formatComment(getComment(node));
-        if (!comment.empty()) oss << comment << "\n\n";
+        ParsedComment parsed = parseNodeComment(node);
+        std::string desc = !parsed.description.empty() ? parsed.description : parsed.brief;
+        if (!desc.empty()) oss << desc << "\n\n";
 
         oss << "```cpp\n";
         oss << MDXFormatter::formatFunctionSignature(*fn) << ";\n";
@@ -560,14 +654,22 @@ std::string MDXGenerator::generateMethodsSection(
         if (!fn->parameters.empty())
         {
             oss << "**Parameters:**\n\n";
-            oss << MDXFormatter::formatParametersTable(fn->parameters, m_linker);
+            oss << MDXFormatter::formatParametersTable(fn->parameters, m_linker, parsed.params);
             oss << "\n";
         }
 
         if (!fn->returnSignature.baseType.empty() && fn->returnSignature.baseType != "void")
         {
-            oss << "**Returns:** " << m_linker.linkifyTypeSignature(fn->returnSignature) << "\n\n";
+            oss << "**Returns:** "
+                << MDXFormatter::formatReturnWithDescription(
+                       m_linker.linkifyTypeSignature(fn->returnSignature), parsed.returns)
+                << "\n\n";
         }
+
+        oss << MDXFormatter::formatNotesSection(parsed.notes);
+
+        std::string seeAlso = formatSeeAlsoFromComment(parsed);
+        if (!seeAlso.empty()) oss << "**See also:**\n\n" << seeAlso << "\n";
     }
 
     return oss.str();
@@ -595,8 +697,9 @@ std::string MDXGenerator::generateOperatorsSection(
 
         oss << "### operator" << op->operatorSymbol << "\n\n";
 
-        std::string comment = MDXFormatter::formatComment(getComment(node));
-        if (!comment.empty()) oss << comment << "\n\n";
+        ParsedComment parsed = parseNodeComment(node);
+        std::string desc = !parsed.description.empty() ? parsed.description : parsed.brief;
+        if (!desc.empty()) oss << desc << "\n\n";
 
         oss << "```cpp\n";
         oss << MDXFormatter::formatOperatorSignature(*op) << ";\n";
@@ -605,14 +708,22 @@ std::string MDXGenerator::generateOperatorsSection(
         if (!op->parameters.empty())
         {
             oss << "**Parameters:**\n\n";
-            oss << MDXFormatter::formatParametersTable(op->parameters, m_linker);
+            oss << MDXFormatter::formatParametersTable(op->parameters, m_linker, parsed.params);
             oss << "\n";
         }
 
         if (!op->returnSignature.baseType.empty() && op->returnSignature.baseType != "void")
         {
-            oss << "**Returns:** " << m_linker.linkifyTypeSignature(op->returnSignature) << "\n\n";
+            oss << "**Returns:** "
+                << MDXFormatter::formatReturnWithDescription(
+                       m_linker.linkifyTypeSignature(op->returnSignature), parsed.returns)
+                << "\n\n";
         }
+
+        oss << MDXFormatter::formatNotesSection(parsed.notes);
+
+        std::string seeAlso = formatSeeAlsoFromComment(parsed);
+        if (!seeAlso.empty()) oss << "**See also:**\n\n" << seeAlso << "\n";
     }
 
     return oss.str();
@@ -644,20 +755,18 @@ std::string MDXGenerator::generateMemberVarsSection(
         oss << "| `" << var->name << "` | ";
         oss << m_linker.linkifyTypeSignature(var->typeSignature) << " | ";
 
-        std::string comment = MDXFormatter::formatComment(getComment(node));
-        // Single line for table
-        size_t newline = comment.find('\n');
-        if (newline != std::string::npos) comment = comment.substr(0, newline);
-        oss << comment << " |\n";
+        ParsedComment parsed = parseNodeComment(node);
+        oss << parsed.brief << " |\n";
     }
 
     oss << "\n";
     return oss.str();
 }
 
-std::string MDXGenerator::generateSeeAlsoSection(const codex::Symbol& sym)
+std::string MDXGenerator::generateSeeAlsoSection(const codex::Symbol& sym,
+                                                 const ParsedComment& parsed)
 {
-    std::vector<std::pair<std::string, std::string>> links;
+    std::ostringstream linkStream;
 
     // Related types from childSymbols
     for (codex::SymbolID childId : sym.childSymbols)
@@ -673,7 +782,8 @@ std::string MDXGenerator::generateSeeAlsoSection(const codex::Symbol& sym)
             case codex::SymbolKind::TypeAlias:
             {
                 std::string filename = CrossLinker::qualifiedToFilename(child->qualifiedName);
-                links.emplace_back(child->name, filename);
+                linkStream << "- [" << child->name << "](/saturn/api_reference/" << filename
+                           << ")\n";
                 break;
             }
             default:
@@ -688,19 +798,19 @@ std::string MDXGenerator::generateSeeAlsoSection(const codex::Symbol& sym)
         if (base)
         {
             std::string filename = CrossLinker::qualifiedToFilename(base->qualifiedName);
-            links.emplace_back(base->name, filename);
+            linkStream << "- [" << base->name << "](/saturn/api_reference/" << filename << ")\n";
         }
     }
 
+    // @see entries from comment
+    linkStream << formatSeeAlsoFromComment(parsed);
+
+    std::string links = linkStream.str();
     if (links.empty()) return "";
 
     std::ostringstream oss;
     oss << "## See Also\n\n";
-
-    for (const auto& [name, filename] : links)
-    {
-        oss << "- [" << name << "](/reference/" << filename << ")\n";
-    }
+    oss << links;
     oss << "\n";
 
     return oss.str();
@@ -721,8 +831,9 @@ std::string MDXGenerator::generateStructConstructorsSection(
         auto* ctor = dynamic_cast<codex::ConstructorNode*>(node.get());
         if (!ctor) continue;
 
-        std::string comment = MDXFormatter::formatComment(getComment(node));
-        if (!comment.empty()) oss << comment << "\n\n";
+        ParsedComment parsed = parseNodeComment(node);
+        std::string desc = !parsed.description.empty() ? parsed.description : parsed.brief;
+        if (!desc.empty()) oss << desc << "\n\n";
 
         oss << "```cpp\n";
         oss << MDXFormatter::formatConstructorSignature(*ctor) << ";\n";
@@ -731,9 +842,14 @@ std::string MDXGenerator::generateStructConstructorsSection(
         if (!ctor->parameters.empty())
         {
             oss << "**Parameters:**\n\n";
-            oss << MDXFormatter::formatParametersTable(ctor->parameters, m_linker);
+            oss << MDXFormatter::formatParametersTable(ctor->parameters, m_linker, parsed.params);
             oss << "\n";
         }
+
+        oss << MDXFormatter::formatNotesSection(parsed.notes);
+
+        std::string seeAlso = formatSeeAlsoFromComment(parsed);
+        if (!seeAlso.empty()) oss << "**See also:**\n\n" << seeAlso << "\n";
     }
 
     return oss.str();
@@ -752,8 +868,9 @@ std::string MDXGenerator::generateStructDestructorsSection(
         auto* dtor = dynamic_cast<codex::DestructorNode*>(node.get());
         if (!dtor) continue;
 
-        std::string comment = MDXFormatter::formatComment(getComment(node));
-        if (!comment.empty()) oss << comment << "\n\n";
+        ParsedComment parsed = parseNodeComment(node);
+        std::string desc = !parsed.description.empty() ? parsed.description : parsed.brief;
+        if (!desc.empty()) oss << desc << "\n\n";
 
         oss << "```cpp\n";
         oss << MDXFormatter::formatDestructorSignature(*dtor) << ";\n";
@@ -778,8 +895,9 @@ std::string MDXGenerator::generateStructMethodsSection(
 
         oss << "### " << fn->name << "\n\n";
 
-        std::string comment = MDXFormatter::formatComment(getComment(node));
-        if (!comment.empty()) oss << comment << "\n\n";
+        ParsedComment parsed = parseNodeComment(node);
+        std::string desc = !parsed.description.empty() ? parsed.description : parsed.brief;
+        if (!desc.empty()) oss << desc << "\n\n";
 
         oss << "```cpp\n";
         oss << MDXFormatter::formatFunctionSignature(*fn) << ";\n";
@@ -788,14 +906,22 @@ std::string MDXGenerator::generateStructMethodsSection(
         if (!fn->parameters.empty())
         {
             oss << "**Parameters:**\n\n";
-            oss << MDXFormatter::formatParametersTable(fn->parameters, m_linker);
+            oss << MDXFormatter::formatParametersTable(fn->parameters, m_linker, parsed.params);
             oss << "\n";
         }
 
         if (!fn->returnSignature.baseType.empty() && fn->returnSignature.baseType != "void")
         {
-            oss << "**Returns:** " << m_linker.linkifyTypeSignature(fn->returnSignature) << "\n\n";
+            oss << "**Returns:** "
+                << MDXFormatter::formatReturnWithDescription(
+                       m_linker.linkifyTypeSignature(fn->returnSignature), parsed.returns)
+                << "\n\n";
         }
+
+        oss << MDXFormatter::formatNotesSection(parsed.notes);
+
+        std::string seeAlso = formatSeeAlsoFromComment(parsed);
+        if (!seeAlso.empty()) oss << "**See also:**\n\n" << seeAlso << "\n";
     }
 
     return oss.str();
@@ -816,8 +942,9 @@ std::string MDXGenerator::generateStructOperatorsSection(
 
         oss << "### operator" << op->operatorSymbol << "\n\n";
 
-        std::string comment = MDXFormatter::formatComment(getComment(node));
-        if (!comment.empty()) oss << comment << "\n\n";
+        ParsedComment parsed = parseNodeComment(node);
+        std::string desc = !parsed.description.empty() ? parsed.description : parsed.brief;
+        if (!desc.empty()) oss << desc << "\n\n";
 
         oss << "```cpp\n";
         oss << MDXFormatter::formatOperatorSignature(*op) << ";\n";
@@ -826,14 +953,22 @@ std::string MDXGenerator::generateStructOperatorsSection(
         if (!op->parameters.empty())
         {
             oss << "**Parameters:**\n\n";
-            oss << MDXFormatter::formatParametersTable(op->parameters, m_linker);
+            oss << MDXFormatter::formatParametersTable(op->parameters, m_linker, parsed.params);
             oss << "\n";
         }
 
         if (!op->returnSignature.baseType.empty() && op->returnSignature.baseType != "void")
         {
-            oss << "**Returns:** " << m_linker.linkifyTypeSignature(op->returnSignature) << "\n\n";
+            oss << "**Returns:** "
+                << MDXFormatter::formatReturnWithDescription(
+                       m_linker.linkifyTypeSignature(op->returnSignature), parsed.returns)
+                << "\n\n";
         }
+
+        oss << MDXFormatter::formatNotesSection(parsed.notes);
+
+        std::string seeAlso = formatSeeAlsoFromComment(parsed);
+        if (!seeAlso.empty()) oss << "**See also:**\n\n" << seeAlso << "\n";
     }
 
     return oss.str();
@@ -858,11 +993,8 @@ std::string MDXGenerator::generateStructMemberVarsSection(
         oss << "| `" << var->name << "` | ";
         oss << m_linker.linkifyTypeSignature(var->typeSignature) << " | ";
 
-        std::string comment = MDXFormatter::formatComment(getComment(node));
-        // Single line for table
-        size_t newline = comment.find('\n');
-        if (newline != std::string::npos) comment = comment.substr(0, newline);
-        oss << comment << " |\n";
+        ParsedComment parsed = parseNodeComment(node);
+        oss << parsed.brief << " |\n";
     }
 
     oss << "\n";

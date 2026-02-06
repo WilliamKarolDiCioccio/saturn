@@ -18,6 +18,9 @@ class CrossLinker
     std::string linkify(const std::string& typeName) const;
     std::string linkifyTypeSignature(const codex::TypeSignature& ts) const;
 
+    /// Returns the filename for a symbol name if it exists in the index, or empty string.
+    std::string findFilename(const std::string& name) const;
+
     static std::string qualifiedToFilename(const std::string& qualifiedName);
     static std::string sanitizeOperator(const std::string& op);
 

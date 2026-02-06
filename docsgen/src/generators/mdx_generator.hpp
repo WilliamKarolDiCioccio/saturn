@@ -5,6 +5,7 @@
 #include <codex/analyzer.hpp>
 
 #include "../models/mdx_file.hpp"
+#include "../models/parsed_comment.hpp"
 #include "cross_linker.hpp"
 
 namespace docsgen
@@ -24,6 +25,9 @@ class MDXGenerator
    private:
     bool isPublicAPI(const codex::Symbol& sym) const;
 
+    ParsedComment parseNodeComment(const std::shared_ptr<codex::Node>& node) const;
+    std::string formatSeeAlsoFromComment(const ParsedComment& parsed) const;
+
     MDXFile generateClassDoc(const codex::Symbol& sym);
     MDXFile generateStructDoc(const codex::Symbol& sym);
     MDXFile generateEnumDoc(const codex::Symbol& sym);
@@ -33,7 +37,9 @@ class MDXGenerator
     MDXFile generateOperatorDoc(const codex::Symbol& sym);
 
     std::string generateInheritanceSection(const codex::Symbol& sym);
-    std::string generateTemplateSection(const std::shared_ptr<codex::Node>& templateDecl);
+    std::string generateTemplateSection(
+        const std::shared_ptr<codex::Node>& templateDecl,
+        const std::unordered_map<std::string, std::string>& tparamDescs = {});
     std::string generateConstructorsSection(
         const std::vector<std::pair<codex::AccessSpecifier, std::shared_ptr<codex::Node>>>& ctors);
     std::string generateDestructorsSection(
@@ -45,7 +51,7 @@ class MDXGenerator
         const std::vector<std::pair<codex::AccessSpecifier, std::shared_ptr<codex::Node>>>& ops);
     std::string generateMemberVarsSection(
         const std::vector<std::pair<codex::AccessSpecifier, std::shared_ptr<codex::Node>>>& vars);
-    std::string generateSeeAlsoSection(const codex::Symbol& sym);
+    std::string generateSeeAlsoSection(const codex::Symbol& sym, const ParsedComment& parsed = {});
 
     // Struct members (no access specifier pairs)
     std::string generateStructConstructorsSection(

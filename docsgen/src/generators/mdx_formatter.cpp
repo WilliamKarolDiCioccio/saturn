@@ -1,4 +1,5 @@
 #include "mdx_formatter.hpp"
+#include "comment_parser.hpp"
 #include "cross_linker.hpp"
 
 #include <algorithm>
@@ -11,66 +12,7 @@ namespace docsgen
 std::string MDXFormatter::formatComment(const std::string& rawComment)
 {
     if (rawComment.empty()) return "";
-
-    std::istringstream iss(rawComment);
-    std::ostringstream oss;
-    std::string line;
-    bool firstLine = true;
-    bool inCodeBlock = false;
-
-    while (std::getline(iss, line))
-    {
-        // Strip leading whitespace
-        size_t start = line.find_first_not_of(" \t");
-        if (start == std::string::npos)
-        {
-            if (!firstLine) oss << "\n";
-            firstLine = false;
-            continue;
-        }
-        line = line.substr(start);
-
-        // Strip comment markers
-        if (line.starts_with("///"))
-            line = line.substr(3);
-        else if (line.starts_with("//"))
-            line = line.substr(2);
-        else if (line.starts_with("/**"))
-            line = line.substr(3);
-        else if (line.starts_with("/*"))
-            line = line.substr(2);
-        else if (line.starts_with("*/"))
-            continue;
-        else if (line.starts_with("*"))
-            line = line.substr(1);
-
-        // Strip leading space after marker
-        if (!line.empty() && line[0] == ' ') line = line.substr(1);
-
-        // Strip trailing */
-        if (line.ends_with("*/"))
-        {
-            line = line.substr(0, line.size() - 2);
-            // Trim trailing whitespace
-            while (!line.empty() && std::isspace(static_cast<unsigned char>(line.back())))
-                line.pop_back();
-        }
-
-        // Track fenced code blocks — escape only outside them
-        size_t ws = line.find_first_not_of(" \t");
-        bool isCodeFence = ws != std::string::npos && line.substr(ws).starts_with("```");
-
-        if (isCodeFence)
-            inCodeBlock = !inCodeBlock;
-        else if (!inCodeBlock)
-            line = escapeInlineMDX(line);
-
-        if (!firstLine) oss << "\n";
-        oss << line;
-        firstLine = false;
-    }
-
-    return oss.str();
+    return CommentParser::parse(rawComment).description;
 }
 
 std::string MDXFormatter::escapeInlineMDX(const std::string& line)
@@ -119,27 +61,8 @@ std::string MDXFormatter::escapeInlineMDX(const std::string& line)
 
 std::string MDXFormatter::extractBrief(const std::string& rawComment)
 {
-    std::string formatted = formatComment(rawComment);
-    if (formatted.empty()) return "";
-
-    // Look for @brief tag
-    size_t briefPos = formatted.find("@brief");
-    if (briefPos != std::string::npos)
-    {
-        size_t start = briefPos + 6;
-        while (start < formatted.size() &&
-               std::isspace(static_cast<unsigned char>(formatted[start])))
-            start++;
-
-        size_t end = formatted.find('\n', start);
-        if (end == std::string::npos) end = formatted.size();
-        return formatted.substr(start, end - start);
-    }
-
-    // Otherwise, return first sentence
-    size_t end = formatted.find_first_of(".!?\n");
-    if (end != std::string::npos && formatted[end] != '\n') end++;
-    return formatted.substr(0, end);
+    if (rawComment.empty()) return "";
+    return CommentParser::parse(rawComment).brief;
 }
 
 std::string MDXFormatter::escapeMDX(const std::string& text)
@@ -449,6 +372,88 @@ std::string MDXFormatter::formatEnumValuesTable(
         oss << " |\n";
     }
 
+    return oss.str();
+}
+
+std::string MDXFormatter::formatParametersTable(
+    const std::vector<codex::FunctionParameter>& params, const CrossLinker& linker,
+    const std::unordered_map<std::string, std::string>& paramDescs)
+{
+    if (params.empty()) return "";
+
+    std::ostringstream oss;
+    oss << "| Name | Type | Default | Description |\n";
+    oss << "|------|------|---------|-------------|\n";
+
+    for (const auto& param : params)
+    {
+        oss << "| `" << (param.name.empty() ? "-" : param.name) << "` | ";
+        oss << linker.linkifyTypeSignature(param.typeSignature) << " | ";
+        oss << (param.defaultValue.empty() ? "-" : escapeMDX(param.defaultValue)) << " | ";
+
+        auto it = paramDescs.find(param.name);
+        oss << (it != paramDescs.end() ? it->second : "") << " |\n";
+    }
+
+    return oss.str();
+}
+
+std::string MDXFormatter::formatTemplateParamsTable(
+    const std::vector<codex::TemplateParameter>& params,
+    const std::unordered_map<std::string, std::string>& tparamDescs)
+{
+    if (params.empty()) return "";
+
+    std::ostringstream oss;
+    oss << "| Parameter | Kind | Default | Description |\n";
+    oss << "|-----------|------|---------|-------------|\n";
+
+    for (const auto& param : params)
+    {
+        std::string kind;
+        switch (param.paramKind)
+        {
+            case codex::TemplateParameterKind::Type:
+                kind = "type";
+                break;
+            case codex::TemplateParameterKind::NonType:
+                kind = "non-type";
+                break;
+            case codex::TemplateParameterKind::TemplateTemplate:
+                kind = "template";
+                break;
+        }
+
+        oss << "| `" << param.toString() << "` | " << kind << " | ";
+        oss << (param.defaultValue.empty() ? "-" : escapeMDX(param.defaultValue)) << " | ";
+
+        auto it = tparamDescs.find(param.name);
+        oss << (it != tparamDescs.end() ? it->second : "") << " |\n";
+    }
+
+    return oss.str();
+}
+
+std::string MDXFormatter::formatNotesSection(const std::vector<std::string>& notes)
+{
+    if (notes.empty()) return "";
+
+    std::ostringstream oss;
+    oss << "**Notes:**\n\n";
+    for (const auto& note : notes)
+    {
+        oss << "- " << note << "\n";
+    }
+    oss << "\n";
+    return oss.str();
+}
+
+std::string MDXFormatter::formatReturnWithDescription(const std::string& linkifiedType,
+                                                      const std::string& returnDesc)
+{
+    std::ostringstream oss;
+    oss << linkifiedType;
+    if (!returnDesc.empty()) oss << " — " << returnDesc;
     return oss.str();
 }
 

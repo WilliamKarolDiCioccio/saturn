@@ -132,6 +132,12 @@ std::string CrossLinker::sanitizeOperator(const std::string& op)
     return result;
 }
 
+std::string CrossLinker::findFilename(const std::string& name) const
+{
+    auto it = m_qualifiedToFilename.find(name);
+    return it != m_qualifiedToFilename.end() ? it->second : "";
+}
+
 std::string CrossLinker::linkify(const std::string& typeName) const
 {
     // Strip qualifiers for lookup
@@ -224,7 +230,7 @@ std::string CrossLinker::linkifyBaseType(const std::string& baseType) const
     auto it = m_qualifiedToFilename.find(baseType);
     if (it != m_qualifiedToFilename.end())
     {
-        return "[" + baseType + "](/reference/" + it->second + ")";
+        return "[" + baseType + "](/saturn/api_reference/" + it->second + ")";
     }
 
     // Not found, return as-is
