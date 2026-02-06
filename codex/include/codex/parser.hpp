@@ -33,7 +33,7 @@ class Parser
     std::shared_ptr<Node> dispatch(TSNode _node);
     std::shared_ptr<Node> parseAmbiguousDeclaration(const TSNode& _node);
     bool tryFindNestedFunctionDeclarator(const TSNode& declaratorNode, NodeKind& outKind);
-    std::shared_ptr<Node> parseAttributedTypeDeclaration(TSNode attributeNode);
+    std::pair<std::shared_ptr<Node>, uint32_t> parseAttributedTypeDeclaration(TSNode attributeNode);
     std::shared_ptr<Node> parseAmbiguousDefinition(const TSNode& _node);
 
     // Preprocessor & Global Scopes

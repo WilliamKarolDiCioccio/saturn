@@ -310,8 +310,9 @@ std::shared_ptr<Node> Parser::parseAmbiguousDeclaration(const TSNode& _node)
         // Handle attributed declarations (struct/class/union with attributes)
         else if (childType == "attribute_declaration")
         {
-            std::shared_ptr<Node> attributedNode = parseAttributedTypeDeclaration(child);
+            auto [attributedNode, consumed] = parseAttributedTypeDeclaration(child);
             if (attributedNode) return attributedNode;
+            i += consumed - 1; // Skip consumed siblings (loop will increment i)
         }
     }
 
@@ -345,18 +346,22 @@ bool Parser::tryFindNestedFunctionDeclarator(const TSNode& declaratorNode, NodeK
 }
 
 // Helper: Parse attributed type declarations (struct/class/union with attributes)
-std::shared_ptr<Node> Parser::parseAttributedTypeDeclaration(TSNode attributeNode)
+// Returns the parsed node and the number of consumed siblings (attributes + type specifier)
+std::pair<std::shared_ptr<Node>, uint32_t> Parser::parseAttributedTypeDeclaration(
+    TSNode attributeNode)
 {
     // Collect all consecutive attribute declarations
     std::vector<std::string> attributes;
     TSNode currNode = attributeNode;
     std::string currNodeType = ts_node_type(currNode);
+    uint32_t consumed = 0;
 
     while (currNodeType == "attribute_declaration")
     {
         attributes.push_back(getNodeText(currNode, m_source->content));
         currNode = ts_node_next_sibling(currNode);
         currNodeType = ts_node_type(currNode);
+        ++consumed;
     }
 
     // Parse the type declaration and attach attributes
@@ -364,22 +369,22 @@ std::shared_ptr<Node> Parser::parseAttributedTypeDeclaration(TSNode attributeNod
     {
         std::shared_ptr<UnionNode> unionNode = parseUnion(currNode);
         unionNode->attributes = std::move(attributes);
-        return unionNode;
+        return {unionNode, consumed + 1};
     }
     else if (currNodeType == "struct_specifier")
     {
         std::shared_ptr<StructNode> structNode = parseStruct(currNode);
         structNode->attributes = std::move(attributes);
-        return structNode;
+        return {structNode, consumed + 1};
     }
     else if (currNodeType == "class_specifier")
     {
         std::shared_ptr<ClassNode> classNode = parseClass(currNode);
         classNode->attributes = std::move(attributes);
-        return classNode;
+        return {classNode, consumed + 1};
     }
 
-    return nullptr;
+    return {nullptr, consumed};
 }
 
 std::shared_ptr<Node> Parser::parseAmbiguousDefinition(const TSNode& _node)
@@ -1286,6 +1291,7 @@ std::vector<FunctionParameter> Parser::parseFunctionParametersList(const TSNode&
             {
                 TSNode nextSub = ts_node_child(child, j + 1);
                 gp.defaultValue = getNodeText(nextSub, m_source->content);
+                ++j; // Skip consumed sibling
             }
         }
 
