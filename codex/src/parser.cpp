@@ -1114,16 +1114,26 @@ std::shared_ptr<ClassNode> Parser::parseClass(const TSNode& _node)
 // Executables & Declarations
 /////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<VariableNode> Parser::parseVariable(const TSNode& _node)
+std::shared_ptr<Node> Parser::parseVariable(const TSNode& _node)
 {
     auto [start, end] = getPositionData(_node);
     const uint32_t childCount = ts_node_child_count(_node);
 
-    auto varNode = std::make_shared<VariableNode>(start.row, start.column, end.row, end.column);
+    // Shared properties
+    TypeSignature sharedType = parseTypeSignature(_node);
+    bool isStatic = false, isConstexpr = false, isThreadLocal = false;
+    bool isInline = false, isExtern = false, isConstinit = false;
+    std::vector<std::string> attributes;
+
+    struct Declarator
+    {
+        std::string name;
+        std::string defaultValue;
+    };
+    std::vector<Declarator> declarators;
 
     clearTemplateDeclaration();
-    varNode->comment = getLeadingComment();
-    varNode->typeSignature = parseTypeSignature(_node);
+    auto comment = getLeadingComment();
 
     for (uint32_t i = 0; i < childCount; ++i)
     {
@@ -1132,43 +1142,84 @@ std::shared_ptr<VariableNode> Parser::parseVariable(const TSNode& _node)
 
         if (childType == "attribute_declaration")
         {
-            varNode->attributes.emplace_back(getNodeText(child, m_source->content));
+            attributes.emplace_back(getNodeText(child, m_source->content));
         }
         else if (childType == "identifier" || childType == "field_identifier")
         {
-            varNode->name = getNodeText(child, m_source->content);
+            declarators.push_back({getNodeText(child, m_source->content), ""});
         }
         else if (childType == "type_qualifier")
         {
             std::string q = getNodeText(child, m_source->content);
 
             if (q == "constexpr")
-                varNode->isConstexpr = true;
+                isConstexpr = true;
             else if (q == "constinit")
-                varNode->isConstinit = true;
+                isConstinit = true;
         }
         else if (childType == "storage_class_specifier")
         {
             std::string s = getNodeText(child, m_source->content);
 
             if (s == "static")
-                varNode->isStatic = true;
+                isStatic = true;
             else if (s == "extern")
-                varNode->isExtern = true;
+                isExtern = true;
             else if (s == "thread_local")
-                varNode->isThreadLocal = true;
+                isThreadLocal = true;
             else if (s == "inline")
-                varNode->isInline = true;
+                isInline = true;
             else if (s == "mutable")
-                varNode->typeSignature.isMutable = true;
+                sharedType.isMutable = true;
         }
         else if (childType == "init_declarator")
         {
-            parseInitDeclarator(child, varNode);
+            Declarator decl;
+            extractInitDeclarator(child, decl.name, decl.defaultValue);
+            declarators.push_back(std::move(decl));
         }
     }
 
-    return varNode;
+    auto makeVar = [&](const Declarator& d) -> std::shared_ptr<VariableNode>
+    {
+        auto var = std::make_shared<VariableNode>(start.row, start.column, end.row, end.column);
+        var->typeSignature = sharedType;
+        var->name = d.name;
+        var->defaultValue = d.defaultValue;
+        var->isStatic = isStatic;
+        var->isConstexpr = isConstexpr;
+        var->isThreadLocal = isThreadLocal;
+        var->isInline = isInline;
+        var->isExtern = isExtern;
+        var->isConstinit = isConstinit;
+        var->attributes = attributes;
+        return var;
+    };
+
+    if (declarators.size() <= 1)
+    {
+        auto var = declarators.empty() ? std::make_shared<VariableNode>(start.row, start.column,
+                                                                        end.row, end.column)
+                                       : makeVar(declarators[0]);
+        if (declarators.empty())
+        {
+            var->typeSignature = sharedType;
+            var->isStatic = isStatic;
+            var->isConstexpr = isConstexpr;
+            var->isThreadLocal = isThreadLocal;
+            var->isInline = isInline;
+            var->isExtern = isExtern;
+            var->isConstinit = isConstinit;
+            var->attributes = attributes;
+        }
+        var->comment = comment;
+        return var;
+    }
+
+    auto group = std::make_shared<VariableGroupNode>(start.row, start.column, end.row, end.column);
+    group->comment = comment;
+    for (const auto& d : declarators) group->variables.push_back(makeVar(d));
+    return group;
 }
 
 std::shared_ptr<FunctionNode> Parser::parseFunction(const TSNode& _node)
@@ -1418,7 +1469,13 @@ void Parser::parseMemberList(const TSNode& _listNode, const std::string& _parent
             {
                 auto declNode = parseAmbiguousDeclaration(child);
 
-                if (declNode->kind == NodeKind::Variable)
+                if (declNode->kind == NodeKind::VariableGroup)
+                {
+                    auto group = std::dynamic_pointer_cast<VariableGroupNode>(declNode);
+                    bool isStatic = !group->variables.empty() && group->variables[0]->isStatic;
+                    (isStatic ? _staticMemberVars : _memberVars).emplace_back(declNode);
+                }
+                else if (declNode->kind == NodeKind::Variable)
                 {
                     auto varNode = std::dynamic_pointer_cast<VariableNode>(declNode);
                     (varNode->isStatic ? _staticMemberVars : _memberVars).emplace_back(declNode);
@@ -1537,7 +1594,14 @@ void Parser::parseClassMemberList(
             {
                 auto declNode = parseAmbiguousDeclaration(child);
 
-                if (declNode->kind == NodeKind::Variable)
+                if (declNode->kind == NodeKind::VariableGroup)
+                {
+                    auto group = std::dynamic_pointer_cast<VariableGroupNode>(declNode);
+                    bool isStatic = !group->variables.empty() && group->variables[0]->isStatic;
+                    (isStatic ? _staticMemberVars : _memberVars)
+                        .emplace_back(std::make_pair(currentAccess, declNode));
+                }
+                else if (declNode->kind == NodeKind::Variable)
                 {
                     auto varNode = std::dynamic_pointer_cast<VariableNode>(declNode);
                     (varNode->isStatic ? _staticMemberVars : _memberVars)
@@ -1641,6 +1705,46 @@ void Parser::parseInitDeclarator(const TSNode& _node, std::shared_ptr<VariableNo
                 else if (subType == "number_literal" || subType == "string_literal")
                 {
                     _varNode->defaultValue = getNodeText(subChild, m_source->content);
+                }
+            }
+        }
+    }
+}
+
+void Parser::extractInitDeclarator(const TSNode& _node, std::string& _name,
+                                   std::string& _defaultValue)
+{
+    const uint32_t childCount = ts_node_child_count(_node);
+
+    for (uint32_t i = 0; i < childCount; ++i)
+    {
+        TSNode child = ts_node_child(_node, i);
+        std::string type = ts_node_type(child);
+
+        if (type == "identifier" || type == "field_identifier")
+        {
+            _name = getNodeText(child, m_source->content);
+        }
+        else if (type == "number_literal" || type == "string_literal")
+        {
+            _defaultValue = getNodeText(child, m_source->content);
+        }
+        else if (type == "reference_declarator" || type == "pointer_declarator")
+        {
+            const uint32_t subChildCount = ts_node_child_count(child);
+
+            for (uint32_t j = 0; j < subChildCount; ++j)
+            {
+                TSNode subChild = ts_node_child(child, j);
+                std::string subType = ts_node_type(subChild);
+
+                if (subType == "identifier")
+                {
+                    _name = getNodeText(subChild, m_source->content);
+                }
+                else if (subType == "number_literal" || subType == "string_literal")
+                {
+                    _defaultValue = getNodeText(subChild, m_source->content);
                 }
             }
         }

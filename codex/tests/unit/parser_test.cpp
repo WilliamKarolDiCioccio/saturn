@@ -473,6 +473,42 @@ TEST_F(ParserTest, ParseGlobalVariable)
     EXPECT_EQ(var->typeSignature.baseType, "int");
 }
 
+TEST_F(ParserTest, ParseVariableList)
+{
+    auto result = parseSingle("int x, y, z;");
+
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto group = std::dynamic_pointer_cast<VariableGroupNode>(result->children[0]);
+    ASSERT_NE(group, nullptr);
+    ASSERT_EQ(group->variables.size(), 3);
+    EXPECT_EQ(group->variables[0]->name, "x");
+    EXPECT_EQ(group->variables[0]->typeSignature.baseType, "int");
+    EXPECT_EQ(group->variables[1]->name, "y");
+    EXPECT_EQ(group->variables[1]->typeSignature.baseType, "int");
+    EXPECT_EQ(group->variables[2]->name, "z");
+    EXPECT_EQ(group->variables[2]->typeSignature.baseType, "int");
+}
+
+TEST_F(ParserTest, ParseVariableListWithInitializers)
+{
+    auto result = parseSingle("int x = 1, y = 2, z = 3;");
+
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto group = std::dynamic_pointer_cast<VariableGroupNode>(result->children[0]);
+    ASSERT_NE(group, nullptr);
+    ASSERT_EQ(group->variables.size(), 3);
+    EXPECT_EQ(group->variables[0]->name, "x");
+    EXPECT_EQ(group->variables[0]->defaultValue, "1");
+    EXPECT_EQ(group->variables[1]->name, "y");
+    EXPECT_EQ(group->variables[1]->defaultValue, "2");
+    EXPECT_EQ(group->variables[2]->name, "z");
+    EXPECT_EQ(group->variables[2]->defaultValue, "3");
+}
+
 TEST_F(ParserTest, ParseConstVariable)
 {
     auto result = parseSingle("const int foo = 42;");
@@ -929,8 +965,6 @@ public:
 
     auto cls = std::dynamic_pointer_cast<ClassNode>(result->children[0]);
     ASSERT_NE(cls, nullptr);
-    // virtual foo, const bar, pure virtual qux = 3 member functions
-    // static baz = 1 static member function
     EXPECT_EQ(cls->memberFunctions.size(), 3);
     EXPECT_EQ(cls->staticMemberFunctions.size(), 1);
 }

@@ -30,6 +30,7 @@ enum struct NodeKind
     Enum,
     EnumSpecifier,
     Variable,
+    VariableGroup,
     Concept,
     Function,
     Constructor,
@@ -69,6 +70,8 @@ inline std::string nodeKindToString(NodeKind kind)
             return "Function";
         case NodeKind::Variable:
             return "Variable";
+        case NodeKind::VariableGroup:
+            return "VariableGroup";
         case NodeKind::Comment:
             return "Comment";
         case NodeKind::TypeAlias:
@@ -778,6 +781,24 @@ struct VariableNode final : Node
             result += "\n" + comment->toString(_depth + 1);
         }
 
+        return result;
+    }
+};
+
+struct VariableGroupNode final : Node
+{
+    std::vector<std::shared_ptr<VariableNode>> variables;
+
+    explicit VariableGroupNode(int _startLine, int _startColumn, int _endLine, int _endColumn)
+        : Node(NodeKind::VariableGroup, _startLine, _startColumn, _endLine, _endColumn) {};
+
+    std::string toString(int _depth = 0) const override
+    {
+        std::string indent = getIndent(_depth);
+        std::string result =
+            indent + nodeKindToString(kind) + "(" + std::to_string(variables.size()) + " vars)";
+        if (comment) result += "\n" + comment->toString(_depth + 1);
+        for (const auto& var : variables) result += "\n" + var->toString(_depth + 1);
         return result;
     }
 };

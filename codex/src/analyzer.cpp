@@ -315,6 +315,19 @@ void Analyzer::walkChildren(const std::vector<std::shared_ptr<Node>>& children,
                 break;
             }
 
+            case NodeKind::VariableGroup:
+            {
+                auto* group = static_cast<VariableGroupNode*>(child.get());
+                for (auto& var : group->variables)
+                {
+                    std::string qualName =
+                        nsPrefix.empty() ? var->name : nsPrefix + "::" + var->name;
+                    registerNode(var, SymbolKind::Variable, var->name, qualName, "",
+                                 AccessSpecifier::None, filePath, db, parent);
+                }
+                break;
+            }
+
             case NodeKind::TypeAlias:
             {
                 auto* ta = static_cast<TypeAliasNode*>(child.get());
@@ -393,6 +406,17 @@ void Analyzer::walkStructMembers(const StructNode& s, const std::string& qualPre
                     std::string qual = qualPrefix + "::" + var->name;
                     registerNode(member, SymbolKind::Variable, var->name, qual, "", defaultAccess,
                                  filePath, db, parent);
+                    break;
+                }
+                case NodeKind::VariableGroup:
+                {
+                    auto* group = static_cast<VariableGroupNode*>(member.get());
+                    for (auto& var : group->variables)
+                    {
+                        std::string qual = qualPrefix + "::" + var->name;
+                        registerNode(var, SymbolKind::Variable, var->name, qual, "", defaultAccess,
+                                     filePath, db, parent);
+                    }
                     break;
                 }
                 case NodeKind::Function:
@@ -479,6 +503,17 @@ void Analyzer::walkClassMembers(const ClassNode& cls, const std::string& qualPre
                                  filePath, db, parent);
                     break;
                 }
+                case NodeKind::VariableGroup:
+                {
+                    auto* group = static_cast<VariableGroupNode*>(member.get());
+                    for (auto& var : group->variables)
+                    {
+                        std::string qual = qualPrefix + "::" + var->name;
+                        registerNode(var, SymbolKind::Variable, var->name, qual, "", access,
+                                     filePath, db, parent);
+                    }
+                    break;
+                }
                 case NodeKind::Function:
                 {
                     auto* fn = static_cast<FunctionNode*>(member.get());
@@ -557,6 +592,17 @@ void Analyzer::walkUnionMembers(const UnionNode& u, const std::string& qualPrefi
                     std::string qual = qualPrefix + "::" + var->name;
                     registerNode(member, SymbolKind::Variable, var->name, qual, "",
                                  AccessSpecifier::Public, filePath, db, parent);
+                    break;
+                }
+                case NodeKind::VariableGroup:
+                {
+                    auto* group = static_cast<VariableGroupNode*>(member.get());
+                    for (auto& var : group->variables)
+                    {
+                        std::string qual = qualPrefix + "::" + var->name;
+                        registerNode(var, SymbolKind::Variable, var->name, qual, "",
+                                     AccessSpecifier::Public, filePath, db, parent);
+                    }
                     break;
                 }
                 case NodeKind::Function:
@@ -750,6 +796,13 @@ void Analyzer::collectTypeRefs(const Symbol& sym, std::vector<std::string>& outT
         {
             auto* var = static_cast<const VariableNode*>(sym.node.get());
             collectTypeSignatureRefs(var->typeSignature, outTypes);
+            break;
+        }
+        case NodeKind::VariableGroup:
+        {
+            auto* group = static_cast<const VariableGroupNode*>(sym.node.get());
+            for (const auto& var : group->variables)
+                collectTypeSignatureRefs(var->typeSignature, outTypes);
             break;
         }
         case NodeKind::TypeAlias:

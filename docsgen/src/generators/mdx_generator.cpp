@@ -749,14 +749,29 @@ std::string MDXGenerator::generateMemberVarsSection(
 
     for (const auto& node : publicVars)
     {
-        auto* var = dynamic_cast<codex::VariableNode*>(node.get());
-        if (!var) continue;
+        if (auto* group = dynamic_cast<codex::VariableGroupNode*>(node.get()))
+        {
+            std::string names;
+            for (size_t i = 0; i < group->variables.size(); ++i)
+            {
+                if (i > 0) names += "`, `";
+                names += group->variables[i]->name;
+            }
+            oss << "| `" << names << "` | ";
+            if (!group->variables.empty())
+                oss << m_linker.linkifyTypeSignature(group->variables[0]->typeSignature);
+            oss << " | ";
+            ParsedComment parsed = parseNodeComment(node);
+            oss << parsed.brief << " |\n";
+        }
+        else if (auto* var = dynamic_cast<codex::VariableNode*>(node.get()))
+        {
+            oss << "| `" << var->name << "` | ";
+            oss << m_linker.linkifyTypeSignature(var->typeSignature) << " | ";
 
-        oss << "| `" << var->name << "` | ";
-        oss << m_linker.linkifyTypeSignature(var->typeSignature) << " | ";
-
-        ParsedComment parsed = parseNodeComment(node);
-        oss << parsed.brief << " |\n";
+            ParsedComment parsed = parseNodeComment(node);
+            oss << parsed.brief << " |\n";
+        }
     }
 
     oss << "\n";
@@ -987,14 +1002,29 @@ std::string MDXGenerator::generateStructMemberVarsSection(
 
     for (const auto& node : vars)
     {
-        auto* var = dynamic_cast<codex::VariableNode*>(node.get());
-        if (!var) continue;
+        if (auto* group = dynamic_cast<codex::VariableGroupNode*>(node.get()))
+        {
+            std::string names;
+            for (size_t i = 0; i < group->variables.size(); ++i)
+            {
+                if (i > 0) names += "`, `";
+                names += group->variables[i]->name;
+            }
+            oss << "| `" << names << "` | ";
+            if (!group->variables.empty())
+                oss << m_linker.linkifyTypeSignature(group->variables[0]->typeSignature);
+            oss << " | ";
+            ParsedComment parsed = parseNodeComment(node);
+            oss << parsed.brief << " |\n";
+        }
+        else if (auto* var = dynamic_cast<codex::VariableNode*>(node.get()))
+        {
+            oss << "| `" << var->name << "` | ";
+            oss << m_linker.linkifyTypeSignature(var->typeSignature) << " | ";
 
-        oss << "| `" << var->name << "` | ";
-        oss << m_linker.linkifyTypeSignature(var->typeSignature) << " | ";
-
-        ParsedComment parsed = parseNodeComment(node);
-        oss << parsed.brief << " |\n";
+            ParsedComment parsed = parseNodeComment(node);
+            oss << parsed.brief << " |\n";
+        }
     }
 
     oss << "\n";

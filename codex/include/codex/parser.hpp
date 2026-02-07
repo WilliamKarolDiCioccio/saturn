@@ -55,7 +55,7 @@ class Parser
     std::shared_ptr<ClassNode> parseClass(const TSNode& _node);
 
     // Executables & Declarations
-    std::shared_ptr<VariableNode> parseVariable(const TSNode& _node);
+    std::shared_ptr<Node> parseVariable(const TSNode& _node);
     std::shared_ptr<FunctionNode> parseFunction(const TSNode& _node);
     std::vector<FunctionParameter> parseFunctionParametersList(const TSNode& _node);
     std::shared_ptr<OperatorNode> parseOperator(const TSNode& _node);
@@ -86,6 +86,7 @@ class Parser
 
     // Specialized Declarators
     void parseInitDeclarator(const TSNode& _node, std::shared_ptr<VariableNode>& _varNode);
+    void extractInitDeclarator(const TSNode& _node, std::string& _name, std::string& _defaultValue);
     void parseFunctionDeclarator(const TSNode& _node, std::shared_ptr<FunctionNode>& _fn);
     void parseOperatorDeclarator(const TSNode& _node, std::shared_ptr<OperatorNode>& _op);
 
