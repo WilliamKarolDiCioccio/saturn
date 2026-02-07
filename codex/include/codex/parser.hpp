@@ -7,7 +7,7 @@
 
 #include <tree_sitter/api.h>
 
-#include "nodes.hpp"
+#include "models/nodes.hpp"
 
 namespace codex
 {

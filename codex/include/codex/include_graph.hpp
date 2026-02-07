@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "nodes.hpp"
+#include "models/nodes.hpp"
 
 namespace codex
 {

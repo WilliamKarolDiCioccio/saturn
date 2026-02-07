@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <codex/preprocessor.hpp>
-#include <codex/source.hpp>
+#include <codex/models/source.hpp>
 
 #include "test_utils.hpp"
 

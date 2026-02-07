@@ -14,9 +14,9 @@
 #include <fmt/ranges.h>
 #include <tree_sitter/api.h>
 
-#include "codex/nodes.hpp"
+#include "codex/models/nodes.hpp"
 
-#include "tree_sitter_cpp.hpp"
+#include "utils/tree_sitter_cpp.hpp"
 
 namespace codex
 {

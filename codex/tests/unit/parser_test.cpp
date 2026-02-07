@@ -6,7 +6,7 @@
 #include <tree_sitter/api.h>
 
 #include <codex/parser.hpp>
-#include <codex/nodes.hpp>
+#include <codex/models/nodes.hpp>
 
 #include "test_utils.hpp"
 

@@ -4,8 +4,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include <codex/nodes.hpp>
-#include <codex/symbol.hpp>
+#include <codex/models/nodes.hpp>
+#include <codex/models/symbol.hpp>
 
 namespace docsgen
 {

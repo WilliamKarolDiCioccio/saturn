@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "symbol.hpp"
+#include "models/symbol.hpp"
 
 namespace codex
 {

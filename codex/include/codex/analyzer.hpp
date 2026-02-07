@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "include_graph.hpp"
-#include "nodes.hpp"
+#include "models/nodes.hpp"
 #include "symbols_database.hpp"
 
 namespace codex

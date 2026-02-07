@@ -1,5 +1,5 @@
-#include <codex/source.hpp>
-#include <codex/nodes.hpp>
+#include <codex/models/source.hpp>
+#include <codex/models/nodes.hpp>
 #include <codex/parser.hpp>
 
 #include <functional>
