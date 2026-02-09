@@ -75,13 +75,14 @@ int main(int argc, char* argv[])
     if (opts.verbose) std::cout << "\nParsing...\n";
 
     codex::Parser parser;
+    parser.setDebugOutput(false);
     std::vector<std::shared_ptr<codex::SourceNode>> sourceNodes;
     sourceNodes.reserve(sources.size());
 
     for (const auto& source : sources)
     {
-        auto node = parser.parse(source);
-        if (node) sourceNodes.push_back(node);
+        auto result = parser.parse(source);
+        if (result.root) sourceNodes.push_back(result.root);
         parser.reset();
     }
 

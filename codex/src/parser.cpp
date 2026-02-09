@@ -39,7 +39,24 @@ Parser::~Parser() { ts_parser_delete(m_parser); }
 // Public API, Lifecycle Management
 /////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<SourceNode> Parser::parse(const std::shared_ptr<Source>& _source)
+static void stringifyTree(TSNode node, int depth, const std::string& code, std::ostringstream& out)
+{
+    std::string indent(depth * 2, ' ');
+    const char* type = ts_node_type(node);
+    bool named = ts_node_is_named(node);
+    uint32_t start = ts_node_start_byte(node);
+    uint32_t end = ts_node_end_byte(node);
+    std::string text = code.substr(start, end - start);
+    if (text.size() > 60) text = text.substr(0, 57) + "...";
+
+    out << indent << (named ? "" : "[anon] ") << type << " \"" << text << "\"\n";
+
+    uint32_t count = ts_node_child_count(node);
+    for (uint32_t i = 0; i < count; ++i)
+        stringifyTree(ts_node_child(node, i), depth + 1, code, out);
+}
+
+ParseResult Parser::parse(const std::shared_ptr<Source>& _source)
 {
     m_source = _source;
 
@@ -63,9 +80,17 @@ std::shared_ptr<SourceNode> Parser::parse(const std::shared_ptr<Source>& _source
         if (childNode) srcNode->children.emplace_back(childNode);
     }
 
+    std::string dumpStr;
+    if (m_debugOutput)
+    {
+        std::ostringstream oss;
+        stringifyTree(root, 0, m_source->content, oss);
+        dumpStr = oss.str();
+    }
+
     ts_tree_delete(tree);
 
-    return srcNode;
+    return {srcNode, std::move(dumpStr)};
 }
 
 void Parser::reset()

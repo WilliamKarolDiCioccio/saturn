@@ -435,7 +435,7 @@ class AnalyzerCrossRefTest : public ::testing::Test
         for (const auto& [code, path] : files)
         {
             auto src = makeSourceWithPath(code, path);
-            nodes.push_back(parser.parse(src));
+            nodes.push_back(parser.parse(src).root);
             parser.reset(); // Reset parser state between files
         }
 

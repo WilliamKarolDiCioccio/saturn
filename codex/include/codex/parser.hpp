@@ -12,6 +12,12 @@
 namespace codex
 {
 
+struct ParseResult
+{
+    std::shared_ptr<SourceNode> root;
+    std::string treeSitterDump;
+};
+
 class Parser
 {
    private:
@@ -19,14 +25,16 @@ class Parser
     std::shared_ptr<Source> m_source;
     std::shared_ptr<CommentNode> m_leadingComment;
     std::shared_ptr<TemplateNode> m_templateDeclaration;
+    bool m_debugOutput = true;
 
    public:
     Parser();
     ~Parser();
 
    public:
-    std::shared_ptr<SourceNode> parse(const std::shared_ptr<Source>& _source);
+    ParseResult parse(const std::shared_ptr<Source>& _source);
     void reset();
+    void setDebugOutput(bool enabled) { m_debugOutput = enabled; }
 
    private:
     // Core Parsing Logic

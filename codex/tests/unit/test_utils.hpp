@@ -27,7 +27,7 @@ inline std::shared_ptr<SourceNode> parseSingle(const std::string& _content, Pars
 {
     auto src = makeSource(_content);
     _parser.reset(); // Ensure parser is reset before parsing new source
-    return _parser.parse(src);
+    return _parser.parse(src).root;
 }
 
 inline std::shared_ptr<SourceNode> parseWithPath(const std::string& content,
@@ -35,7 +35,7 @@ inline std::shared_ptr<SourceNode> parseWithPath(const std::string& content,
 {
     auto src = makeSourceWithPath(content, path);
     _parser.reset(); // Ensure parser is reset before parsing new source
-    return _parser.parse(src);
+    return _parser.parse(src).root;
 }
 
 inline std::function<void(TSNode, int)> dumpAST(TSNode _node, int _depth, const std::string& _code)
