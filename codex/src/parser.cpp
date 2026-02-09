@@ -324,6 +324,11 @@ std::shared_ptr<Node> Parser::parseAmbiguousDeclaration(const TSNode& _node)
         {
             kind = determineKind(child);
         }
+        // Check if this is a conversion operator (e.g. operator bool())
+        else if (childType == "operator_cast")
+        {
+            kind = NodeKind::Operator;
+        }
         // Check if function declarator is nested within pointer/reference/array declarator
         else if (isDeclaratorWrapper(childType))
         {
@@ -426,6 +431,10 @@ std::shared_ptr<Node> Parser::parseAmbiguousDefinition(const TSNode& _node)
         if (childType == "function_declarator")
         {
             kind = determineKind(child);
+        }
+        else if (childType == "operator_cast")
+        {
+            kind = NodeKind::Operator;
         }
         else if (childType == "reference_declarator" || childType == "pointer_declarator" ||
                  childType == "array_declarator")
@@ -1397,10 +1406,6 @@ std::shared_ptr<OperatorNode> Parser::parseOperator(const TSNode& _node)
         {
             opNode->attributes.emplace_back(getNodeText(child, m_source->content));
         }
-        else if (type == "function_declarator")
-        {
-            parseOperatorDeclarator(child, opNode);
-        }
         else if (type == "storage_class_specifier")
         {
             std::string txt = getNodeText(child, m_source->content);
@@ -1413,6 +1418,75 @@ std::shared_ptr<OperatorNode> Parser::parseOperator(const TSNode& _node)
             if (text == "const") opNode->isConst = true;
             if (text == "constexpr") opNode->isConstexpr = true;
             if (text == "explicit") opNode->isExplicit = true;
+        }
+        else if (type == "explicit_function_specifier")
+        {
+            opNode->isExplicit = true;
+        }
+        else if (type == "operator_cast")
+        {
+            // Conversion operator: e.g. "operator bool() const"
+            std::string castSymbol = opNode->isExplicit ? "explicit operator " : "operator ";
+            const uint32_t castChildCount = ts_node_child_count(child);
+
+            for (uint32_t j = 0; j < castChildCount; ++j)
+            {
+                TSNode castChild = ts_node_child(child, j);
+                std::string castType = ts_node_type(castChild);
+
+                if (castType == "primitive_type" || castType == "type_identifier" ||
+                    castType == "qualified_identifier" || castType == "template_type")
+                {
+                    castSymbol += getNodeText(castChild, m_source->content);
+                }
+                else if (castType == "abstract_function_declarator")
+                {
+                    const uint32_t absDeclCount = ts_node_child_count(castChild);
+
+                    for (uint32_t k = 0; k < absDeclCount; ++k)
+                    {
+                        TSNode absDeclChild = ts_node_child(castChild, k);
+                        std::string absDeclType = ts_node_type(absDeclChild);
+
+                        if (absDeclType == "parameter_list")
+                        {
+                            opNode->parameters = parseFunctionParametersList(absDeclChild);
+                        }
+                        else if (absDeclType == "type_qualifier")
+                        {
+                            std::string q = getNodeText(absDeclChild, m_source->content);
+                            if (q == "const") opNode->isConst = true;
+                        }
+                        else if (absDeclType == "noexcept")
+                        {
+                            opNode->isNoexcept = true;
+                        }
+                    }
+                }
+            }
+
+            opNode->operatorSymbol = castSymbol;
+        }
+        else
+        {
+            if (type == "reference_declarator" || type == "pointer_declarator")
+            {
+                const uint32_t subChildCount = ts_node_child_count(child);
+
+                for (uint32_t j = 0; j < subChildCount; ++j)
+                {
+                    TSNode subChild = ts_node_child(child, j);
+                    std::string subType = ts_node_type(subChild);
+
+                    if (subType != "function_declarator") continue;
+
+                    parseOperatorDeclarator(subChild, opNode);
+                }
+            }
+            else if (type == "function_declarator")
+            {
+                parseOperatorDeclarator(child, opNode);
+            }
         }
     }
 
@@ -1835,8 +1909,9 @@ void Parser::parseOperatorDeclarator(const TSNode& _node, std::shared_ptr<Operat
 
         if (type == "operator_name")
         {
-            _op->operatorSymbol =
-                getNodeText(child, m_source->content).substr(8); // remove "operator"
+            auto sym = getNodeText(child, m_source->content).substr(8); // remove "operator"
+            if (!sym.empty() && sym[0] == ' ') sym = sym.substr(1); // trim space for keyword ops
+            _op->operatorSymbol = sym;
         }
         else if (type == "parameter_list")
         {

@@ -778,6 +778,112 @@ class Foo {};
 // Operator Tests
 /////////////////////////////////////////////////////////////////////////////////////////////
 
+TEST_F(ParserTest, ParseDifferentOperators)
+{
+    auto result = parseSingle(R"(
+struct Foo {
+    bool operator==(const Foo& other) const { return true; }
+    bool operator!=(const Foo& other) const { return false; }
+    bool operator<(const Foo& other) const { return false; }
+    bool operator>(const Foo& other) const { return false; }
+    bool operator<=(const Foo& other) const { return true; }
+    bool operator>=(const Foo& other) const { return true; }
+    auto operator<=>(const Foo& other) const = default;
+    Foo operator+(const Foo& other) const { return *this; }
+    Foo operator-(const Foo& other) const { return *this; }
+    Foo operator*(const Foo& other) const { return *this; }
+    Foo operator/(const Foo& other) const { return *this; }
+    Foo operator%(const Foo& other) const { return *this; }
+    Foo& operator++() { return *this; }
+    Foo& operator--() { return *this; }
+    Foo operator&(const Foo& other) const { return *this; }
+    Foo operator|(const Foo& other) const { return *this; }
+    Foo operator^(const Foo& other) const { return *this; }
+    Foo operator~() const { return *this; }
+    bool operator!() const { return false; }
+    bool operator&&(const Foo& other) const { return true; }
+    bool operator||(const Foo& other) const { return true; }
+    Foo operator<<(int n) const { return *this; }
+    Foo operator>>(int n) const { return *this; }
+    Foo& operator=(const Foo& other) { return *this; }
+    Foo& operator+=(const Foo& other) { return *this; }
+    Foo& operator-=(const Foo& other) { return *this; }
+    Foo& operator*=(const Foo& other) { return *this; }
+    Foo& operator/=(const Foo& other) { return *this; }
+    Foo& operator%=(const Foo& other) { return *this; }
+    Foo& operator&=(const Foo& other) { return *this; }
+    Foo& operator|=(const Foo& other) { return *this; }
+    Foo& operator^=(const Foo& other) { return *this; }
+    Foo& operator<<=(int n) { return *this; }
+    Foo& operator>>=(int n) { return *this; }
+    Foo& operator[](int index) { return *this; }
+    void operator()() const {}
+    Foo* operator->() { return this; }
+    int operator->*(int Foo::*ptr) { return 0; }
+    Foo operator,(const Foo& other) const { return *this; }
+    void* operator new(size_t size) { return nullptr; }
+    void operator delete(void* ptr) {}
+    void* operator new[](size_t size) { return nullptr; }
+    void operator delete[](void* ptr) {}
+    explicit operator bool() const { return true; }
+};
+)");
+
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto st = std::dynamic_pointer_cast<StructNode>(result->children[0]);
+    ASSERT_NE(st, nullptr);
+    EXPECT_EQ(st->operators.size(), 44);
+
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[0])->operatorSymbol, "==");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[1])->operatorSymbol, "!=");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[2])->operatorSymbol, "<");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[3])->operatorSymbol, ">");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[4])->operatorSymbol, "<=");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[5])->operatorSymbol, ">=");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[6])->operatorSymbol, "<=>");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[7])->operatorSymbol, "+");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[8])->operatorSymbol, "-");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[9])->operatorSymbol, "*");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[10])->operatorSymbol, "/");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[11])->operatorSymbol, "%");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[12])->operatorSymbol, "++");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[13])->operatorSymbol, "--");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[14])->operatorSymbol, "&");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[15])->operatorSymbol, "|");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[16])->operatorSymbol, "^");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[17])->operatorSymbol, "~");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[18])->operatorSymbol, "!");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[19])->operatorSymbol, "&&");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[20])->operatorSymbol, "||");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[21])->operatorSymbol, "<<");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[22])->operatorSymbol, ">>");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[23])->operatorSymbol, "=");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[24])->operatorSymbol, "+=");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[25])->operatorSymbol, "-=");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[26])->operatorSymbol, "*=");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[27])->operatorSymbol, "/=");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[28])->operatorSymbol, "%=");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[29])->operatorSymbol, "&=");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[30])->operatorSymbol, "|=");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[31])->operatorSymbol, "^=");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[32])->operatorSymbol, "<<=");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[33])->operatorSymbol, ">>=");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[34])->operatorSymbol, "[]");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[35])->operatorSymbol, "()");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[36])->operatorSymbol, "->");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[37])->operatorSymbol, "->*");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[38])->operatorSymbol, ",");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[39])->operatorSymbol, "new");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[40])->operatorSymbol, "delete");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[41])->operatorSymbol, "new[]");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[42])->operatorSymbol,
+              "delete[]");
+    EXPECT_EQ(std::dynamic_pointer_cast<OperatorNode>(st->operators[43])->operatorSymbol,
+              "explicit operator bool");
+}
+
 TEST_F(ParserTest, ParseOperatorOverload)
 {
     auto result = parseSingle(R"(
