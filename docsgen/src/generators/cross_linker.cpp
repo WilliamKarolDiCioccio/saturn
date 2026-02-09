@@ -65,6 +65,10 @@ std::string CrossLinker::qualifiedToFilename(const std::string& qualifiedName)
         result = prefix + sanitizeOperator(opPart);
     }
 
+    // Astro/Starlight lowercases slugs, so filenames must match
+    std::transform(result.begin(), result.end(), result.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+
     return result;
 }
 
