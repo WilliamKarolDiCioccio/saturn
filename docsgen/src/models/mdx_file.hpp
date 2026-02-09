@@ -11,6 +11,7 @@ struct MDXFile
     std::string title;
     std::string description;
     std::string content;
+    bool hidden = false;
 };
 
 } // namespace docsgen

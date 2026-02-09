@@ -12,6 +12,7 @@ struct CLIOptions
     std::filesystem::path outputDir;
     bool verbose = false;
     bool showHelp = false;
+    bool hideNested = false;
 };
 
 struct CLIParseResult

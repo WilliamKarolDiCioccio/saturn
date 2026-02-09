@@ -17,9 +17,11 @@ class MDXGenerator
     const codex::SymbolsDatabase* m_db = nullptr;
     CrossLinker m_linker;
     bool m_verbose = false;
+    bool m_hideNested = false;
 
    public:
     void setVerbose(bool verbose) { m_verbose = verbose; }
+    void setHideNested(bool hide) { m_hideNested = hide; }
     std::vector<MDXFile> generate(const codex::AnalysisResult& result);
 
    private:

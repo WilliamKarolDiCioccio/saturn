@@ -30,6 +30,7 @@ int main(int argc, char* argv[])
         std::cout << "  -i, --input <path>   Input directory with C++ headers (required)\n";
         std::cout << "  -o, --output <path>  Output directory for MDX files (required)\n";
         std::cout << "  -v, --verbose        Enable verbose output\n";
+        std::cout << "      --hide-nested    Hide non-top-level entities from sidebar\n";
         std::cout << "  -h, --help           Show this help message\n";
         return 0;
     }
@@ -101,6 +102,7 @@ int main(int argc, char* argv[])
 
     docsgen::MDXGenerator generator;
     generator.setVerbose(opts.verbose);
+    generator.setHideNested(opts.hideNested);
     std::vector<docsgen::MDXFile> mdxFiles = generator.generate(result);
 
     if (opts.verbose) std::cout << "  Generated " << mdxFiles.size() << " MDX files\n";

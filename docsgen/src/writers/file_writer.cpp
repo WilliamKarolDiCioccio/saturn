@@ -15,6 +15,7 @@ std::string FileWriter::buildFullMDX(const MDXFile& file)
     oss << "---\n";
     oss << "title: \"" << file.title << "\"\n";
     if (!file.description.empty()) oss << "description: \"" << file.description << "\"\n";
+    if (file.hidden) oss << "sidebar:\n  hidden: true\n";
     oss << "---\n\n";
 
     // Content

@@ -51,6 +51,12 @@ std::vector<MDXFile> MDXGenerator::generate(const codex::AnalysisResult& result)
 
             if (!file.filename.empty())
             {
+                if (m_hideNested && sym->parentSymbol != codex::SymbolID::invalid())
+                {
+                    const codex::Symbol* parentSym = m_db->findByID(sym->parentSymbol);
+                    file.hidden =
+                        parentSym && parentSym->symbolKind != codex::SymbolKind::Namespace;
+                }
                 files.push_back(std::move(file));
                 if (m_verbose) std::cout << "  Generated: " << file.filename << "\n";
             }

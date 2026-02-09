@@ -19,7 +19,9 @@ CLIParseResult parseCLI(int argc, char* argv[])
             .required() |
         lyra::opt(outputPath, "path")["-o"]["--output"]("Output directory for MDX files (required)")
             .required() |
-        lyra::opt(result.options.verbose)["-v"]["--verbose"]("Enable verbose output");
+        lyra::opt(result.options.verbose)["-v"]["--verbose"]("Enable verbose output") |
+        lyra::opt(result.options.hideNested)["--hide-nested"](
+            "Hide non-top-level entities from sidebar");
 
     auto parseResult = cli.parse({argc, argv});
 
