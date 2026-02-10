@@ -1155,6 +1155,7 @@ std::shared_ptr<Node> Parser::parseVariable(const TSNode& _node)
 
     // Shared properties
     TypeSignature sharedType = parseTypeSignature(_node);
+    std::string name;
     bool isStatic = false, isConstexpr = false, isThreadLocal = false;
     bool isInline = false, isExtern = false, isConstinit = false;
     std::vector<std::string> attributes;
@@ -1206,6 +1207,24 @@ std::shared_ptr<Node> Parser::parseVariable(const TSNode& _node)
             else if (s == "mutable")
                 sharedType.isMutable = true;
         }
+        else if (childType == "reference_declarator" || childType == "pointer_declarator" ||
+                 childType == "array_declarator")
+        {
+            const uint32_t subChildCount = ts_node_child_count(child);
+
+            for (uint32_t j = 0; j < subChildCount; ++j)
+            {
+                TSNode subChild = ts_node_child(child, j);
+                std::string subType = ts_node_type(subChild);
+
+                if (subType == "identifier")
+                {
+                    Declarator decl;
+                    decl.name = getNodeText(subChild, m_source->content);
+                    declarators.push_back(std::move(decl));
+                }
+            }
+        }
         else if (childType == "init_declarator")
         {
             Declarator decl;
@@ -1227,6 +1246,7 @@ std::shared_ptr<Node> Parser::parseVariable(const TSNode& _node)
         var->isExtern = isExtern;
         var->isConstinit = isConstinit;
         var->attributes = attributes;
+
         return var;
     };
 
@@ -1246,13 +1266,17 @@ std::shared_ptr<Node> Parser::parseVariable(const TSNode& _node)
             var->isConstinit = isConstinit;
             var->attributes = attributes;
         }
+
         var->comment = comment;
+
         return var;
     }
 
     auto group = std::make_shared<VariableGroupNode>(start.row, start.column, end.row, end.column);
     group->comment = comment;
+
     for (const auto& d : declarators) group->variables.push_back(makeVar(d));
+
     return group;
 }
 
@@ -1771,45 +1795,6 @@ void Parser::parseClassMemberList(
 // Specialized Declarators
 /////////////////////////////////////////////////////////////////////////////////////////////
 
-void Parser::parseInitDeclarator(const TSNode& _node, std::shared_ptr<VariableNode>& _varNode)
-{
-    const uint32_t childCount = ts_node_child_count(_node);
-
-    for (uint32_t i = 0; i < childCount; ++i)
-    {
-        TSNode child = ts_node_child(_node, i);
-        std::string type = ts_node_type(child);
-
-        if (type == "identifier" || type == "field_identifier")
-        {
-            _varNode->name = getNodeText(child, m_source->content);
-        }
-        else if (type == "number_literal" || type == "string_literal")
-        {
-            _varNode->defaultValue = getNodeText(child, m_source->content);
-        }
-        else if (type == "reference_declarator" || type == "pointer_declarator")
-        {
-            const uint32_t subChildCount = ts_node_child_count(child);
-
-            for (uint32_t j = 0; j < subChildCount; ++j)
-            {
-                TSNode subChild = ts_node_child(child, j);
-                std::string subType = ts_node_type(subChild);
-
-                if (subType == "identifier")
-                {
-                    _varNode->name = getNodeText(subChild, m_source->content);
-                }
-                else if (subType == "number_literal" || subType == "string_literal")
-                {
-                    _varNode->defaultValue = getNodeText(subChild, m_source->content);
-                }
-            }
-        }
-    }
-}
-
 void Parser::extractInitDeclarator(const TSNode& _node, std::string& _name,
                                    std::string& _defaultValue)
 {
@@ -1824,9 +1809,9 @@ void Parser::extractInitDeclarator(const TSNode& _node, std::string& _name,
         {
             _name = getNodeText(child, m_source->content);
         }
-        else if (type == "number_literal" || type == "string_literal")
+        else if (type == "=")
         {
-            _defaultValue = getNodeText(child, m_source->content);
+            _defaultValue = getNodeText(ts_node_next_sibling(child), m_source->content);
         }
         else if (type == "reference_declarator" || type == "pointer_declarator")
         {
@@ -1837,13 +1822,13 @@ void Parser::extractInitDeclarator(const TSNode& _node, std::string& _name,
                 TSNode subChild = ts_node_child(child, j);
                 std::string subType = ts_node_type(subChild);
 
-                if (subType == "identifier")
+                if (subType == "identifier" || subType == "field_identifier")
                 {
                     _name = getNodeText(subChild, m_source->content);
                 }
-                else if (subType == "number_literal" || subType == "string_literal")
+                else if (subType == "=")
                 {
-                    _defaultValue = getNodeText(subChild, m_source->content);
+                    _defaultValue = getNodeText(ts_node_next_sibling(subChild), m_source->content);
                 }
             }
         }

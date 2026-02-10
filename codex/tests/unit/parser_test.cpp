@@ -542,37 +542,80 @@ TEST_F(ParserTest, ParsePointerVariable)
     ASSERT_NE(var, nullptr);
     EXPECT_TRUE(var->typeSignature.isPointer);
     EXPECT_EQ(var->typeSignature.baseType, "int");
+    EXPECT_EQ(var->name, "x");
 }
 
-TEST_F(ParserTest, ParseReferenceVariable)
+TEST_F(ParserTest, ParserPointerVariableWithInitDeclarator)
 {
-    auto result = parseSingle(R"(
-struct Foo {};
-const Foo& y = *static_cast<Foo*>(nullptr);
-)");
+    auto result = parseSingle("int* x = nullptr;");
     ASSERT_NE(result, nullptr);
-    ASSERT_GE(result->children.size(), 2);
+    ASSERT_EQ(result->children.size(), 1);
 
-    auto var = std::dynamic_pointer_cast<VariableNode>(result->children[1]);
+    auto var = std::dynamic_pointer_cast<VariableNode>(result->children[0]);
+    ASSERT_NE(var, nullptr);
+    EXPECT_TRUE(var->typeSignature.isPointer);
+    EXPECT_EQ(var->typeSignature.baseType, "int");
+    EXPECT_EQ(var->name, "x");
+    EXPECT_EQ(var->defaultValue, "nullptr");
+}
+
+TEST_F(ParserTest, ParseLValueReferenceVariable)
+{
+    auto result = parseSingle("const int& x;");
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto var = std::dynamic_pointer_cast<VariableNode>(result->children[0]);
     ASSERT_NE(var, nullptr);
     EXPECT_TRUE(var->typeSignature.isConst);
     EXPECT_TRUE(var->typeSignature.isLValueRef);
-    EXPECT_EQ(var->typeSignature.baseType, "Foo");
+    EXPECT_EQ(var->typeSignature.baseType, "int");
+    EXPECT_EQ(var->name, "x");
+}
+
+TEST_F(ParserTest, ParseLValueReferenceVariableWithInitDeclarator)
+{
+    auto result = parseSingle(R"(
+const int& x = *static_cast<int*>(nullptr);
+)");
+    ASSERT_NE(result, nullptr);
+    ASSERT_GE(result->children.size(), 1);
+
+    auto var = std::dynamic_pointer_cast<VariableNode>(result->children[0]);
+    ASSERT_NE(var, nullptr);
+    EXPECT_TRUE(var->typeSignature.isConst);
+    EXPECT_TRUE(var->typeSignature.isLValueRef);
+    EXPECT_EQ(var->typeSignature.baseType, "int");
+    EXPECT_EQ(var->name, "x");
 }
 
 TEST_F(ParserTest, ParseRValueReferenceVariable)
 {
-    auto result = parseSingle(R"(
-struct Foo {};
-Foo&& z = Foo();
-)");
+    auto result = parseSingle("int&& x;");
     ASSERT_NE(result, nullptr);
-    ASSERT_GE(result->children.size(), 2);
+    ASSERT_EQ(result->children.size(), 1);
 
-    auto var = std::dynamic_pointer_cast<VariableNode>(result->children[1]);
+    auto var = std::dynamic_pointer_cast<VariableNode>(result->children[0]);
     ASSERT_NE(var, nullptr);
     EXPECT_TRUE(var->typeSignature.isRValueRef);
-    EXPECT_EQ(var->typeSignature.baseType, "Foo");
+    EXPECT_EQ(var->typeSignature.baseType, "int");
+    EXPECT_EQ(var->name, "x");
+}
+
+TEST_F(ParserTest, ParseRValueReferenceVariableWithInitDeclarator)
+{
+    auto result = parseSingle(R"(
+int&& x = *static_cast<int*>(nullptr);
+)");
+    ASSERT_NE(result, nullptr);
+    ASSERT_GE(result->children.size(), 1);
+
+    auto var = std::dynamic_pointer_cast<VariableNode>(result->children[0]);
+    ASSERT_NE(var, nullptr);
+    EXPECT_TRUE(var->typeSignature.isRValueRef);
+    EXPECT_EQ(var->typeSignature.baseType, "int");
+    EXPECT_EQ(var->name, "x");
+    EXPECT_EQ(var->defaultValue, "*static_cast<int*>(nullptr)");
 }
 
 TEST_F(ParserTest, ParseMutableVariable)
