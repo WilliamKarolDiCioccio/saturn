@@ -237,16 +237,16 @@ TEST_F(ParserTest, ParseFunctionWithParameters)
 
     EXPECT_EQ(fn->parameters[0].name, "a");
     EXPECT_EQ(fn->parameters[0].typeSignature.baseType, "int");
-    EXPECT_FALSE(fn->parameters[0].typeSignature.isPointer);
+    EXPECT_FALSE(fn->parameters[0].typeSignature.isPointer());
 
     EXPECT_EQ(fn->parameters[1].name, "b");
     EXPECT_EQ(fn->parameters[1].typeSignature.baseType, "int");
-    EXPECT_TRUE(fn->parameters[1].typeSignature.isPointer);
+    EXPECT_TRUE(fn->parameters[1].typeSignature.isPointer());
 
     EXPECT_EQ(fn->parameters[2].name, "c");
     EXPECT_EQ(fn->parameters[2].typeSignature.baseType, "int");
-    EXPECT_FALSE(fn->parameters[2].typeSignature.isPointer);
-    EXPECT_TRUE(fn->parameters[2].typeSignature.isLValueRef);
+    EXPECT_FALSE(fn->parameters[2].typeSignature.isPointer());
+    EXPECT_TRUE(fn->parameters[2].typeSignature.isLValueRef());
 }
 
 TEST_F(ParserTest, ParseFunctionWithDefaultParameters)
@@ -262,12 +262,12 @@ TEST_F(ParserTest, ParseFunctionWithDefaultParameters)
 
     EXPECT_EQ(fn->parameters[0].name, "a");
     EXPECT_EQ(fn->parameters[0].typeSignature.baseType, "int");
-    EXPECT_TRUE(fn->parameters[0].typeSignature.isPointer);
+    EXPECT_TRUE(fn->parameters[0].typeSignature.isPointer());
     EXPECT_EQ(fn->parameters[0].defaultValue, "nullptr");
 
     EXPECT_EQ(fn->parameters[1].name, "b");
     EXPECT_EQ(fn->parameters[1].typeSignature.baseType, "double");
-    EXPECT_TRUE(fn->parameters[1].typeSignature.isRValueRef);
+    EXPECT_TRUE(fn->parameters[1].typeSignature.isRValueRef());
     EXPECT_EQ(fn->parameters[1].defaultValue, "3.14");
 }
 
@@ -540,7 +540,7 @@ TEST_F(ParserTest, ParsePointerVariable)
 
     auto var = std::dynamic_pointer_cast<VariableNode>(result->children[0]);
     ASSERT_NE(var, nullptr);
-    EXPECT_TRUE(var->typeSignature.isPointer);
+    EXPECT_TRUE(var->typeSignature.isPointer());
     EXPECT_EQ(var->typeSignature.baseType, "int");
     EXPECT_EQ(var->name, "x");
 }
@@ -553,7 +553,7 @@ TEST_F(ParserTest, ParserPointerVariableWithInitDeclarator)
 
     auto var = std::dynamic_pointer_cast<VariableNode>(result->children[0]);
     ASSERT_NE(var, nullptr);
-    EXPECT_TRUE(var->typeSignature.isPointer);
+    EXPECT_TRUE(var->typeSignature.isPointer());
     EXPECT_EQ(var->typeSignature.baseType, "int");
     EXPECT_EQ(var->name, "x");
     EXPECT_EQ(var->defaultValue, "nullptr");
@@ -568,7 +568,7 @@ TEST_F(ParserTest, ParseLValueReferenceVariable)
     auto var = std::dynamic_pointer_cast<VariableNode>(result->children[0]);
     ASSERT_NE(var, nullptr);
     EXPECT_TRUE(var->typeSignature.isConst);
-    EXPECT_TRUE(var->typeSignature.isLValueRef);
+    EXPECT_TRUE(var->typeSignature.isLValueRef());
     EXPECT_EQ(var->typeSignature.baseType, "int");
     EXPECT_EQ(var->name, "x");
 }
@@ -584,7 +584,7 @@ const int& x = *static_cast<int*>(nullptr);
     auto var = std::dynamic_pointer_cast<VariableNode>(result->children[0]);
     ASSERT_NE(var, nullptr);
     EXPECT_TRUE(var->typeSignature.isConst);
-    EXPECT_TRUE(var->typeSignature.isLValueRef);
+    EXPECT_TRUE(var->typeSignature.isLValueRef());
     EXPECT_EQ(var->typeSignature.baseType, "int");
     EXPECT_EQ(var->name, "x");
 }
@@ -597,7 +597,7 @@ TEST_F(ParserTest, ParseRValueReferenceVariable)
 
     auto var = std::dynamic_pointer_cast<VariableNode>(result->children[0]);
     ASSERT_NE(var, nullptr);
-    EXPECT_TRUE(var->typeSignature.isRValueRef);
+    EXPECT_TRUE(var->typeSignature.isRValueRef());
     EXPECT_EQ(var->typeSignature.baseType, "int");
     EXPECT_EQ(var->name, "x");
 }
@@ -612,10 +612,72 @@ int&& x = *static_cast<int*>(nullptr);
 
     auto var = std::dynamic_pointer_cast<VariableNode>(result->children[0]);
     ASSERT_NE(var, nullptr);
-    EXPECT_TRUE(var->typeSignature.isRValueRef);
+    EXPECT_TRUE(var->typeSignature.isRValueRef());
     EXPECT_EQ(var->typeSignature.baseType, "int");
     EXPECT_EQ(var->name, "x");
     EXPECT_EQ(var->defaultValue, "*static_cast<int*>(nullptr)");
+}
+
+TEST_F(ParserTest, ParseMultiLevelIndirectionPointers)
+{
+    auto check = [&](const std::string& input, const std::string& expectedBase,
+                     std::vector<DeclaratorKind> expectedKinds)
+    {
+        auto result = parseSingle(input);
+        ASSERT_NE(result, nullptr) << "Failed to parse: " << input;
+
+        auto var = std::dynamic_pointer_cast<VariableNode>(result->children.at(0));
+        ASSERT_NE(var, nullptr);
+
+        EXPECT_EQ(var->typeSignature.baseType, expectedBase);
+        ASSERT_EQ(var->typeSignature.declarators.size(), expectedKinds.size());
+
+        for (size_t i = 0; i < expectedKinds.size(); ++i)
+        {
+            EXPECT_EQ(var->typeSignature.declarators[i].kind, expectedKinds[i])
+                << "Mismatch at level " << i << " for " << input;
+        }
+    };
+
+    check("int** ptr;", "int", {DeclaratorKind::Pointer, DeclaratorKind::Pointer});
+
+    check("int*** ptr;", "int",
+          {DeclaratorKind::Pointer, DeclaratorKind::Pointer, DeclaratorKind::Pointer});
+
+    check("float*& ref;", "float", {DeclaratorKind::Pointer, DeclaratorKind::LValueRef});
+}
+
+TEST_F(ParserTest, ParseConstVolatileTypePointerCombinations)
+{
+    // Helper lambda to reduce repetition
+    auto check = [&](const std::string& code, bool baseConst,
+                     std::vector<std::pair<DeclaratorKind, bool>> expected)
+    {
+        auto res = parseSingle(code);
+        auto var = std::dynamic_pointer_cast<VariableNode>(res->children.at(0));
+
+        EXPECT_EQ(var->typeSignature.isConst, baseConst) << "Base Const error: " << code;
+        ASSERT_EQ(var->typeSignature.declarators.size(), expected.size())
+            << "Size mismatch: " << code;
+
+        for (size_t i = 0; i < expected.size(); ++i)
+        {
+            EXPECT_EQ(var->typeSignature.declarators[i].kind, expected[i].first)
+                << "Kind error at level " << i;
+            EXPECT_EQ(var->typeSignature.declarators[i].isConst, expected[i].second)
+                << "Const error at level " << i;
+        }
+    };
+
+    check("const int* volatile ptr;", true, {{DeclaratorKind::Pointer, false}});
+
+    check("int** const* ptr;", false,
+          {{DeclaratorKind::Pointer, false},
+           {DeclaratorKind::Pointer, true},
+           {DeclaratorKind::Pointer, false}});
+
+    check("const int* const& ref;", true,
+          {{DeclaratorKind::Pointer, true}, {DeclaratorKind::LValueRef, false}});
 }
 
 TEST_F(ParserTest, ParseMutableVariable)

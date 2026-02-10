@@ -139,11 +139,11 @@ auto toConstructorNode = [](const std::shared_ptr<FunctionNode>& func,
         // Check if the base type matches the class name
         if (sig.baseType == parentName)
         {
-            if (sig.isLValueRef && sig.isConst && !sig.isRValueRef)
+            if (sig.isLValueRef() && sig.isConst && !sig.isRValueRef())
             {
                 ctor->isCopyConstructor = true;
             }
-            else if (sig.isRValueRef && !sig.isLValueRef)
+            else if (sig.isRValueRef() && !sig.isLValueRef())
             {
                 ctor->isMoveConstructor = true;
             }
@@ -704,6 +704,56 @@ std::shared_ptr<UsingNamespaceNode> Parser::parseUsingNamespace(const TSNode& _n
 // Type & Data Structures
 /////////////////////////////////////////////////////////////////////////////////////////////
 
+void Parser::parseDeclarators(const TSNode& _node, std::vector<TypeDeclarator>& _out, int _depth)
+{
+    if (_depth > 3) return;
+
+    const uint32_t childCount = ts_node_child_count(_node);
+    const std::string nodeType = ts_node_type(_node);
+    const std::string nodeText = getNodeText(_node, m_source->content);
+
+    // Determine this node's declarator kind
+    DeclaratorKind kind;
+    if (nodeType == "pointer_declarator" || (nodeType == "init_declarator" && nodeText[0] == '*'))
+    {
+        kind = DeclaratorKind::Pointer;
+    }
+    else if (nodeType == "reference_declarator" ||
+             (nodeType == "init_declarator" && nodeText[0] == '&'))
+    {
+        kind = (nodeText.size() >= 2 && nodeText[0] == '&' && nodeText[1] == '&')
+                   ? DeclaratorKind::RValueRef
+                   : DeclaratorKind::LValueRef;
+    }
+    else
+    {
+        return;
+    }
+
+    // Push this level first (outermost tree node = innermost type layer)
+    _out.push_back({kind});
+
+    // Then recurse into nested declarators (inner tree nodes = outer type layers)
+    for (uint32_t i = 0; i < childCount; ++i)
+    {
+        TSNode child = ts_node_child(_node, i);
+        const std::string childType = ts_node_type(child);
+        const std::string childText = getNodeText(child, m_source->content);
+
+        if (childType == "pointer_declarator" || childType == "reference_declarator")
+        {
+            parseDeclarators(child, _out, _depth + 1);
+        }
+        else if (childType == "type_qualifier")
+        {
+            // apply qualifiers to the current innermost declarator
+            TypeDeclarator& decl = *_out.rbegin();
+            if (childText == "const") decl.isConst = true;
+            if (childText == "volatile") decl.isVolatile = true;
+        }
+    }
+}
+
 TypeSignature Parser::parseTypeSignature(const TSNode& _node)
 {
     TypeSignature sig;
@@ -738,21 +788,12 @@ TypeSignature Parser::parseTypeSignature(const TSNode& _node)
         else if (childType == "pointer_declarator" ||
                  (childType == "init_declarator" && childText[0] == '*'))
         {
-            sig.isPointer = true;
+            parseDeclarators(child, sig.declarators);
         }
         else if (childType == "reference_declarator" ||
                  (childType == "init_declarator" && childText[0] == '&'))
         {
-            std::string txt = childText;
-
-            if (txt.find("&&") != std::string::npos)
-            {
-                sig.isRValueRef = true;
-            }
-            else
-            {
-                sig.isLValueRef = true;
-            }
+            parseDeclarators(child, sig.declarators);
         }
         else if (childType == "template_type")
         {

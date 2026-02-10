@@ -270,9 +270,21 @@ std::string CrossLinker::linkifyTypeSignature(const codex::TypeSignature& ts) co
         oss << "&gt;";
     }
 
-    if (ts.isPointer) oss << "*";
-    if (ts.isLValueRef) oss << "&amp;";
-    if (ts.isRValueRef) oss << "&amp;&amp;";
+    for (const auto& d : ts.declarators)
+    {
+        switch (d.kind)
+        {
+            case codex::DeclaratorKind::Pointer:
+                oss << "*";
+                break;
+            case codex::DeclaratorKind::LValueRef:
+                oss << "&amp;";
+                break;
+            case codex::DeclaratorKind::RValueRef:
+                oss << "&amp;&amp;";
+                break;
+        }
+    }
 
     return oss.str();
 }

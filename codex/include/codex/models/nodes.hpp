@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <map>
@@ -132,6 +133,20 @@ inline std::string accessSpecifierToString(AccessSpecifier access)
 
 struct TemplateArgument;
 
+enum struct DeclaratorKind : uint8_t
+{
+    Pointer,
+    LValueRef,
+    RValueRef
+};
+
+struct TypeDeclarator
+{
+    DeclaratorKind kind;
+    bool isConst = false;
+    bool isVolatile = false;
+};
+
 struct TypeSignature
 {
     std::string baseType;
@@ -139,11 +154,28 @@ struct TypeSignature
     bool isConst = false;
     bool isVolatile = false;
     bool isMutable = false;
-    bool isPointer = false;
-    bool isLValueRef = false;
-    bool isRValueRef = false;
+
+    // Innermost -> outermost ordering.
+    // int*&  -> [{Pointer}, {LValueRef}]
+    // int**  -> [{Pointer}, {Pointer}]
+    std::vector<TypeDeclarator> declarators;
 
     std::vector<TemplateArgument> templateArgs = {};
+
+    // Convenience: checks outermost (last) declarator
+    bool isPointer() const
+    {
+        return !declarators.empty() && declarators.back().kind == DeclaratorKind::Pointer;
+    }
+    bool isLValueRef() const
+    {
+        return !declarators.empty() && declarators.back().kind == DeclaratorKind::LValueRef;
+    }
+    bool isRValueRef() const
+    {
+        return !declarators.empty() && declarators.back().kind == DeclaratorKind::RValueRef;
+    }
+    bool hasDeclarators() const { return !declarators.empty(); }
 
     inline std::string toString() const;
 };
@@ -240,9 +272,24 @@ inline std::string TypeSignature::toString() const
     if (isConst) result = "const " + result;
     if (isVolatile) result = "volatile " + result;
     if (isMutable) result = "mutable " + result;
-    if (isPointer) result += "*";
-    if (isLValueRef) result += "&";
-    if (isRValueRef) result += "&&";
+
+    for (const auto& d : declarators)
+    {
+        switch (d.kind)
+        {
+            case DeclaratorKind::Pointer:
+                result += "*";
+                break;
+            case DeclaratorKind::LValueRef:
+                result += "&";
+                break;
+            case DeclaratorKind::RValueRef:
+                result += "&&";
+                break;
+        }
+        if (d.isConst) result += " const";
+        if (d.isVolatile) result += " volatile";
+    }
 
     if (!templateArgs.empty())
     {
