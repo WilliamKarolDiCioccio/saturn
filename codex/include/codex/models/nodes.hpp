@@ -137,7 +137,8 @@ enum struct DeclaratorKind : uint8_t
 {
     Pointer,
     LValueRef,
-    RValueRef
+    RValueRef,
+    Array
 };
 
 struct TypeDeclarator
@@ -145,6 +146,7 @@ struct TypeDeclarator
     DeclaratorKind kind;
     bool isConst = false;
     bool isVolatile = false;
+    std::string arraySize; // Only used when kind == Array
 };
 
 struct TypeSignature
@@ -285,6 +287,9 @@ inline std::string TypeSignature::toString() const
                 break;
             case DeclaratorKind::RValueRef:
                 result += "&&";
+                break;
+            case DeclaratorKind::Array:
+                result += "[" + d.arraySize + "]";
                 break;
         }
         if (d.isConst) result += " const";

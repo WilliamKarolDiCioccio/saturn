@@ -53,6 +53,7 @@ class Parser
     std::shared_ptr<UsingNamespaceNode> parseUsingNamespace(const TSNode& _node);
 
     // Type & Data Structures
+    void parseArrayDeclarators(const TSNode& _node, std::vector<TypeDeclarator>& _out);
     void parseDeclarators(const TSNode& _node, std::vector<TypeDeclarator>& _out, int _depth = 0);
     TypeSignature parseTypeSignature(const TSNode& _node);
     std::shared_ptr<EnumNode> parseEnum(const TSNode& _node);
@@ -95,6 +96,7 @@ class Parser
 
     // Specialized Declarators
     void extractInitDeclarator(const TSNode& _node, std::string& _name, std::string& _defaultValue);
+    std::shared_ptr<VariableNode> tryParsePointerToArrayVariable(const TSNode& _node);
     void parseFunctionDeclarator(const TSNode& _node, std::shared_ptr<FunctionNode>& _fn);
     void parseOperatorDeclarator(const TSNode& _node, std::shared_ptr<OperatorNode>& _op);
 

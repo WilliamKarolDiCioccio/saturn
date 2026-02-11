@@ -305,6 +305,12 @@ std::shared_ptr<Node> Parser::dispatch(TSNode _node)
     {
         return parseClass(_node);
     }
+    else if (type == "expression_statement")
+    {
+        // Detect int (*ptr)[10] / int (&ref)[10] = arr patterns
+        auto ptrArrayVar = tryParsePointerToArrayVariable(_node);
+        if (ptrArrayVar) return ptrArrayVar;
+    }
 
     return nullptr;
 }
@@ -704,6 +710,49 @@ std::shared_ptr<UsingNamespaceNode> Parser::parseUsingNamespace(const TSNode& _n
 // Type & Data Structures
 /////////////////////////////////////////////////////////////////////////////////////////////
 
+void Parser::parseArrayDeclarators(const TSNode& _node, std::vector<TypeDeclarator>& _out)
+{
+    const uint32_t childCount = ts_node_child_count(_node);
+
+    // Recurse into nested array_declarator first (innermost dimension first)
+    for (uint32_t i = 0; i < childCount; ++i)
+    {
+        TSNode child = ts_node_child(_node, i);
+        const std::string childType = ts_node_type(child);
+
+        if (childType == "array_declarator") parseArrayDeclarators(child, _out);
+    }
+
+    // Extract size for this dimension (content between [ and ])
+    std::string sizeText;
+    bool foundBracket = false;
+
+    for (uint32_t i = 0; i < childCount; ++i)
+    {
+        TSNode child = ts_node_child(_node, i);
+        std::string childType = ts_node_type(child);
+
+        if (childType == "[")
+        {
+            foundBracket = true;
+            continue;
+        }
+
+        if (childType == "]") break;
+
+        if (foundBracket)
+        {
+            sizeText = getNodeText(child, m_source->content);
+            break;
+        }
+    }
+
+    TypeDeclarator decl;
+    decl.kind = DeclaratorKind::Array;
+    decl.arraySize = sizeText;
+    _out.push_back(decl);
+}
+
 void Parser::parseDeclarators(const TSNode& _node, std::vector<TypeDeclarator>& _out, int _depth)
 {
     if (_depth > 3) return;
@@ -714,6 +763,7 @@ void Parser::parseDeclarators(const TSNode& _node, std::vector<TypeDeclarator>& 
 
     // Determine this node's declarator kind
     DeclaratorKind kind;
+
     if (nodeType == "pointer_declarator" || (nodeType == "init_declarator" && nodeText[0] == '*'))
     {
         kind = DeclaratorKind::Pointer;
@@ -730,7 +780,16 @@ void Parser::parseDeclarators(const TSNode& _node, std::vector<TypeDeclarator>& 
         return;
     }
 
-    // Push this level first (outermost tree node = innermost type layer)
+    // Process array_declarator children first (arrays bind tighter to the name)
+    for (uint32_t i = 0; i < childCount; ++i)
+    {
+        TSNode child = ts_node_child(_node, i);
+        const std::string childType = ts_node_type(child);
+
+        if (childType == "array_declarator") parseArrayDeclarators(child, _out);
+    }
+
+    // Push this level (outermost tree node = innermost type layer)
     _out.push_back({kind});
 
     // Then recurse into nested declarators (inner tree nodes = outer type layers)
@@ -738,7 +797,6 @@ void Parser::parseDeclarators(const TSNode& _node, std::vector<TypeDeclarator>& 
     {
         TSNode child = ts_node_child(_node, i);
         const std::string childType = ts_node_type(child);
-        const std::string childText = getNodeText(child, m_source->content);
 
         if (childType == "pointer_declarator" || childType == "reference_declarator")
         {
@@ -746,8 +804,9 @@ void Parser::parseDeclarators(const TSNode& _node, std::vector<TypeDeclarator>& 
         }
         else if (childType == "type_qualifier")
         {
-            // apply qualifiers to the current innermost declarator
-            TypeDeclarator& decl = *_out.rbegin();
+            const std::string childText = getNodeText(child, m_source->content);
+            // apply qualifiers to the current ptr/ref declarator
+            TypeDeclarator& decl = _out.back();
             if (childText == "const") decl.isConst = true;
             if (childText == "volatile") decl.isVolatile = true;
         }
@@ -794,6 +853,25 @@ TypeSignature Parser::parseTypeSignature(const TSNode& _node)
                  (childType == "init_declarator" && childText[0] == '&'))
         {
             parseDeclarators(child, sig.declarators);
+        }
+        else if (childType == "array_declarator")
+        {
+            parseArrayDeclarators(child, sig.declarators);
+        }
+        else if (childType == "init_declarator")
+        {
+            // Check if init_declarator wraps an array_declarator (e.g. arr[10] = {0})
+            const uint32_t initCount = ts_node_child_count(child);
+
+            for (uint32_t j = 0; j < initCount; ++j)
+            {
+                TSNode initChild = ts_node_child(child, j);
+                if (std::string(ts_node_type(initChild)) == "array_declarator")
+                {
+                    parseArrayDeclarators(initChild, sig.declarators);
+                    break;
+                }
+            }
         }
         else if (childType == "template_type")
         {
@@ -1246,8 +1324,7 @@ std::shared_ptr<Node> Parser::parseVariable(const TSNode& _node)
             else if (childText == "mutable")
                 sharedType.isMutable = true;
         }
-        else if (childType == "reference_declarator" || childType == "pointer_declarator" ||
-                 childType == "array_declarator")
+        else if (childType == "reference_declarator" || childType == "pointer_declarator")
         {
             const uint32_t subChildCount = ts_node_child_count(child);
 
@@ -1258,10 +1335,70 @@ std::shared_ptr<Node> Parser::parseVariable(const TSNode& _node)
 
                 if (subType == "identifier" || subType == "field_identifier")
                 {
-                    Declarator decl;
-                    decl.name = getNodeText(subChild, m_source->content);
-                    declarators.push_back(std::move(decl));
+                    declarators.push_back({getNodeText(subChild, m_source->content), ""});
                 }
+                else if (subType == "array_declarator")
+                {
+                    // For int* arr[10]: pointer_declarator > array_declarator > identifier
+                    // Drill through nested array_declarators to find identifier
+
+                    TSNode current = subChild;
+                    while (true)
+                    {
+                        bool nested = false;
+                        const uint32_t cnt = ts_node_child_count(current);
+                        for (uint32_t k = 0; k < cnt; ++k)
+                        {
+                            TSNode inner = ts_node_child(current, k);
+                            std::string innerType = ts_node_type(inner);
+                            if (innerType == "identifier" || innerType == "field_identifier")
+                            {
+                                declarators.push_back({getNodeText(inner, m_source->content), ""});
+                                nested = false;
+                                break;
+                            }
+                            else if (innerType == "array_declarator")
+                            {
+                                current = inner;
+                                nested = true;
+                                break;
+                            }
+                        }
+                        if (!nested) break;
+                    }
+                }
+            }
+        }
+        else if (childType == "array_declarator")
+        {
+            // Drill through nested array_declarators to find identifier
+            TSNode current = child;
+
+            while (true)
+            {
+                bool nested = false;
+                const uint32_t cnt = ts_node_child_count(current);
+
+                for (uint32_t k = 0; k < cnt; ++k)
+                {
+                    TSNode inner = ts_node_child(current, k);
+                    std::string innerType = ts_node_type(inner);
+
+                    if (innerType == "identifier" || innerType == "field_identifier")
+                    {
+                        declarators.push_back({getNodeText(inner, m_source->content), ""});
+                        nested = false;
+                        break;
+                    }
+                    else if (innerType == "array_declarator")
+                    {
+                        current = inner;
+                        nested = true;
+                        break;
+                    }
+                }
+
+                if (!nested) break;
             }
         }
         else if (childType == "init_declarator")
@@ -1872,7 +2009,209 @@ void Parser::extractInitDeclarator(const TSNode& _node, std::string& _name,
                 }
             }
         }
+        else if (type == "array_declarator")
+        {
+            // Drill through nested array_declarators to find identifier
+            TSNode current = child;
+            while (true)
+            {
+                bool nested = false;
+                const uint32_t cnt = ts_node_child_count(current);
+
+                for (uint32_t k = 0; k < cnt; ++k)
+                {
+                    TSNode inner = ts_node_child(current, k);
+                    std::string innerType = ts_node_type(inner);
+                    if (innerType == "identifier" || innerType == "field_identifier")
+                    {
+                        _name = getNodeText(inner, m_source->content);
+                        break;
+                    }
+                    else if (innerType == "array_declarator")
+                    {
+                        current = inner;
+                        nested = true;
+                        break;
+                    }
+                }
+                if (!nested) break;
+            }
+        }
     }
+}
+
+std::shared_ptr<VariableNode> Parser::tryParsePointerToArrayVariable(const TSNode& _node)
+{
+    // Detects int (*ptr)[10] and int (&ref)[10] = arr patterns.
+    // Tree-sitter mislabels these as expression_statement containing:
+    //   subscript_expression > call_expression(primitive_type, argument_list) +
+    //   subscript_argument_list
+    // Or assignment_expression wrapping the above.
+
+    const uint32_t childCount = ts_node_child_count(_node);
+    if (childCount == 0) return nullptr;
+
+    TSNode firstChild = ts_node_child(_node, 0);
+    std::string firstChildType = ts_node_type(firstChild);
+
+    TSNode subscriptNode = {};
+    std::string defaultValue;
+
+    if (firstChildType == "subscript_expression")
+    {
+        subscriptNode = firstChild;
+    }
+    else if (firstChildType == "assignment_expression")
+    {
+        const uint32_t assignCount = ts_node_child_count(firstChild);
+
+        for (uint32_t i = 0; i < assignCount; ++i)
+        {
+            TSNode child = ts_node_child(firstChild, i);
+            std::string childType = ts_node_type(child);
+
+            if (childType == "subscript_expression")
+            {
+                subscriptNode = child;
+            }
+            else if (childType == "=")
+            {
+                TSNode next = ts_node_next_sibling(child);
+                if (!ts_node_is_null(next)) defaultValue = getNodeText(next, m_source->content);
+            }
+        }
+        if (ts_node_is_null(subscriptNode)) return nullptr;
+    }
+    else
+    {
+        return nullptr;
+    }
+
+    // subscript_expression children: call_expression + size (between [ and ], or in argument_list)
+    TSNode callExpr = {};
+    std::string arraySize;
+
+    const uint32_t subCount = ts_node_child_count(subscriptNode);
+    bool foundBracket = false;
+
+    for (uint32_t i = 0; i < subCount; ++i)
+    {
+        TSNode child = ts_node_child(subscriptNode, i);
+        std::string childType = ts_node_type(child);
+
+        if (childType == "call_expression")
+        {
+            callExpr = child;
+        }
+        else if (childType == "[")
+        {
+            foundBracket = true;
+        }
+        else if (childType == "]")
+        {
+            foundBracket = false;
+        }
+        else if (foundBracket && arraySize.empty())
+        {
+            arraySize = getNodeText(child, m_source->content);
+        }
+        else if (childType == "subscript_argument_list")
+        {
+            // Size is inside the argument list
+            const uint32_t argCount2 = ts_node_child_count(child);
+
+            for (uint32_t j = 0; j < argCount2; ++j)
+            {
+                TSNode inner = ts_node_child(child, j);
+                std::string innerType = ts_node_type(inner);
+
+                if (innerType == "number_literal" || innerType == "identifier")
+                {
+                    arraySize = getNodeText(inner, m_source->content);
+                    break;
+                }
+            }
+        }
+    }
+
+    if (ts_node_is_null(callExpr)) return nullptr;
+
+    // call_expression children: primitive_type/type_identifier + argument_list
+    std::string baseType;
+    TSNode argList = {};
+
+    const uint32_t callCount = ts_node_child_count(callExpr);
+
+    for (uint32_t i = 0; i < callCount; ++i)
+    {
+        TSNode child = ts_node_child(callExpr, i);
+        std::string childType = ts_node_type(child);
+
+        if (childType == "primitive_type" || childType == "type_identifier" ||
+            childType == "qualified_identifier")
+        {
+            baseType = getNodeText(child, m_source->content);
+        }
+        else if (childType == "argument_list")
+        {
+            argList = child;
+        }
+    }
+
+    if (baseType.empty() || ts_node_is_null(argList)) return nullptr;
+
+    // argument_list contains pointer_expression (*name) or &-expression (&name)
+    DeclaratorKind ptrRefKind = DeclaratorKind::Pointer;
+    std::string name;
+
+    const uint32_t argCount = ts_node_child_count(argList);
+
+    for (uint32_t i = 0; i < argCount; ++i)
+    {
+        TSNode child = ts_node_child(argList, i);
+        std::string childType = ts_node_type(child);
+
+        if (childType == "pointer_expression")
+        {
+            // Could be *name (pointer) or &name (reference)
+            const uint32_t ptrCount = ts_node_child_count(child);
+
+            for (uint32_t j = 0; j < ptrCount; ++j)
+            {
+                TSNode inner = ts_node_child(child, j);
+                std::string innerType = ts_node_type(inner);
+                std::string innerText = getNodeText(inner, m_source->content);
+
+                if (innerType == "identifier")
+                    name = innerText;
+                else if (innerType == "*")
+                    ptrRefKind = DeclaratorKind::Pointer;
+                else if (innerType == "&")
+                    ptrRefKind = DeclaratorKind::LValueRef;
+            }
+        }
+    }
+
+    if (name.empty()) return nullptr;
+
+    auto [start, end] = getPositionData(_node);
+    auto var = std::make_shared<VariableNode>(start.row, start.column, end.row, end.column);
+
+    var->typeSignature.baseType = baseType;
+    var->typeSignature.declarators.push_back({ptrRefKind});
+
+    TypeDeclarator arrayDecl;
+    arrayDecl.kind = DeclaratorKind::Array;
+    arrayDecl.arraySize = arraySize;
+    var->typeSignature.declarators.push_back(arrayDecl);
+
+    var->name = name;
+    var->defaultValue = defaultValue;
+    var->comment = getLeadingComment();
+
+    clearTemplateDeclaration();
+
+    return var;
 }
 
 void Parser::parseFunctionDeclarator(const TSNode& _node, std::shared_ptr<FunctionNode>& _fn)

@@ -680,15 +680,137 @@ TEST_F(ParserTest, ParseConstVolatileTypePointerCombinations)
           {{DeclaratorKind::Pointer, true}, {DeclaratorKind::LValueRef, false}});
 }
 
-TEST_F(ParserTest, ParseMutableVariable)
+TEST_F(ParserTest, ParseVariableWithStorageClassQualifiers)
 {
-    auto result = parseSingle("mutable int count;");
+    auto check = [&](const std::string& input, auto validate)
+    {
+        auto result = parseSingle(input);
+        ASSERT_NE(result, nullptr) << "Failed to parse: " << input;
+        ASSERT_EQ(result->children.size(), 1);
+
+        auto var = std::dynamic_pointer_cast<VariableNode>(result->children[0]);
+        ASSERT_NE(var, nullptr);
+        validate(var);
+    };
+
+    check("mutable int count;", [](auto v) { EXPECT_TRUE(v->typeSignature.isMutable); });
+    check("constexpr int foo=42;", [](auto v) { EXPECT_TRUE(v->isConstexpr); });
+    check("static int bar;", [](auto v) { EXPECT_TRUE(v->isStatic); });
+
+    check("static constexpr int z=0;",
+          [](auto v)
+          {
+              EXPECT_TRUE(v->isStatic);
+              EXPECT_TRUE(v->isConstexpr);
+          });
+}
+
+TEST_F(ParserTest, ParseArrayVariable)
+{
+    auto result = parseSingle("int arr[10];");
     ASSERT_NE(result, nullptr);
     ASSERT_EQ(result->children.size(), 1);
 
     auto var = std::dynamic_pointer_cast<VariableNode>(result->children[0]);
     ASSERT_NE(var, nullptr);
-    EXPECT_TRUE(var->typeSignature.isMutable);
+    EXPECT_EQ(var->typeSignature.baseType, "int");
+    ASSERT_EQ(var->typeSignature.declarators.size(), 1);
+    EXPECT_EQ(var->typeSignature.declarators[0].kind, DeclaratorKind::Array);
+    EXPECT_EQ(var->typeSignature.declarators[0].arraySize, "10");
+}
+
+TEST_F(ParserTest, ParseArrayVariableWithInitDeclarator)
+{
+    auto result = parseSingle("int arr[10] = {0};");
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto var = std::dynamic_pointer_cast<VariableNode>(result->children[0]);
+    ASSERT_NE(var, nullptr);
+    EXPECT_EQ(var->typeSignature.baseType, "int");
+    ASSERT_EQ(var->typeSignature.declarators.size(), 1);
+    EXPECT_EQ(var->typeSignature.declarators[0].kind, DeclaratorKind::Array);
+    EXPECT_EQ(var->typeSignature.declarators[0].arraySize, "10");
+    EXPECT_EQ(var->defaultValue, "{0}");
+}
+
+TEST_F(ParserTest, ParseMultiDimensionalArrayVariable)
+{
+    auto result = parseSingle("float matrix[3][4];");
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto var = std::dynamic_pointer_cast<VariableNode>(result->children[0]);
+    ASSERT_NE(var, nullptr);
+    EXPECT_EQ(var->typeSignature.baseType, "float");
+    ASSERT_EQ(var->typeSignature.declarators.size(), 2);
+    EXPECT_EQ(var->typeSignature.declarators[0].kind, DeclaratorKind::Array);
+    EXPECT_EQ(var->typeSignature.declarators[0].arraySize, "3");
+    EXPECT_EQ(var->typeSignature.declarators[1].kind, DeclaratorKind::Array);
+    EXPECT_EQ(var->typeSignature.declarators[1].arraySize, "4");
+}
+
+TEST_F(ParserTest, ParserMultiDimensionalArrayVariableWithInitDeclarator)
+{
+    auto result = parseSingle("float matrix[3][4] = {{0}};");
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto var = std::dynamic_pointer_cast<VariableNode>(result->children[0]);
+    ASSERT_NE(var, nullptr);
+    EXPECT_EQ(var->typeSignature.baseType, "float");
+    ASSERT_EQ(var->typeSignature.declarators.size(), 2);
+    EXPECT_EQ(var->typeSignature.declarators[0].kind, DeclaratorKind::Array);
+    EXPECT_EQ(var->typeSignature.declarators[0].arraySize, "3");
+    EXPECT_EQ(var->typeSignature.declarators[1].kind, DeclaratorKind::Array);
+    EXPECT_EQ(var->typeSignature.declarators[1].arraySize, "4");
+    EXPECT_EQ(var->defaultValue, "{{0}}");
+}
+
+TEST_F(ParserTest, ParsePointerToArrayVariable)
+{
+    auto result = parseSingle("int (*ptr)[10];");
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto var = std::dynamic_pointer_cast<VariableNode>(result->children[0]);
+    ASSERT_NE(var, nullptr);
+    EXPECT_EQ(var->typeSignature.baseType, "int");
+    ASSERT_EQ(var->typeSignature.declarators.size(), 2);
+    EXPECT_EQ(var->typeSignature.declarators[0].kind, DeclaratorKind::Pointer);
+    EXPECT_EQ(var->typeSignature.declarators[1].kind, DeclaratorKind::Array);
+    EXPECT_EQ(var->typeSignature.declarators[1].arraySize, "10");
+}
+
+TEST_F(ParserTest, ParseReferenceToArrayVariable)
+{
+    auto result = parseSingle("int (&ref)[10] = arr;");
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto var = std::dynamic_pointer_cast<VariableNode>(result->children[0]);
+    ASSERT_NE(var, nullptr);
+    EXPECT_EQ(var->typeSignature.baseType, "int");
+    ASSERT_EQ(var->typeSignature.declarators.size(), 2);
+    EXPECT_EQ(var->typeSignature.declarators[0].kind, DeclaratorKind::LValueRef);
+    EXPECT_EQ(var->typeSignature.declarators[1].kind, DeclaratorKind::Array);
+    EXPECT_EQ(var->typeSignature.declarators[1].arraySize, "10");
+    EXPECT_EQ(var->defaultValue, "arr");
+}
+
+TEST_F(ParserTest, ParseArrayOfPointersVariable)
+{
+    auto result = parseSingle("int* arr[10];");
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto var = std::dynamic_pointer_cast<VariableNode>(result->children[0]);
+    ASSERT_NE(var, nullptr);
+    EXPECT_EQ(var->typeSignature.baseType, "int");
+    ASSERT_EQ(var->typeSignature.declarators.size(), 2);
+    EXPECT_EQ(var->typeSignature.declarators[0].kind, DeclaratorKind::Array);
+    EXPECT_EQ(var->typeSignature.declarators[0].arraySize, "10");
+    EXPECT_EQ(var->typeSignature.declarators[1].kind, DeclaratorKind::Pointer);
 }
 
 TEST_F(ParserTest, ParseQualifiedVariable)
@@ -702,26 +824,18 @@ TEST_F(ParserTest, ParseQualifiedVariable)
     EXPECT_EQ(var->typeSignature.baseType, "foo::Bar");
 }
 
-TEST_F(ParserTest, ParseConstexprVariable)
+TEST_F(ParserTest, ParseUserDefinedTypeVariable)
 {
-    auto result = parseSingle("constexpr int foo = 42;");
+    auto result = parseSingle(R"(
+struct Baz;
+Baz b;
+)");
     ASSERT_NE(result, nullptr);
-    ASSERT_EQ(result->children.size(), 1);
+    ASSERT_EQ(result->children.size(), 2);
 
-    auto var = std::dynamic_pointer_cast<VariableNode>(result->children[0]);
+    auto var = std::dynamic_pointer_cast<VariableNode>(result->children[1]);
     ASSERT_NE(var, nullptr);
-    EXPECT_TRUE(var->isConstexpr);
-}
-
-TEST_F(ParserTest, ParseStaticVariable)
-{
-    auto result = parseSingle("static int foo;");
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(result->children.size(), 1);
-
-    auto var = std::dynamic_pointer_cast<VariableNode>(result->children[0]);
-    ASSERT_NE(var, nullptr);
-    EXPECT_TRUE(var->isStatic);
+    EXPECT_EQ(var->typeSignature.baseType, "Baz");
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////

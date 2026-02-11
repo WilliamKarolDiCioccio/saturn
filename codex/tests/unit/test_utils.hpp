@@ -27,7 +27,9 @@ inline std::shared_ptr<SourceNode> parseSingle(const std::string& _content, Pars
 {
     auto src = makeSource(_content);
     _parser.reset(); // Ensure parser is reset before parsing new source
-    return _parser.parse(src).root;
+    auto res = _parser.parse(src);
+    // std::cout << res.treeSitterDump << std::endl; // Debug output of the tree-sitter parse tree
+    return res.root;
 }
 
 inline std::shared_ptr<SourceNode> parseWithPath(const std::string& content,
@@ -36,22 +38,6 @@ inline std::shared_ptr<SourceNode> parseWithPath(const std::string& content,
     auto src = makeSourceWithPath(content, path);
     _parser.reset(); // Ensure parser is reset before parsing new source
     return _parser.parse(src).root;
-}
-
-inline std::function<void(TSNode, int)> dumpAST(TSNode _node, int _depth, const std::string& _code)
-{
-    std::string indent(_depth * 2, ' ');
-    const char* type = ts_node_type(_node);
-    bool named = ts_node_is_named(_node);
-    uint32_t start = ts_node_start_byte(_node);
-    uint32_t end = ts_node_end_byte(_node);
-    std::string text = _code.substr(start, end - start);
-    if (text.size() > 60) text = text.substr(0, 57) + "...";
-
-    std::cout << indent << (named ? "" : "[anon] ") << type << " \"" << text << "\"" << std::endl;
-
-    uint32_t count = ts_node_child_count(_node);
-    for (uint32_t i = 0; i < count; ++i) dumpAST(ts_node_child(_node, i), _depth + 1, _code);
 }
 
 } // namespace codex::tests

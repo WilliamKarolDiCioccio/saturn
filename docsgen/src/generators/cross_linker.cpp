@@ -283,6 +283,9 @@ std::string CrossLinker::linkifyTypeSignature(const codex::TypeSignature& ts) co
             case codex::DeclaratorKind::RValueRef:
                 oss << "&amp;&amp;";
                 break;
+            case codex::DeclaratorKind::Array:
+                oss << "[" << d.arraySize << "]";
+                break;
         }
     }
 
