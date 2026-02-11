@@ -1206,6 +1206,7 @@ std::shared_ptr<Node> Parser::parseVariable(const TSNode& _node)
         std::string name;
         std::string defaultValue;
     };
+
     std::vector<Declarator> declarators;
 
     clearTemplateDeclaration();
@@ -1214,38 +1215,35 @@ std::shared_ptr<Node> Parser::parseVariable(const TSNode& _node)
     for (uint32_t i = 0; i < childCount; ++i)
     {
         TSNode child = ts_node_child(_node, i);
-        std::string childType = ts_node_type(child);
+        const std::string childType = ts_node_type(child);
+        const std::string childText = getNodeText(child, m_source->content);
 
         if (childType == "attribute_declaration")
         {
-            attributes.emplace_back(getNodeText(child, m_source->content));
+            attributes.emplace_back(childText);
         }
         else if (childType == "identifier" || childType == "field_identifier")
         {
-            declarators.push_back({getNodeText(child, m_source->content), ""});
+            declarators.push_back({childText, ""});
         }
         else if (childType == "type_qualifier")
         {
-            std::string q = getNodeText(child, m_source->content);
-
-            if (q == "constexpr")
+            if (childText == "constexpr")
                 isConstexpr = true;
-            else if (q == "constinit")
+            else if (childText == "constinit")
                 isConstinit = true;
         }
         else if (childType == "storage_class_specifier")
         {
-            std::string s = getNodeText(child, m_source->content);
-
-            if (s == "static")
+            if (childText == "static")
                 isStatic = true;
-            else if (s == "extern")
+            else if (childText == "extern")
                 isExtern = true;
-            else if (s == "thread_local")
+            else if (childText == "thread_local")
                 isThreadLocal = true;
-            else if (s == "inline")
+            else if (childText == "inline")
                 isInline = true;
-            else if (s == "mutable")
+            else if (childText == "mutable")
                 sharedType.isMutable = true;
         }
         else if (childType == "reference_declarator" || childType == "pointer_declarator" ||
@@ -1258,7 +1256,7 @@ std::shared_ptr<Node> Parser::parseVariable(const TSNode& _node)
                 TSNode subChild = ts_node_child(child, j);
                 std::string subType = ts_node_type(subChild);
 
-                if (subType == "identifier")
+                if (subType == "identifier" || subType == "field_identifier")
                 {
                     Declarator decl;
                     decl.name = getNodeText(subChild, m_source->content);
@@ -1631,6 +1629,7 @@ void Parser::parseMemberList(const TSNode& _listNode, const std::string& _parent
             }
             else
             {
+                auto fullText = getNodeText(child, m_source->content);
                 auto declNode = parseAmbiguousDeclaration(child);
 
                 if (declNode->kind == NodeKind::VariableGroup)
