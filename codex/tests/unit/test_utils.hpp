@@ -27,9 +27,7 @@ inline std::shared_ptr<SourceNode> parseSingle(const std::string& _content, Pars
 {
     auto src = makeSource(_content);
     _parser.reset(); // Ensure parser is reset before parsing new source
-    auto res = _parser.parse(src);
-    // std::cout << res.treeSitterDump << std::endl; // Debug output of the tree-sitter parse tree
-    return res.root;
+    return _parser.parse(src).root;
 }
 
 inline std::shared_ptr<SourceNode> parseWithPath(const std::string& content,
