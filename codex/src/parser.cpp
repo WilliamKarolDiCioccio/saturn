@@ -25,10 +25,7 @@ Parser::Parser()
 {
     m_parser = ts_parser_new();
 
-    if (!m_parser)
-    {
-        throw std::runtime_error("Failed to create TSParser");
-    }
+    if (!m_parser) throw std::runtime_error("Failed to create TSParser");
 
     ts_parser_set_language(m_parser, tree_sitter_cpp());
 }
@@ -36,77 +33,33 @@ Parser::Parser()
 Parser::~Parser() { ts_parser_delete(m_parser); }
 
 /////////////////////////////////////////////////////////////////////////////////////////////
-// Public API, Lifecycle Management
-/////////////////////////////////////////////////////////////////////////////////////////////
-
-static void stringifyTree(TSNode node, int depth, const std::string& code, std::ostringstream& out)
-{
-    std::string indent(depth * 2, ' ');
-    const char* type = ts_node_type(node);
-    bool named = ts_node_is_named(node);
-    uint32_t start = ts_node_start_byte(node);
-    uint32_t end = ts_node_end_byte(node);
-    std::string text = code.substr(start, end - start);
-    if (text.size() > 60) text = text.substr(0, 57) + "...";
-
-    out << indent << (named ? "" : "[anon] ") << type << " \"" << text << "\"\n";
-
-    uint32_t count = ts_node_child_count(node);
-    for (uint32_t i = 0; i < count; ++i)
-        stringifyTree(ts_node_child(node, i), depth + 1, code, out);
-}
-
-ParseResult Parser::parse(const std::shared_ptr<Source>& _source)
-{
-    m_source = _source;
-
-    TSTree* tree = ts_parser_parse_string(m_parser, nullptr, m_source->content.c_str(),
-                                          static_cast<uint32_t>(m_source->content.size()));
-
-    TSNode root = ts_tree_root_node(tree);
-    TSPoint rootEnd = ts_node_end_point(root);
-    auto srcNode = std::make_shared<SourceNode>(0, 0, static_cast<int>(rootEnd.row),
-                                                static_cast<int>(rootEnd.column));
-
-    srcNode->source = m_source;
-
-    uint32_t childCount = ts_node_child_count(root);
-
-    for (uint32_t i = 0; i < childCount; ++i)
-    {
-        TSNode child = ts_node_child(root, i);
-        auto childNode = dispatch(child);
-
-        if (childNode) srcNode->children.emplace_back(childNode);
-    }
-
-    std::string dumpStr;
-    if (m_debugOutput)
-    {
-        std::ostringstream oss;
-        stringifyTree(root, 0, m_source->content, oss);
-        dumpStr = oss.str();
-    }
-
-    ts_tree_delete(tree);
-
-    return {srcNode, std::move(dumpStr)};
-}
-
-void Parser::reset()
-{
-    ts_parser_reset(m_parser);
-    m_source = nullptr;
-    clearLeadingComment();
-    clearTemplateDeclaration();
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////
 // Custom AST helpers
 /////////////////////////////////////////////////////////////////////////////////////////////
 
-auto toConstructorNode = [](const std::shared_ptr<FunctionNode>& func,
-                            const std::string& parentName) -> std::shared_ptr<ConstructorNode>
+static void stringifyTree(TSNode _node, int _depth, const std::string& _code,
+                          std::ostringstream& _out)
+{
+    std::string indent(_depth * 2, ' ');
+    const char* type = ts_node_type(_node);
+    bool named = ts_node_is_named(_node);
+    uint32_t start = ts_node_start_byte(_node);
+    uint32_t end = ts_node_end_byte(_node);
+    std::string text = _code.substr(start, end - start);
+
+    if (text.size() > 60) text = text.substr(0, 57) + "...";
+
+    _out << indent << (named ? "" : "[anon] ") << type << " \"" << text << "\"\n";
+
+    uint32_t count = ts_node_child_count(_node);
+
+    for (uint32_t i = 0; i < count; ++i)
+    {
+        stringifyTree(ts_node_child(_node, i), _depth + 1, _code, _out);
+    }
+}
+
+static std::shared_ptr<ConstructorNode> toConstructorNode(const std::shared_ptr<FunctionNode>& func,
+                                                          const std::string& parentName)
 {
     auto ctor = std::make_shared<ConstructorNode>(func->startLine, func->startColumn, func->endLine,
                                                   func->endColumn);
@@ -153,8 +106,7 @@ auto toConstructorNode = [](const std::shared_ptr<FunctionNode>& func,
     return ctor;
 };
 
-auto toDestructorNode =
-    [](const std::shared_ptr<FunctionNode>& func) -> std::shared_ptr<DestructorNode>
+static std::shared_ptr<DestructorNode> toDestructorNode(const std::shared_ptr<FunctionNode>& func)
 {
     auto dtor = std::make_shared<DestructorNode>(func->startLine, func->startColumn, func->endLine,
                                                  func->endColumn);
@@ -175,7 +127,7 @@ auto toDestructorNode =
     return dtor;
 };
 
-auto determineKind = [](const TSNode& _node) -> NodeKind
+static NodeKind determineKind(const TSNode& _node)
 {
     uint32_t childCount = ts_node_child_count(_node);
 
@@ -190,11 +142,104 @@ auto determineKind = [](const TSNode& _node) -> NodeKind
     return NodeKind::Function;
 };
 
-auto isDeclaratorWrapper = [](const std::string& _nodeType) -> bool
+static bool isDeclaratorWrapper(const std::string& _nodeType)
 {
     return _nodeType == "reference_declarator" || _nodeType == "pointer_declarator" ||
            _nodeType == "array_declarator";
 };
+
+static bool canHaveInlineComment(NodeKind _kind)
+{
+    switch (_kind)
+    {
+        case NodeKind::Enum:
+        case NodeKind::Variable:
+        case NodeKind::VariableGroup:
+        case NodeKind::Typedef:
+        case NodeKind::TypeAlias:
+        case NodeKind::UsingNamespace:
+        case NodeKind::ObjectLikeMacro:
+        case NodeKind::FunctionLikeMacro:
+        case NodeKind::IncludeDirective:
+            return true;
+        default:
+            return false;
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+// Public API, Lifecycle Management
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+ParseResult Parser::parse(const std::shared_ptr<Source>& _source)
+{
+    m_source = _source;
+
+    TSTree* tree = ts_parser_parse_string(m_parser, nullptr, m_source->content.c_str(),
+                                          static_cast<uint32_t>(m_source->content.size()));
+
+    TSNode root = ts_tree_root_node(tree);
+    TSPoint rootEnd = ts_node_end_point(root);
+    auto srcNode = std::make_shared<SourceNode>(0, 0, static_cast<int>(rootEnd.row),
+                                                static_cast<int>(rootEnd.column));
+
+    srcNode->source = m_source;
+
+    const uint32_t childCount = ts_node_child_count(root);
+
+    std::shared_ptr<Node> lastNode = nullptr;
+
+    for (uint32_t i = 0; i < childCount; ++i)
+    {
+        TSNode child = ts_node_child(root, i);
+        std::string childType = ts_node_type(child);
+
+        if (childType == "comment")
+        {
+            auto comment = parseComment(child);
+
+            if (lastNode && comment->startLine == lastNode->endLine &&
+                canHaveInlineComment(lastNode->kind) && !lastNode->comment)
+            {
+                lastNode->comment = comment;
+            }
+            else
+            {
+                m_leadingComment = comment;
+            }
+        }
+        else
+        {
+            auto childNode = dispatch(child);
+
+            if (!childNode) continue;
+
+            srcNode->children.emplace_back(childNode);
+            lastNode = childNode;
+        }
+    }
+
+    std::string dumpStr;
+
+    if (m_debugOutput)
+    {
+        std::ostringstream oss;
+        stringifyTree(root, 0, m_source->content, oss);
+        dumpStr = oss.str();
+    }
+
+    ts_tree_delete(tree);
+
+    return {srcNode, std::move(dumpStr)};
+}
+
+void Parser::reset()
+{
+    ts_parser_reset(m_parser);
+    m_source = nullptr;
+    clearLeadingComment();
+    clearTemplateDeclaration();
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 // Core Parsing Logic
@@ -235,10 +280,34 @@ std::shared_ptr<Node> Parser::dispatch(TSNode _node)
             {
                 uint32_t subChildCount = ts_node_child_count(child);
 
+                std::shared_ptr<Node> lastNsChild = nullptr;
                 for (uint32_t j = 0; j < subChildCount; ++j)
                 {
-                    auto subChild = dispatch(ts_node_child(child, j));
-                    if (subChild) ns->children.emplace_back(subChild);
+                    TSNode nsChild = ts_node_child(child, j);
+                    std::string nsChildType = ts_node_type(nsChild);
+
+                    if (nsChildType == "comment")
+                    {
+                        auto comment = parseComment(nsChild);
+                        if (lastNsChild && comment->startLine == lastNsChild->endLine &&
+                            canHaveInlineComment(lastNsChild->kind) && !lastNsChild->comment)
+                        {
+                            lastNsChild->comment = comment;
+                        }
+                        else
+                        {
+                            m_leadingComment = comment;
+                        }
+                    }
+                    else
+                    {
+                        auto subChild = dispatch(nsChild);
+                        if (subChild)
+                        {
+                            ns->children.emplace_back(subChild);
+                            lastNsChild = subChild;
+                        }
+                    }
                 }
             }
         }
@@ -482,7 +551,7 @@ std::shared_ptr<IncludeNode> Parser::parseInclude(const TSNode& _node)
     auto incNode = std::make_shared<IncludeNode>(start.row, start.column, end.row, end.column);
 
     clearTemplateDeclaration();
-    incNode->comment = getLeadingComment();
+    incNode->comment = getLeadingComment(start.row);
 
     for (uint32_t i = 0; i < childCount; ++i)
     {
@@ -514,7 +583,7 @@ std::shared_ptr<ObjectLikeMacroNode> Parser::parseObjectLikeMacro(const TSNode& 
         std::make_shared<ObjectLikeMacroNode>(start.row, start.column, end.row, end.column);
 
     clearTemplateDeclaration();
-    objMacroNode->comment = getLeadingComment();
+    objMacroNode->comment = getLeadingComment(start.row);
 
     for (uint32_t i = 0; i < childCount; ++i)
     {
@@ -543,7 +612,7 @@ std::shared_ptr<FunctionLikeMacroNode> Parser::parseFunctionLikeMacro(const TSNo
         std::make_shared<FunctionLikeMacroNode>(start.row, start.column, end.row, end.column);
 
     clearTemplateDeclaration();
-    fnMacroNode->comment = getLeadingComment();
+    fnMacroNode->comment = getLeadingComment(start.row);
 
     for (uint32_t i = 0; i < childCount; ++i)
     {
@@ -616,7 +685,7 @@ std::shared_ptr<NamespaceNode> Parser::parseNamespace(const TSNode& _node)
     auto nsNode = std::make_shared<NamespaceNode>(start.row, start.column, end.row, end.column);
 
     clearTemplateDeclaration();
-    nsNode->comment = getLeadingComment();
+    nsNode->comment = getLeadingComment(start.row);
 
     for (uint32_t i = 0; i < childCount; ++i)
     {
@@ -625,7 +694,7 @@ std::shared_ptr<NamespaceNode> Parser::parseNamespace(const TSNode& _node)
 
         if (type == "comment")
         {
-            m_leadingComment = parseComment(_node);
+            m_leadingComment = parseComment(child);
         }
         else if (type == "namespace_identifier")
         {
@@ -657,7 +726,7 @@ std::shared_ptr<NamespaceAliasNode> Parser::parseNamespaceAlias(const TSNode& _n
         std::make_shared<NamespaceAliasNode>(start.row, start.column, end.row, end.column);
 
     clearTemplateDeclaration();
-    nsAliasNode->comment = getLeadingComment();
+    nsAliasNode->comment = getLeadingComment(start.row);
 
     for (uint32_t i = 0; i < childCount; ++i)
     {
@@ -690,7 +759,7 @@ std::shared_ptr<UsingNamespaceNode> Parser::parseUsingNamespace(const TSNode& _n
         std::make_shared<UsingNamespaceNode>(start.row, start.column, end.row, end.column);
 
     clearTemplateDeclaration();
-    usingNsNode->comment = getLeadingComment();
+    usingNsNode->comment = getLeadingComment(start.row);
 
     for (uint32_t i = 0; i < childCount; ++i)
     {
@@ -901,7 +970,7 @@ std::shared_ptr<EnumNode> Parser::parseEnum(const TSNode& _node)
     auto enumNode = std::make_shared<EnumNode>(start.row, start.column, end.row, end.column);
 
     clearTemplateDeclaration();
-    enumNode->comment = getLeadingComment();
+    enumNode->comment = getLeadingComment(start.row);
 
     for (uint32_t i = 0; i < childCount; ++i)
     {
@@ -924,6 +993,7 @@ std::shared_ptr<EnumNode> Parser::parseEnum(const TSNode& _node)
         {
             const uint32_t enumCount = ts_node_child_count(child);
 
+            std::shared_ptr<Node> lastEnumerator = nullptr;
             for (uint32_t j = 0; j < enumCount; ++j)
             {
                 TSNode eChild = ts_node_child(child, j);
@@ -931,9 +1001,18 @@ std::shared_ptr<EnumNode> Parser::parseEnum(const TSNode& _node)
 
                 if (eType == "comment")
                 {
-                    m_leadingComment = parseComment(_node);
+                    auto comment = parseComment(eChild);
+                    if (lastEnumerator && comment->startLine == lastEnumerator->endLine &&
+                        canHaveInlineComment(lastEnumerator->kind) && !lastEnumerator->comment)
+                    {
+                        lastEnumerator->comment = comment;
+                    }
+                    else
+                    {
+                        m_leadingComment = comment;
+                    }
                 }
-                if (eType == "enumerator")
+                else if (eType == "enumerator")
                 {
                     std::string enumName;
                     std::string enumValue;
@@ -948,12 +1027,10 @@ std::shared_ptr<EnumNode> Parser::parseEnum(const TSNode& _node)
 
                         if (pType == "identifier")
                         {
-                            // e.g. "VALUE1"
                             enumName = getNodeText(part, m_source->content);
                         }
                         else if (pType == "number_literal" || pType == "string_literal")
                         {
-                            // e.g. "42" or "\"value\""
                             enumValue = getNodeText(part, m_source->content);
                         }
                     }
@@ -963,8 +1040,10 @@ std::shared_ptr<EnumNode> Parser::parseEnum(const TSNode& _node)
 
                     enumSpecNode->name = enumName;
                     enumSpecNode->value = enumValue;
+                    enumSpecNode->comment = getLeadingComment(s.row);
 
                     enumNode->enumerators.emplace_back(enumSpecNode);
+                    lastEnumerator = enumSpecNode;
                 }
             }
         }
@@ -980,7 +1059,7 @@ std::shared_ptr<ConceptNode> Parser::parseConcept(const TSNode& _node)
 
     auto conceptNode = std::make_shared<ConceptNode>(start.row, start.column, end.row, end.column);
 
-    conceptNode->comment = getLeadingComment();
+    conceptNode->comment = getLeadingComment(start.row);
     conceptNode->templateDecl = getTemplateDeclaration();
 
     for (uint32_t i = 0; i < childCount; ++i)
@@ -1012,7 +1091,7 @@ std::shared_ptr<TypedefNode> Parser::parseTypedef(const TSNode& _node)
     auto typedefNode = std::make_shared<TypedefNode>(start.row, start.column, end.row, end.column);
 
     clearTemplateDeclaration();
-    typedefNode->comment = getLeadingComment();
+    typedefNode->comment = getLeadingComment(start.row);
 
     for (uint32_t i = 0; i < childCount; ++i)
     {
@@ -1049,7 +1128,7 @@ std::shared_ptr<TypeAliasNode> Parser::parseTypeAlias(const TSNode& _node)
         std::make_shared<TypeAliasNode>(start.row, start.column, end.row, end.column);
 
     typeAliasNode->templateDecl = getTemplateDeclaration();
-    typeAliasNode->comment = getLeadingComment();
+    typeAliasNode->comment = getLeadingComment(start.row);
 
     for (uint32_t i = 0; i < childCount; ++i)
     {
@@ -1077,7 +1156,7 @@ std::shared_ptr<UnionNode> Parser::parseUnion(const TSNode& _node)
 
     auto unionNode = std::make_shared<UnionNode>(start.row, start.column, end.row, end.column);
 
-    unionNode->comment = getLeadingComment();
+    unionNode->comment = getLeadingComment(start.row);
     unionNode->templateDecl = getTemplateDeclaration();
 
     for (uint32_t i = 0; i < childCount; ++i)
@@ -1141,7 +1220,7 @@ std::shared_ptr<StructNode> Parser::parseStruct(const TSNode& _node)
 
     auto structNode = std::make_shared<StructNode>(start.row, start.column, end.row, end.column);
 
-    structNode->comment = getLeadingComment();
+    structNode->comment = getLeadingComment(start.row);
     structNode->templateDecl = getTemplateDeclaration();
 
     for (uint32_t i = 0; i < childCount; ++i)
@@ -1209,7 +1288,7 @@ std::shared_ptr<ClassNode> Parser::parseClass(const TSNode& _node)
 
     const uint32_t childCount = ts_node_child_count(_node);
 
-    classNode->comment = getLeadingComment();
+    classNode->comment = getLeadingComment(start.row);
     classNode->templateDecl = getTemplateDeclaration();
 
     for (uint32_t i = 0; i < childCount; ++i)
@@ -1288,7 +1367,7 @@ std::shared_ptr<Node> Parser::parseVariable(const TSNode& _node)
     std::vector<Declarator> declarators;
 
     clearTemplateDeclaration();
-    auto comment = getLeadingComment();
+    auto comment = getLeadingComment(start.row);
 
     for (uint32_t i = 0; i < childCount; ++i)
     {
@@ -1463,7 +1542,7 @@ std::shared_ptr<FunctionNode> Parser::parseFunction(const TSNode& _node)
 
     auto fnNode = std::make_shared<FunctionNode>(start.row, start.column, end.row, end.column);
 
-    fnNode->comment = getLeadingComment();
+    fnNode->comment = getLeadingComment(start.row);
     fnNode->templateDecl = getTemplateDeclaration();
     fnNode->returnSignature = parseTypeSignature(_node);
 
@@ -1593,7 +1672,7 @@ std::shared_ptr<OperatorNode> Parser::parseOperator(const TSNode& _node)
 
     auto opNode = std::make_shared<OperatorNode>(start.row, start.column, end.row, end.column);
 
-    opNode->comment = getLeadingComment();
+    opNode->comment = getLeadingComment(start.row);
     opNode->templateDecl = getTemplateDeclaration();
     opNode->returnSignature = parseTypeSignature(_node);
 
@@ -1701,7 +1780,7 @@ std::shared_ptr<Node> Parser::parseFriend(const TSNode& _node)
     auto friendNode = std::make_shared<FriendNode>(start.row, start.column, end.row, end.column);
 
     clearTemplateDeclaration();
-    friendNode->comment = getLeadingComment();
+    friendNode->comment = getLeadingComment(start.row);
 
     for (uint32_t i = 0; i < childCount; ++i)
     {
@@ -1738,6 +1817,7 @@ void Parser::parseMemberList(const TSNode& _listNode, const std::string& _parent
 {
     const uint32_t fieldCount = ts_node_child_count(_listNode);
 
+    std::shared_ptr<Node> lastMember = nullptr;
     for (uint32_t j = 0; j < fieldCount; ++j)
     {
         TSNode child = ts_node_child(_listNode, j);
@@ -1745,13 +1825,22 @@ void Parser::parseMemberList(const TSNode& _listNode, const std::string& _parent
 
         if (childType == "comment")
         {
-            m_leadingComment = parseComment(child);
+            auto comment = parseComment(child);
+            if (lastMember && comment->startLine == lastMember->endLine &&
+                canHaveInlineComment(lastMember->kind) && !lastMember->comment)
+            {
+                lastMember->comment = comment;
+            }
+            else
+            {
+                m_leadingComment = comment;
+            }
         }
         else if (childType == "template_declaration")
         {
             m_templateDeclaration = parseTemplateDeclaration(child);
         }
-        if (childType == "field_declaration" || childType == "declaration")
+        else if (childType == "field_declaration" || childType == "declaration")
         {
             const uint32_t childCount = ts_node_child_count(child);
 
@@ -1763,6 +1852,7 @@ void Parser::parseMemberList(const TSNode& _listNode, const std::string& _parent
             {
                 auto nested = dispatch(firstSubChild);
                 _nestedTypes.emplace_back(nested);
+                lastMember = nested;
             }
             else
             {
@@ -1774,11 +1864,13 @@ void Parser::parseMemberList(const TSNode& _listNode, const std::string& _parent
                     auto group = std::dynamic_pointer_cast<VariableGroupNode>(declNode);
                     bool isStatic = !group->variables.empty() && group->variables[0]->isStatic;
                     (isStatic ? _staticMemberVars : _memberVars).emplace_back(declNode);
+                    lastMember = declNode;
                 }
                 else if (declNode->kind == NodeKind::Variable)
                 {
                     auto varNode = std::dynamic_pointer_cast<VariableNode>(declNode);
                     (varNode->isStatic ? _staticMemberVars : _memberVars).emplace_back(declNode);
+                    lastMember = declNode;
                 }
                 else if (declNode->kind == NodeKind::Function)
                 {
@@ -1787,20 +1879,24 @@ void Parser::parseMemberList(const TSNode& _listNode, const std::string& _parent
                     if (funcNode->name == _parentName) // constructor
                     {
                         _ctors.emplace_back(toConstructorNode(funcNode, _parentName));
+                        lastMember = _ctors.back();
                     }
                     else if (!funcNode->name.empty() && funcNode->name[0] == '~') // destructor
                     {
                         _dtors.emplace_back(toDestructorNode(funcNode));
+                        lastMember = _dtors.back();
                     }
                     else
                     {
                         (funcNode->isStatic ? _staticMemberFuncs : _memberFuncs)
                             .emplace_back(funcNode);
+                        lastMember = funcNode;
                     }
                 }
                 else
                 {
                     _ops.emplace_back(declNode);
+                    lastMember = declNode;
                 }
             }
         }
@@ -1815,24 +1911,29 @@ void Parser::parseMemberList(const TSNode& _listNode, const std::string& _parent
                 if (funcNode->name == _parentName) // constructor
                 {
                     _ctors.emplace_back(toConstructorNode(funcNode, _parentName));
+                    lastMember = _ctors.back();
                 }
                 else if (!funcNode->name.empty() && funcNode->name[0] == '~') // destructor
                 {
                     _dtors.emplace_back(toDestructorNode(funcNode));
+                    lastMember = _dtors.back();
                 }
                 else
                 {
                     (funcNode->isStatic ? _staticMemberFuncs : _memberFuncs).emplace_back(funcNode);
+                    lastMember = funcNode;
                 }
             }
             else
             {
                 _ops.emplace_back(defNode);
+                lastMember = defNode;
             }
         }
         else if (childType == "friend_declaration")
         {
             _friends.emplace_back(parseFriend(child));
+            lastMember = _friends.back();
         }
     }
 }
@@ -1853,6 +1954,7 @@ void Parser::parseClassMemberList(
 
     AccessSpecifier currentAccess = AccessSpecifier::Private;
 
+    std::shared_ptr<Node> lastMember = nullptr;
     for (uint32_t j = 0; j < fieldCount; ++j)
     {
         TSNode child = ts_node_child(_listNode, j);
@@ -1860,7 +1962,16 @@ void Parser::parseClassMemberList(
 
         if (childType == "comment")
         {
-            m_leadingComment = parseComment(child);
+            auto comment = parseComment(child);
+            if (lastMember && comment->startLine == lastMember->endLine &&
+                canHaveInlineComment(lastMember->kind) && !lastMember->comment)
+            {
+                lastMember->comment = comment;
+            }
+            else
+            {
+                m_leadingComment = comment;
+            }
         }
         else if (childType == "template_declaration")
         {
@@ -1889,6 +2000,7 @@ void Parser::parseClassMemberList(
             {
                 auto nested = dispatch(firstSubChild);
                 _nestedTypes.emplace_back(std::make_pair(currentAccess, nested));
+                lastMember = nested;
             }
             else
             {
@@ -1900,12 +2012,14 @@ void Parser::parseClassMemberList(
                     bool isStatic = !group->variables.empty() && group->variables[0]->isStatic;
                     (isStatic ? _staticMemberVars : _memberVars)
                         .emplace_back(std::make_pair(currentAccess, declNode));
+                    lastMember = declNode;
                 }
                 else if (declNode->kind == NodeKind::Variable)
                 {
                     auto varNode = std::dynamic_pointer_cast<VariableNode>(declNode);
                     (varNode->isStatic ? _staticMemberVars : _memberVars)
                         .emplace_back(std::make_pair(currentAccess, declNode));
+                    lastMember = declNode;
                 }
                 else if (declNode->kind == NodeKind::Function)
                 {
@@ -1915,21 +2029,25 @@ void Parser::parseClassMemberList(
                     {
                         _ctors.emplace_back(std::make_pair(
                             currentAccess, toConstructorNode(funcNode, _parentName)));
+                        lastMember = _ctors.back().second;
                     }
                     else if (!funcNode->name.empty() && funcNode->name[0] == '~') // destructor
                     {
                         _dtors.emplace_back(
                             std::make_pair(currentAccess, toDestructorNode(funcNode)));
+                        lastMember = _dtors.back().second;
                     }
                     else
                     {
                         (funcNode->isStatic ? _staticMemberFuncs : _memberFuncs)
                             .emplace_back(std::make_pair(currentAccess, funcNode));
+                        lastMember = funcNode;
                     }
                 }
                 else
                 {
                     _ops.emplace_back(std::make_pair(currentAccess, declNode));
+                    lastMember = declNode;
                 }
             }
         }
@@ -1945,25 +2063,30 @@ void Parser::parseClassMemberList(
                 {
                     _ctors.emplace_back(
                         std::make_pair(currentAccess, toConstructorNode(funcNode, _parentName)));
+                    lastMember = _ctors.back().second;
                 }
                 else if (!funcNode->name.empty() && funcNode->name[0] == '~') // destructor
                 {
                     _dtors.emplace_back(std::make_pair(currentAccess, toDestructorNode(funcNode)));
+                    lastMember = _dtors.back().second;
                 }
                 else
                 {
                     (funcNode->isStatic ? _staticMemberFuncs : _memberFuncs)
                         .emplace_back(std::make_pair(currentAccess, funcNode));
+                    lastMember = funcNode;
                 }
             }
             else
             {
                 _ops.emplace_back(std::make_pair(currentAccess, defNode));
+                lastMember = defNode;
             }
         }
         else if (childType == "friend_declaration")
         {
             _friends.emplace_back(std::make_pair(currentAccess, parseFriend(child)));
+            lastMember = _friends.back().second;
         }
     }
 }
@@ -2207,7 +2330,7 @@ std::shared_ptr<VariableNode> Parser::tryParsePointerToArrayVariable(const TSNod
 
     var->name = name;
     var->defaultValue = defaultValue;
-    var->comment = getLeadingComment();
+    var->comment = getLeadingComment(start.row);
 
     clearTemplateDeclaration();
 
@@ -2616,14 +2739,19 @@ std::shared_ptr<CommentNode> Parser::parseComment(const TSNode& _node)
     return std::make_shared<CommentNode>(text, start.row, start.column, end.row, end.column);
 }
 
-std::shared_ptr<CommentNode> Parser::getLeadingComment()
+std::shared_ptr<CommentNode> Parser::getLeadingComment(uint32_t targetStartLine)
 {
     if (!m_leadingComment) return nullptr;
 
+    // Discard comment if gap > 1 line (filters separator blocks)
+    if (targetStartLine - m_leadingComment->endLine > 1)
+    {
+        m_leadingComment = nullptr;
+        return nullptr;
+    }
+
     auto copy = m_leadingComment;
-
     m_leadingComment = nullptr;
-
     return copy;
 }
 

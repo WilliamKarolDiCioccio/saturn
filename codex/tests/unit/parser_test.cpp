@@ -972,25 +972,117 @@ TEST_F(ParserTest, ParseUsingAlias)
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////
-// Comment Tests
+// Comment Linking Tests
 /////////////////////////////////////////////////////////////////////////////////////////////
 
-TEST_F(ParserTest, ParseCommentAttachedToClass)
+TEST_F(ParserTest, SeparatorCommentNotAttached)
 {
     auto result = parseSingle(R"(
-// This is a comment
-class Foo {};
+////// Public API //////
+
+void foo();
 )");
     ASSERT_NE(result, nullptr);
     ASSERT_EQ(result->children.size(), 1);
 
-    auto cls = std::dynamic_pointer_cast<ClassNode>(result->children[0]);
-    ASSERT_NE(cls, nullptr);
-    ASSERT_NE(cls->comment, nullptr);
+    auto fn = std::dynamic_pointer_cast<FunctionNode>(result->children[0]);
+    ASSERT_NE(fn, nullptr);
+    EXPECT_EQ(fn->comment, nullptr);
+}
 
-    auto comment = std::dynamic_pointer_cast<CommentNode>(cls->comment);
+TEST_F(ParserTest, ParseAdjacentLeadingComment)
+{
+    auto result = parseSingle(R"(
+// This describes foo
+void foo();
+)");
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto fn = std::dynamic_pointer_cast<FunctionNode>(result->children[0]);
+    ASSERT_NE(fn, nullptr);
+    ASSERT_NE(fn->comment, nullptr);
+
+    auto comment = std::dynamic_pointer_cast<CommentNode>(fn->comment);
     ASSERT_NE(comment, nullptr);
-    EXPECT_TRUE(comment->text.find("This is a comment") != std::string::npos);
+    EXPECT_NE(comment->text.find("This describes foo"), std::string::npos);
+}
+
+TEST_F(ParserTest, ParseInlineCommentOnEnumLabel)
+{
+    auto result = parseSingle(R"(
+enum Color {
+    Red,   // primary
+    Green, // primary
+    Blue
+};
+)");
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto enumNode = std::dynamic_pointer_cast<EnumNode>(result->children[0]);
+    ASSERT_NE(enumNode, nullptr);
+    ASSERT_GE(enumNode->enumerators.size(), 3);
+
+    // Red should have inline comment "// primary"
+    auto red = std::dynamic_pointer_cast<EnumSpecifierNode>(enumNode->enumerators[0]);
+    ASSERT_NE(red, nullptr);
+    EXPECT_EQ(red->name, "Red");
+    ASSERT_NE(red->comment, nullptr);
+
+    // Green should have inline comment "// primary"
+    auto green = std::dynamic_pointer_cast<EnumSpecifierNode>(enumNode->enumerators[1]);
+    ASSERT_NE(green, nullptr);
+    EXPECT_EQ(green->name, "Green");
+    ASSERT_NE(green->comment, nullptr);
+
+    // Blue has no comment
+    auto blue = std::dynamic_pointer_cast<EnumSpecifierNode>(enumNode->enumerators[2]);
+    ASSERT_NE(blue, nullptr);
+    EXPECT_EQ(blue->name, "Blue");
+    EXPECT_EQ(blue->comment, nullptr);
+}
+
+TEST_F(ParserTest, ParseInlineCommentOnMemberVariable)
+{
+    auto result = parseSingle(R"(
+struct Foo {
+    int x; // horizontal
+    int y; // vertical
+};
+)");
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto s = std::dynamic_pointer_cast<StructNode>(result->children[0]);
+    ASSERT_NE(s, nullptr);
+    ASSERT_GE(s->memberVariables.size(), 2);
+
+    auto xVar = std::dynamic_pointer_cast<VariableNode>(s->memberVariables[0]);
+    ASSERT_NE(xVar, nullptr);
+    EXPECT_EQ(xVar->name, "x");
+    ASSERT_NE(xVar->comment, nullptr);
+
+    auto yVar = std::dynamic_pointer_cast<VariableNode>(s->memberVariables[1]);
+    ASSERT_NE(yVar, nullptr);
+    EXPECT_EQ(yVar->name, "y");
+    ASSERT_NE(yVar->comment, nullptr);
+}
+
+TEST_F(ParserTest, ParseCommentWithBlankLineGapDiscarded)
+{
+    auto result = parseSingle(R"(
+// this comment is far away
+
+
+int x;
+)");
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->children.size(), 1);
+
+    auto var = std::dynamic_pointer_cast<VariableNode>(result->children[0]);
+    ASSERT_NE(var, nullptr);
+    EXPECT_EQ(var->comment, nullptr);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////

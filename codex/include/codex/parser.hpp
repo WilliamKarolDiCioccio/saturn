@@ -110,7 +110,7 @@ class Parser
     // "Sticky" State Management (Floating Nodes)
     std::shared_ptr<CommentNode> parseComment(const TSNode& _node);
 
-    std::shared_ptr<CommentNode> getLeadingComment();
+    std::shared_ptr<CommentNode> getLeadingComment(uint32_t targetStartLine);
     void clearLeadingComment() { m_leadingComment = nullptr; }
 
     std::shared_ptr<TemplateNode> getTemplateDeclaration();
