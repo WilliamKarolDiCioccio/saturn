@@ -10,7 +10,7 @@ import MermaidDiagram from "../../../components/mmd_diagram";
 
 The Saturn [repository](https://github.com/WilliamKarolDiCioccio/saturn) is a **monorepo**, not a single project. It contains multiple first-class projects unified by shared philosophy and tooling, each with distinct responsibility boundaries.
 
-This organization reflects an intentional architecture: a cohesive ecosystem where the engine (`saturn/`), utilities (`pieces/`), tooling (`codex/`, `docsgen/`), sandbox (`testbed/`), and editor (`editor/`) coordinate around common design patterns while maintaining clear separation of concerns.
+This organization reflects an intentional architecture: a cohesive ecosystem where the engine (`saturn/`), utilities (`pieces/`), sandbox (`testbed/`), and editor (`editor/`) coordinate around common design patterns while maintaining clear separation of concerns.
 
 ### Top-level projects
 
@@ -19,9 +19,6 @@ The repository contains six major top-level projects:
 - <Badge text="WIP" variant="note" /> **`pieces/`** — STL-like header-only
   utility library
 - **`saturn/`** — Game engine core
-- <Badge text="WIP" variant="note" /> **`codex/`** — C++ source code parser
-- <Badge text="WIP" variant="note" /> **`docsgen/`** — Documentation generation
-  tool
 - <Badge text="Future" variant="success" /> **`metagen/`** — Code generation
   tool
 - <Badge text="Future" variant="success" /> **`editor/`** — Saturn Editor
@@ -202,45 +199,6 @@ The engine is organized into subsystems, each with clear ownership and invariant
 **Input system:** Three-layer architecture separating platform input sources, window-specific input context, and high-level action bindings.
 
 **Platform abstraction:** Conditional compilation for Win32, POSIX (Linux), Android (AGDK), WebAssembly (Emscripten), and GLFW (cross-platform).
-
----
-
-## `codex/` — C++ parser and documentation extractor
-
-- **Type:** Static library
-- **Dependencies:** pieces, tree-sitter, tree-sitter-cpp, fmt
-- **Responsibility:** Parsing C++ source code and extracting structured documentation data
-
-`codex` uses tree-sitter to build an Abstract Syntax Tree (AST) from C++ source files, then extracts structured information for documentation generation. It is intentionally decoupled from the Saturn engine and can parse any C++ project.
-
-<Aside type="note">
-  Codex performs **syntax-only analysis**. It does not resolve types,
-  instantiate templates, or evaluate preprocessor conditionals. This limitation
-  keeps it simple and enables fast parsing of large codebases.
-</Aside>
-
----
-
-## `docsgen/` — Documentation generation tool
-
-- **Type:** Executable (CLI tool)
-- **Dependencies:** codex, bfgroup-lyra, STL
-- **Responsibility:** Converting codex AST output into MDX documentation files
-
-`docsgen` consumes `codex` output and generates MDX (Markdown + JSX) files suitable for the Astro documentation site. It is the pipeline terminal: FilesCollector → Parser → MDXGenerator.
-
-**Invocation:**
-
-```bash
-./build/docsgen/docsgen --input ./saturn/include --output ./docs/src/content/docs/reference
-```
-
-This generates API reference pages from the engine headers. The tool guarantees deterministic output (same input = same output) and respects the `--input` and `--output` directories.
-
-<Aside type="note">
-  API reference generation is **in development**. The MDXGenerator
-  implementation is currently stubbed and awaits implementation.
-</Aside>
 
 ---
 

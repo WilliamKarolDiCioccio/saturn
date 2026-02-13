@@ -46,7 +46,7 @@ repos:
     rev: v1.1.11
     hooks:
       - id: clang-format
-        files: ^(saturn|testbed|pieces|codex|docsgen)/
+        files: ^(saturn|testbed|pieces)/
         args: [--style=file, -i]
 
   # Dart and Flutter hooks

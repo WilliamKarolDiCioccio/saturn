@@ -28,7 +28,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **For any task involving:**
 
-- C++ engine code (saturn/, pieces/, codex/)
+- C++ engine code (saturn/, pieces/)
 - Architecture planning/implementation
 - Core systems (ECS, rendering, exec, input, platform)
 - Cross-package changes
@@ -115,8 +115,6 @@ python .claude/skills/invoke-gemini/scripts/check_line_count.py <file>
 **Top-Level Modules:**
 
 - `pieces/CLAUDE.md` — Header-only utility library (zero dependencies)
-- `codex/CLAUDE.md` — C++ parser tool
-- `docsgen/CLAUDE.md` — Documentation generator
 
 **Engine Subsystems (`saturn/`):**
 
@@ -230,7 +228,7 @@ ctest --test-dir build
 The `docsgen` tool generates API documentation:
 
 ```bash
-./build/docsgen/docsgen --input ./saturn/include --output ./docs
+docsgen --input ./saturn/include --output ./docs
 ```
 
 ### Shader Compilation
@@ -275,15 +273,6 @@ The codebase is organized into four main modules:
      - `AGDK/`: Android Game Development Kit
      - `Emscripten/`: WebAssembly/browser
      - `GLFW/`: Cross-platform windowing (desktop only)
-
-3. **codex** (`codex/`)
-   - C++ source code parser and documentation extractor
-   - Uses tree-sitter for parsing
-   - Generates structured data for documentation tooling
-
-4. **docsgen** (`docsgen/`)
-   - Documentation generation tool
-   - Consumes codex output to generate API docs
 
 ### Cross-Cutting Systems
 
@@ -485,7 +474,6 @@ Key dependencies (managed via vcpkg.json):
 - **Graphics**: Vulkan SDK, volk, vulkan-memory-allocator, glfw3, glm
 - **Utilities**: fmt (formatting), nlohmann-json, utf8cpp
 - **Testing**: gtest, benchmark
-- **Parsing**: tree-sitter
 - **CLI**: bfgroup-lyra
 - **Concurrency**: readerwriterqueue, concurrentqueue
 

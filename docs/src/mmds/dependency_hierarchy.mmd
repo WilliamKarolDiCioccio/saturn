@@ -1,12 +1,7 @@
 graph TD
     %% Base Layer
-    PIECES[pieces/] --> CODEX[codex/]
     PIECES --> SATURN[saturn/]
     PIECES --> TESTBED[testbed/]
-
-    %% Codex Branch
-    CODEX --> DOCSGEN[docsgen/]
-    CODEX --> METAGEN[metagen/]
 
     %% Saturn Branch
     EXT_LIBS([External Libs]) -.-> SATURN

@@ -48,8 +48,6 @@ git status --short
    - `saturn/src/exec/` → scope: exec
    - `saturn/src/core/` → scope: core
    - `saturn/src/scene/` → scope: scene
-   - `codex/` → scope: codex
-   - `docsgen/` → scope: docsgen
    - Multiple scopes → omit scope or use broader category
 
 4. **Craft commit message:**

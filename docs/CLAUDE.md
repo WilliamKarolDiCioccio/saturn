@@ -21,9 +21,7 @@
 
 ### Does NOT Own
 
-- C++ code documentation generation (docsgen/ package)
-- API reference extraction (codex/ package)
-- Engine architecture or implementation (saturn/, pieces/, codex/)
+- Engine architecture or implementation (saturn/, pieces/)
 - Version control of generated assets (src/assets/mmds/\*.svg excluded from git)
 
 ---
@@ -299,4 +297,4 @@ pnpm run preview  # Serve dist/ locally before deployment
 
 ## Status Notes
 
-**Active development** — Website deployed to GitHub Pages. Mermaid pre-rendering workflow stable. API reference section pending integration with docsgen/codex output. Italian translations incomplete (only navigation strings, no content pages yet).
+**Active development** — Website deployed to GitHub Pages. Mermaid pre-rendering workflow stable. API reference section pending integration with docsgen output. Italian translations incomplete (only navigation strings, no content pages yet).

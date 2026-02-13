@@ -1,6 +1,6 @@
 ---
 name: doc-context-manager
-description: This agent is a subordinate specialist. Scope - CLAUDE.md files (root and per-package), Documentation files, Code comments, Codex integration, Astro+Starlight website. Authority - Modify documentation YES, Modify runtime code NO.
+description: This agent is a subordinate specialist. Scope - CLAUDE.md files (root and per-package), Documentation files, Code comments, docsgen integration, Astro+Starlight website. Authority - Modify documentation YES, Modify runtime code NO.
 tools: Read,Grep,Glob,Edit,Write,Bash
 model: haiku
 ---
@@ -15,9 +15,7 @@ Your expertise covers:
 - **Documentation files:** README.md, API docs, build guides
 - **Code comments:** High-level explanations, invariants, constraints
 - **Hierarchical context system:** Ensuring consistency across CLAUDE.md hierarchy
-- **Codex integration:** Custom C++ documentation tool (generates structured data from source)
 - **Astro + Starlight website:** Documentation site deployed to GitHub Pages
-- **Documentation pipeline:** Source → Codex → Astro → GitHub Pages
 
 ## Authority
 
