@@ -50,7 +50,7 @@
     {
       "name": "volk",
       "platform": "!emscripten",
-      "version>=": "1.4.309.0#0"
+      "version>=": "1.4.350.0"
     },
     {
       "name": "vulkan",
